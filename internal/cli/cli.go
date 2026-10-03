@@ -38,15 +38,14 @@ type app struct {
 	opts Options
 	env  map[string]string
 
-	// global flags
-	vault, project, actor string
-	format                string
-	json                  bool
-	version               bool
+	// global flags; the config key flags are read back from cobra
+	format   string
+	jsonFlag bool
+	version  bool
 
-	root   *cobra.Command
-	parsed bool // flags were parsed and validated
-	out    output.Format
+	root           *cobra.Command
+	formatResolved bool // flags were parsed and the format validated
+	out            output.Format
 }
 
 // Run executes one otman command and returns its exit code.
@@ -68,7 +67,7 @@ func Run(o Options) int {
 		// Anything otman did not classify comes from cobra's own parsing.
 		e = invalidArgs(err.Error(), "run 'otman --help' for usage")
 	}
-	if !a.parsed {
+	if !a.formatResolved {
 		a.out = a.prescanFormat()
 	}
 	if werr := output.Failure(a.out, o.Stderr, e.problem()); werr != nil {
@@ -84,11 +83,16 @@ func (a *app) newRoot() *cobra.Command {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-			f, err := resolveFormat(a.json, a.format, cmd.Flags().Changed("format"), a.opts.IsTTY)
+			f, err := formatRequest{
+				json:        a.jsonFlag,
+				format:      a.format,
+				formatGiven: cmd.Flags().Changed("format"),
+				isTTY:       a.opts.IsTTY,
+			}.resolve()
 			if err != nil {
 				return err
 			}
-			a.out, a.parsed = f, true
+			a.out, a.formatResolved = f, true
 			return nil
 		},
 		// otman handles --version itself, rather than through cobra, so
@@ -102,11 +106,11 @@ func (a *app) newRoot() *cobra.Command {
 	}
 	root.CompletionOptions.DisableDefaultCmd = true
 	pf := root.PersistentFlags()
-	pf.StringVar(&a.vault, "vault", "", "Vault path (overrides OTM_VAULT and config)")
-	pf.StringVar(&a.project, "project", "", "Project key (overrides OTM_PROJECT and config)")
-	pf.StringVar(&a.actor, "actor", "", "actor name (overrides OTM_ACTOR and config)")
+	for _, k := range config.Keys {
+		pf.String(k.Name, "", k.Usage)
+	}
 	pf.StringVar(&a.format, "format", "", "output format: human|axi|json (default human on a terminal, axi otherwise)")
-	pf.BoolVar(&a.json, "json", false, "shorthand for --format json")
+	pf.BoolVar(&a.jsonFlag, "json", false, "shorthand for --format json")
 	root.Flags().BoolVarP(&a.version, "version", "v", false, "version for otman")
 
 	root.AddCommand(a.newConfigCmd())
@@ -122,62 +126,66 @@ func (r versionResult) RenderHuman(w io.Writer) error {
 	return err
 }
 
-// resolveFormat applies --format/--json over the TTY default.
-func resolveFormat(jsonFlag bool, format string, formatGiven bool, isTTY bool) (output.Format, error) {
+// formatRequest is what a run asked for: --json, --format (and whether it
+// was given at all) and whether stdout is a terminal.
+type formatRequest struct {
+	json        bool
+	format      string
+	formatGiven bool
+	isTTY       bool
+}
+
+// resolve applies --format/--json over the TTY default.
+func (r formatRequest) resolve() (output.Format, error) {
 	var f output.Format
-	if formatGiven {
+	if r.formatGiven {
 		var ok bool
-		if f, ok = output.ParseFormat(format); !ok {
-			return "", &Error{
-				Exit: ExitInvalid, Code: "invalid_format",
-				Message: "unknown output format " + quoteArg(format),
-				Details: map[string]any{"format": format, "allowed": []string{"human", "axi", "json"}},
-				Hint:    "use --format human, axi or json",
-			}
+		if f, ok = output.ParseFormat(r.format); !ok {
+			return "", invalid("invalid_format",
+				"unknown output format "+quoteArg(r.format),
+				map[string]any{"format": r.format, "allowed": []string{"human", "axi", "json"}},
+				"use --format human, axi or json")
 		}
 	}
-	if jsonFlag {
-		if formatGiven && f != output.JSON {
-			return "", &Error{
-				Exit: ExitInvalid, Code: "conflicting_flags",
-				Message: "--json conflicts with --format " + format,
-				Details: map[string]any{"flags": []string{"--json", "--format"}},
-				Hint:    "pass either --json or --format, not both",
-			}
+	if r.json {
+		if r.formatGiven && f != output.JSON {
+			return "", invalid("conflicting_flags",
+				"--json conflicts with --format "+r.format,
+				map[string]any{"flags": []string{"--json", "--format"}},
+				"pass either --json or --format, not both")
 		}
 		return output.JSON, nil
 	}
-	if formatGiven {
+	if r.formatGiven {
 		return f, nil
 	}
-	return output.Default(isTTY), nil
+	return output.Default(r.isTTY), nil
 }
 
 // prescanFormat finds the requested format when cobra failed before parsing
 // flags, so even a usage error is reported in the format asked for. An
 // invalid or conflicting request falls back to the TTY default.
 func (a *app) prescanFormat() output.Format {
-	var jsonFlag, given bool
-	var format string
+	r := formatRequest{isTTY: a.opts.IsTTY}
 	args := a.opts.Args
 	for i := 0; i < len(args); i++ {
 		switch arg := args[i]; {
 		case arg == "--":
 			i = len(args)
 		case arg == "--json":
-			jsonFlag = true
+			r.json = true
 		case strings.HasPrefix(arg, "--json="):
 			if v, err := strconv.ParseBool(strings.TrimPrefix(arg, "--json=")); err == nil {
-				jsonFlag = v
+				r.json = v
 			}
 		case arg == "--format" && i+1 < len(args):
-			format, given = args[i+1], true
+			r.format, r.formatGiven = args[i+1], true
 			i++
 		case strings.HasPrefix(arg, "--format="):
-			format, given = strings.TrimPrefix(arg, "--format="), true
+			r.format, r.formatGiven = strings.TrimPrefix(arg, "--format="), true
 		}
 	}
-	f, err := resolveFormat(jsonFlag, format, given, a.opts.IsTTY)
+	f, err := r.resolve()
 	if err != nil {
 		return output.Default(a.opts.IsTTY)
 	}
@@ -192,16 +200,11 @@ func (a *app) emit(data output.HumanRenderer, warnings []output.Problem) error {
 	return nil
 }
 
-func (a *app) getenv(k string) string { return a.env[k] }
-
 // configPath locates the user config file.
 func (a *app) configPath() (string, error) {
-	p, err := config.Path(a.getenv)
+	p, err := config.Path(a.env)
 	if err != nil {
-		return "", &Error{
-			Exit: ExitInvalid, Code: "invalid_config", Message: err.Error(),
-			Hint: "set XDG_CONFIG_HOME or HOME",
-		}
+		return "", invalid("invalid_config", err.Error(), nil, "set XDG_CONFIG_HOME or HOME")
 	}
 	return p, nil
 }
@@ -220,26 +223,19 @@ func (a *app) settings() (config.Settings, string, error) {
 	flags := map[string]string{}
 	pf := a.root.PersistentFlags()
 	for _, k := range config.Keys {
-		if pf.Changed(k) {
-			flags[k], _ = pf.GetString(k)
+		if pf.Changed(k.Name) {
+			flags[k.Name], _ = pf.GetString(k.Name)
 		}
 	}
-	s := config.Resolve(config.Inputs{Flags: flags, Env: a.getenv, File: file})
-	if s.Vault.IsSet() {
-		s.Vault.Value = a.abs(s.Vault.Value)
-	}
+	s := config.Resolve(config.Inputs{Flags: flags, Env: a.env, File: file, Abs: a.abs})
 	return s, path, nil
 }
 
 func configLoadError(err error) error {
 	var pe *config.ParseError
 	if errors.As(err, &pe) {
-		return &Error{
-			Exit: ExitInvalid, Code: "invalid_config",
-			Message: "cannot read user config: " + pe.Error(),
-			Details: map[string]any{"path": pe.Path},
-			Hint:    "fix or remove " + pe.Path,
-		}
+		return invalid("invalid_config", "cannot read user config: "+pe.Error(),
+			map[string]any{"path": pe.Path}, "fix or remove "+pe.Path)
 	}
 	return ioError(err)
 }

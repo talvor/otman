@@ -12,17 +12,54 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-// Keys are the user config keys, in display order.
-var Keys = []string{"vault", "actor", "project"}
+// Key is one user config key. The same name is its config file key and its
+// global flag; EnvVar is the environment variable that overrides the file.
+type Key struct {
+	Name   string
+	EnvVar string
+	Usage  string // global flag help
+	IsPath bool   // relative values resolve against the working directory
+	field  func(*Settings) *Value
+}
 
-// IsKey reports whether k is a user config key.
-func IsKey(k string) bool {
-	for _, key := range Keys {
-		if key == k {
-			return true
+var (
+	Vault = Key{
+		Name: "vault", EnvVar: "OTM_VAULT", IsPath: true,
+		Usage: "Vault path (overrides OTM_VAULT and config)",
+		field: func(s *Settings) *Value { return &s.Vault },
+	}
+	Actor = Key{
+		Name: "actor", EnvVar: "OTM_ACTOR",
+		Usage: "actor name (overrides OTM_ACTOR and config)",
+		field: func(s *Settings) *Value { return &s.Actor },
+	}
+	Project = Key{
+		Name: "project", EnvVar: "OTM_PROJECT",
+		Usage: "Project key (overrides OTM_PROJECT and config)",
+		field: func(s *Settings) *Value { return &s.Project },
+	}
+)
+
+// Keys are the user config keys, in display order.
+var Keys = []Key{Vault, Actor, Project}
+
+// LookupKey finds the config key called name.
+func LookupKey(name string) (Key, bool) {
+	for _, k := range Keys {
+		if k.Name == name {
+			return k, true
 		}
 	}
-	return false
+	return Key{}, false
+}
+
+// KeyNames lists the config key names, in display order.
+func KeyNames() []string {
+	names := make([]string, len(Keys))
+	for i, k := range Keys {
+		names[i] = k.Name
+	}
+	return names
 }
 
 // Source says where an effective value came from.
@@ -36,45 +73,22 @@ const (
 
 // File is the user config file's contents.
 type File struct {
-	Vault   string `toml:"vault,omitempty"`
-	Actor   string `toml:"actor,omitempty"`
-	Project string `toml:"project,omitempty"`
+	values map[string]string // known keys
 }
 
-func (f *File) get(k string) string {
-	switch k {
-	case "vault":
-		return f.Vault
-	case "actor":
-		return f.Actor
-	case "project":
-		return f.Project
-	}
-	return ""
-}
-
-func (f *File) set(k, v string) {
-	switch k {
-	case "vault":
-		f.Vault = v
-	case "actor":
-		f.Actor = v
-	case "project":
-		f.Project = v
-	}
-}
+// Get returns the file's value for k, or "" when the file does not set it.
+func (f File) Get(k Key) string { return f.values[k.Name] }
 
 // ErrNoConfigDir means neither XDG_CONFIG_HOME nor HOME is set.
 var ErrNoConfigDir = errors.New("neither XDG_CONFIG_HOME nor HOME is set")
 
 // Path returns the user config path: $XDG_CONFIG_HOME/otman/config.toml,
-// falling back to $HOME/.config/otman/config.toml. lookup reads the
-// environment.
-func Path(lookup func(string) string) (string, error) {
-	if x := lookup("XDG_CONFIG_HOME"); x != "" {
+// falling back to $HOME/.config/otman/config.toml.
+func Path(env map[string]string) (string, error) {
+	if x := env["XDG_CONFIG_HOME"]; x != "" {
 		return filepath.Join(x, "otman", "config.toml"), nil
 	}
-	if h := lookup("HOME"); h != "" {
+	if h := env["HOME"]; h != "" {
 		return filepath.Join(h, ".config", "otman", "config.toml"), nil
 	}
 	return "", ErrNoConfigDir
@@ -90,41 +104,81 @@ func (e *ParseError) Error() string { return fmt.Sprintf("%s: %v", e.Path, e.Err
 
 // Load reads the config file at path. A missing file is an empty config.
 func Load(path string) (File, error) {
-	var f File
-	b, err := os.ReadFile(path)
-	if errors.Is(err, os.ErrNotExist) {
-		return f, nil
-	}
-	if err != nil {
-		return f, err
-	}
-	md, err := toml.Decode(string(b), &f)
-	if err != nil {
-		return f, &ParseError{path, err}
-	}
-	if undec := md.Undecoded(); len(undec) > 0 {
-		return f, &ParseError{path, fmt.Errorf("unknown key %q", undec[0].String())}
-	}
-	return f, nil
+	f, _, err := load(path)
+	return f, err
 }
 
-// Set writes key = value to the config file at path, creating it if needed,
+// load also returns the decoded document, so Set can write back what it
+// read.
+func load(path string) (File, map[string]any, error) {
+	f := File{values: map[string]string{}}
+	doc := map[string]any{}
+	b, err := os.ReadFile(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return f, doc, nil
+	}
+	if err != nil {
+		return f, nil, err
+	}
+	if _, err := toml.Decode(string(b), &doc); err != nil {
+		return f, nil, &ParseError{path, err}
+	}
+	for name, v := range doc {
+		k, ok := LookupKey(name)
+		if !ok {
+			return f, nil, &ParseError{path, fmt.Errorf("unknown key %q", name)}
+		}
+		s, ok := v.(string)
+		if !ok {
+			return f, nil, &ParseError{path, fmt.Errorf("%s must be a string", k.Name)}
+		}
+		f.values[k.Name] = s
+	}
+	return f, doc, nil
+}
+
+// Set writes k = value to the config file at path, creating it if needed,
 // and reports whether the stored value changed. The file is replaced
 // atomically.
-func Set(path, key, value string) (bool, error) {
-	f, err := Load(path)
+func Set(path string, k Key, value string) (bool, error) {
+	f, doc, err := load(path)
 	if err != nil {
 		return false, err
 	}
-	if f.get(key) == value {
+	if f.Get(k) == value {
 		return false, nil
 	}
-	f.set(key, value)
-	var buf bytes.Buffer
-	if err := toml.NewEncoder(&buf).Encode(f); err != nil {
+	doc[k.Name] = value
+	data, err := encode(doc)
+	if err != nil {
 		return false, err
 	}
-	return true, writeAtomic(path, buf.Bytes())
+	return true, writeAtomic(path, data)
+}
+
+// encode writes the known keys first, in display order, then everything
+// else. Known keys are plain strings, so they always precede any table.
+func encode(doc map[string]any) ([]byte, error) {
+	var buf bytes.Buffer
+	enc := toml.NewEncoder(&buf)
+	rest := make(map[string]any, len(doc))
+	for name, v := range doc {
+		rest[name] = v
+	}
+	for _, k := range Keys {
+		if v, ok := rest[k.Name]; ok {
+			if err := enc.Encode(map[string]any{k.Name: v}); err != nil {
+				return nil, err
+			}
+			delete(rest, k.Name)
+		}
+	}
+	if len(rest) > 0 {
+		if err := enc.Encode(rest); err != nil {
+			return nil, err
+		}
+	}
+	return buf.Bytes(), nil
 }
 
 func writeAtomic(path string, data []byte) error {
@@ -161,7 +215,7 @@ type Value struct {
 	Source Source
 }
 
-// Set reports whether the setting has a value.
+// IsSet reports whether the setting has a value.
 func (v Value) IsSet() bool { return v.Source != "" }
 
 // Settings are the effective Vault, actor and Project for one run.
@@ -171,52 +225,36 @@ type Settings struct {
 	Project Value
 }
 
-// Get returns the effective value for a config key.
-func (s Settings) Get(k string) Value {
-	switch k {
-	case "vault":
-		return s.Vault
-	case "actor":
-		return s.Actor
-	case "project":
-		return s.Project
-	}
-	return Value{}
-}
+// Get returns the effective value for k.
+func (s *Settings) Get(k Key) Value { return *k.field(s) }
 
 // Inputs are the layers Resolve merges, highest precedence first.
 type Inputs struct {
-	Flags map[string]string // explicitly passed flags, by config key
-	Env   func(string) string
+	Flags map[string]string // explicitly passed flags, by key name
+	Env   map[string]string
 	File  File
+	Abs   func(string) string // makes a path key's value absolute; nil leaves it
 }
-
-// envVars maps config keys to their environment variables.
-var envVars = map[string]string{
-	"vault":   "OTM_VAULT",
-	"actor":   "OTM_ACTOR",
-	"project": "OTM_PROJECT",
-}
-
-// EnvVar returns the environment variable that sets config key k.
-func EnvVar(k string) string { return envVars[k] }
 
 // Resolve applies precedence for every key: flag > OTM_* environment >
 // user config. Empty values count as unset.
 func Resolve(in Inputs) Settings {
-	pick := func(k string) Value {
-		if v, ok := in.Flags[k]; ok && v != "" {
-			return Value{v, FromFlag}
+	var s Settings
+	for _, k := range Keys {
+		v := k.field(&s)
+		switch {
+		case in.Flags[k.Name] != "":
+			*v = Value{in.Flags[k.Name], FromFlag}
+		case in.Env[k.EnvVar] != "":
+			*v = Value{in.Env[k.EnvVar], FromEnv}
+		case in.File.Get(k) != "":
+			*v = Value{in.File.Get(k), FromConfig}
 		}
-		if v := in.Env(envVars[k]); v != "" {
-			return Value{v, FromEnv}
+		if k.IsPath && v.IsSet() && in.Abs != nil {
+			v.Value = in.Abs(v.Value)
 		}
-		if v := in.File.get(k); v != "" {
-			return Value{v, FromConfig}
-		}
-		return Value{}
 	}
-	return Settings{Vault: pick("vault"), Actor: pick("actor"), Project: pick("project")}
+	return s
 }
 
 // ErrNoActor means a command needed an identity and no actor is configured.
