@@ -226,15 +226,15 @@ func (a *app) configPath() (string, error) {
 }
 
 // settings resolves the effective Vault, Project and actor, and returns the
-// config path it read.
-func (a *app) settings() (config.Settings, string, error) {
+// config path it read and any warnings about that file.
+func (a *app) settings() (config.Settings, string, []output.Problem, error) {
 	path, err := a.configPath()
 	if err != nil {
-		return config.Settings{}, "", err
+		return config.Settings{}, "", nil, err
 	}
 	file, err := config.Load(path)
 	if err != nil {
-		return config.Settings{}, "", configLoadError(err)
+		return config.Settings{}, "", nil, configLoadError(err)
 	}
 	flags := map[string]string{}
 	pf := a.root.PersistentFlags()
@@ -244,7 +244,22 @@ func (a *app) settings() (config.Settings, string, error) {
 		}
 	}
 	s := config.Resolve(config.Inputs{Flags: flags, Env: a.env, File: file, Abs: a.abs})
-	return s, path, nil
+	return s, path, configWarnings(file, path), nil
+}
+
+// configWarnings flags keys in the config file that otman ignores.
+func configWarnings(f config.File, path string) []output.Problem {
+	var ws []output.Problem
+	for _, k := range f.Unknown {
+		hint := "otman reads only " + strings.Join(config.KeyNames(), ", ") + "; remove or rename it in " + path
+		ws = append(ws, output.Problem{
+			Code:    "unknown_config_key",
+			Message: "ignoring unknown config key " + quoteArg(k),
+			Details: map[string]any{"key": k, "path": path},
+			Hint:    &hint,
+		})
+	}
+	return ws
 }
 
 func configLoadError(err error) error {

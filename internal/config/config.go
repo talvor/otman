@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/BurntSushi/toml"
 )
@@ -71,9 +72,12 @@ const (
 	FromConfig Source = "config"
 )
 
-// File is the user config file's contents.
+// File is the user config file's contents. Following ADR 0005, keys otman
+// does not know are not an error: they are listed in Unknown, so callers
+// can warn, and Set writes them back untouched.
 type File struct {
-	values map[string]string // known keys
+	values  map[string]string // known keys
+	Unknown []string          // top-level keys otman does not know, sorted
 }
 
 // Get returns the file's value for k, or "" when the file does not set it.
@@ -126,7 +130,8 @@ func load(path string) (File, map[string]any, error) {
 	for name, v := range doc {
 		k, ok := LookupKey(name)
 		if !ok {
-			return f, nil, &ParseError{path, fmt.Errorf("unknown key %q", name)}
+			f.Unknown = append(f.Unknown, name)
+			continue
 		}
 		s, ok := v.(string)
 		if !ok {
@@ -134,26 +139,28 @@ func load(path string) (File, map[string]any, error) {
 		}
 		f.values[k.Name] = s
 	}
+	sort.Strings(f.Unknown)
 	return f, doc, nil
 }
 
 // Set writes k = value to the config file at path, creating it if needed,
-// and reports whether the stored value changed. The file is replaced
-// atomically.
-func Set(path string, k Key, value string) (bool, error) {
+// and reports whether the stored value changed, along with the file as it
+// was read. Keys otman does not own are kept (TOML comments are not). The
+// file is replaced atomically.
+func Set(path string, k Key, value string) (File, bool, error) {
 	f, doc, err := load(path)
 	if err != nil {
-		return false, err
+		return f, false, err
 	}
 	if f.Get(k) == value {
-		return false, nil
+		return f, false, nil
 	}
 	doc[k.Name] = value
 	data, err := encode(doc)
 	if err != nil {
-		return false, err
+		return f, false, err
 	}
-	return true, writeAtomic(path, data)
+	return f, true, writeAtomic(path, data)
 }
 
 // encode writes the known keys first, in display order, then everything
@@ -161,6 +168,7 @@ func Set(path string, k Key, value string) (bool, error) {
 func encode(doc map[string]any) ([]byte, error) {
 	var buf bytes.Buffer
 	enc := toml.NewEncoder(&buf)
+	enc.Indent = ""
 	rest := make(map[string]any, len(doc))
 	for name, v := range doc {
 		rest[name] = v

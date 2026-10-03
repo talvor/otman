@@ -72,11 +72,12 @@ func (a *app) configSet(name, value string) error {
 	if err != nil {
 		return err
 	}
-	changed, err := config.Set(path, k, value)
+	file, changed, err := config.Set(path, k, value)
 	if err != nil {
 		return configLoadError(err)
 	}
-	return a.emit(configSetResult{Key: k.Name, Value: value, Path: path, Changed: changed}, nil)
+	return a.emit(configSetResult{Key: k.Name, Value: value, Path: path, Changed: changed},
+		configWarnings(file, path))
 }
 
 // setting is one effective value in config show; both fields are null when
@@ -139,7 +140,7 @@ func (r configShowResult) RenderHuman(w io.Writer) error {
 }
 
 func (a *app) configShow() error {
-	s, path, err := a.settings()
+	s, path, warnings, err := a.settings()
 	if err != nil {
 		return err
 	}
@@ -147,5 +148,5 @@ func (a *app) configShow() error {
 	for _, k := range config.Keys {
 		r.Settings = append(r.Settings, newSetting(s.Get(k)))
 	}
-	return a.emit(r, nil)
+	return a.emit(r, warnings)
 }

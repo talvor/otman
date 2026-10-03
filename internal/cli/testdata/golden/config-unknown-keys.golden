@@ -1,0 +1,94 @@
+$ otman config show --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "config_path": "$WORK/config/otman/config.toml",
+    "vault": {
+      "value": "/from/config",
+      "source": "config"
+    },
+    "actor": {
+      "value": null,
+      "source": null
+    },
+    "project": {
+      "value": null,
+      "source": null
+    }
+  },
+  "warnings": [
+    {
+      "code": "unknown_config_key",
+      "message": "ignoring unknown config key \"colour\"",
+      "details": {
+        "key": "colour",
+        "path": "$WORK/config/otman/config.toml"
+      },
+      "hint": "otman reads only vault, actor, project; remove or rename it in $WORK/config/otman/config.toml"
+    },
+    {
+      "code": "unknown_config_key",
+      "message": "ignoring unknown config key \"editor\"",
+      "details": {
+        "key": "editor",
+        "path": "$WORK/config/otman/config.toml"
+      },
+      "hint": "otman reads only vault, actor, project; remove or rename it in $WORK/config/otman/config.toml"
+    }
+  ]
+}
+-- stderr --
+
+$ otman config show
+tty: true
+exit: 0
+-- stdout --
+KEY      VALUE         SOURCE
+vault    /from/config  config
+actor    -             unset
+project  -             unset
+
+config file: $WORK/config/otman/config.toml
+-- stderr --
+warning[unknown_config_key]: ignoring unknown config key "colour"
+hint: otman reads only vault, actor, project; remove or rename it in $WORK/config/otman/config.toml
+warning[unknown_config_key]: ignoring unknown config key "editor"
+hint: otman reads only vault, actor, project; remove or rename it in $WORK/config/otman/config.toml
+
+$ otman config set project OTM
+exit: 0
+-- stdout --
+key: project
+value: OTM
+path: $WORK/config/otman/config.toml
+changed: true
+-- stderr --
+warning:
+  code: unknown_config_key
+  message: "ignoring unknown config key \"colour\""
+  details:
+    key: colour
+    path: $WORK/config/otman/config.toml
+  hint: "otman reads only vault, actor, project; remove or rename it in $WORK/config/otman/config.toml"
+warning:
+  code: unknown_config_key
+  message: "ignoring unknown config key \"editor\""
+  details:
+    key: editor
+    path: $WORK/config/otman/config.toml
+  hint: "otman reads only vault, actor, project; remove or rename it in $WORK/config/otman/config.toml"
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "/from/config"
+project = "OTM"
+colour = "blue"
+
+[editor]
+name = "vim"
+home/
+vault/

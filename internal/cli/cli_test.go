@@ -182,3 +182,17 @@ func TestEmptySettings(t *testing.T) {
 		},
 	})
 }
+
+// Following ADR 0005, unknown config keys are read leniently with an
+// unknown_config_key warning, and config set keeps them.
+func TestUnknownConfigKeys(t *testing.T) {
+	runGolden(t, goldenCase{
+		name:   "config-unknown-keys",
+		config: "vault = \"/from/config\"\ncolour = \"blue\"\n\n[editor]\nname = \"vim\"\n",
+		steps: []step{
+			{args: []string{"config", "show", "--json"}},
+			{args: []string{"config", "show"}, tty: true},
+			{args: []string{"config", "set", "project", "OTM"}},
+		},
+	})
+}
