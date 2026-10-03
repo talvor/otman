@@ -30,7 +30,7 @@ var listStates = []string{"open", "closed", "all"}
 func (a *app) newListCmd() *cobra.Command {
 	var f listFlags
 	cmd := &cobra.Command{
-		Use:   "list",
+		Use:   "list [--state open|closed|all] [--kind K] [--assignee NAME|@me | --unassigned] [--search TEXT] [--all-projects] [--limit N] [--offset N] [--all]",
 		Short: "List the Items of the selected Project (default: open ones)",
 		Args:  cobra.NoArgs,
 	}
