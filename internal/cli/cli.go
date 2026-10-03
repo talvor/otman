@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -238,4 +239,4 @@ func parseEnv(env []string) map[string]string {
 	return m
 }
 
-func quoteArg(s string) string { return "\"" + s + "\"" }
+func quoteArg(s string) string { return strconv.Quote(s) }

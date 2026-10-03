@@ -39,6 +39,14 @@ exit: 2
   }
 }
 
+$ otman config set co"lour\ blue
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error: unknown config key "co\"lour\\"
+hint: use one of: vault, actor, project
+
 == tree ==
 config/
 home/

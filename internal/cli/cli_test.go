@@ -97,6 +97,7 @@ func TestErrorFormats(t *testing.T) {
 			{args: args, tty: true},
 			{args: args},
 			{args: append(args, "--json")},
+			{args: []string{"config", "set", "co\"lour\\", "blue"}, tty: true},
 		},
 	})
 }
