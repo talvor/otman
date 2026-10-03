@@ -2,3 +2,4 @@
 .scratch/
 .claude/worktrees/
 /dist/
+/.otman.toml
