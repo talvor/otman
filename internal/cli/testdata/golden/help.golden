@@ -9,8 +9,10 @@ Usage:
 
 Available Commands:
   config      Show or change user config
+  create      Create an Item in the selected Project
   help        Help about any command
   project     Create, list, view and link Projects
+  view        Show an Item by ID, number, full filename or Vault-relative path
 
 Flags:
       --actor string     actor name (overrides OTM_ACTOR and config)

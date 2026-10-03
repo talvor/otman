@@ -1,0 +1,542 @@
+$ otman view OTM-1 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-1",
+      "title": "Handle sync collisions",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": "agent-b",
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-1 Handle sync collisions.md",
+      "rev": "8c015b8d4fe9",
+      "author": "talvor",
+      "body": "Detect duplicate numbers and report both paths.\n\n## Comments\n\nThis body has its own Comments heading; the marker is the boundary.",
+      "created": "2026-01-01T10:00:00Z",
+      "updated": "2026-01-01T11:00:00Z",
+      "comments": [
+        {
+          "author": "talvor",
+          "created": "2026-01-01T10:30:00Z",
+          "body": "Reproduced with a copied note."
+        },
+        {
+          "author": "agent-b",
+          "created": "2026-01-01T11:00:00Z",
+          "body": "Fixed in the scanner.\n\n### A heading inside the comment\nstays part of it."
+        }
+      ],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman view 2 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-2",
+      "title": "Item file format: frontmatter and body",
+      "kind": "spec",
+      "status": "closed",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md",
+      "rev": "fc9a1f15b73e",
+      "author": null,
+      "body": "",
+      "created": "2026-01-01T09:00:00Z",
+      "updated": "2026-01-01T09:00:00Z",
+      "comments": [],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman view OTM-2 Item file format frontmatter and body.md --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-2",
+      "title": "Item file format: frontmatter and body",
+      "kind": "spec",
+      "status": "closed",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md",
+      "rev": "fc9a1f15b73e",
+      "author": null,
+      "body": "",
+      "created": "2026-01-01T09:00:00Z",
+      "updated": "2026-01-01T09:00:00Z",
+      "comments": [],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman view OTM-2 Item file format frontmatter and body
+exit: 3
+-- stdout --
+-- stderr --
+error:
+  code: item_not_found
+  message: "no Item matches \"OTM-2 Item file format frontmatter and body\""
+  details:
+    ref: OTM-2 Item file format frontmatter and body
+  hint: "name an Item by its ID (OTM-12), its number, its full filename or its Vault-relative path; titles do not match"
+
+$ otman view Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md
+tty: true
+exit: 0
+-- stdout --
+OTM-2 · Item file format: frontmatter and body
+spec · closed · unassigned
+Author: - · created 2026-01-01T09:00:00Z · updated 2026-01-01T09:00:00Z
+Path: Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md
+
+(no body)
+-- stderr --
+
+$ otman view WEB-1 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "WEB-1",
+      "title": "Landing page",
+      "kind": "prd",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/WEB/PRDs/WEB-1 Landing page.md",
+      "rev": "500e0146a3ff",
+      "author": "talvor",
+      "body": "Explain otman in one screen.",
+      "created": "2026-01-01T08:00:00Z",
+      "updated": "2026-01-01T08:00:00Z",
+      "comments": [],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman view WEB-1 --project WEB
+exit: 0
+-- stdout --
+item:
+  id: WEB-1
+  title: Landing page
+  kind: prd
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/WEB/PRDs/WEB-1 Landing page.md
+  rev: 500e0146a3ff
+  author: talvor
+  body: Explain otman in one screen.
+  created: "2026-01-01T08:00:00Z"
+  updated: "2026-01-01T08:00:00Z"
+  children[0]:
+  blocks[0]:
+truncated: false
+-- stderr --
+
+$ otman view WEB-1 --project OTM --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "project_mismatch",
+    "message": "WEB-1 is in Project WEB, but --project is OTM",
+    "details": {
+      "flag": "OTM",
+      "project": "WEB",
+      "ref": "WEB-1"
+    },
+    "hint": "drop --project, or pass --project WEB"
+  }
+}
+
+$ otman view WEB-1
+env: OTM_PROJECT=lower
+exit: 0
+-- stdout --
+item:
+  id: WEB-1
+  title: Landing page
+  kind: prd
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/WEB/PRDs/WEB-1 Landing page.md
+  rev: 500e0146a3ff
+  author: talvor
+  body: Explain otman in one screen.
+  created: "2026-01-01T08:00:00Z"
+  updated: "2026-01-01T08:00:00Z"
+  children[0]:
+  blocks[0]:
+truncated: false
+-- stderr --
+
+$ otman view 1 --project WEB --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "WEB-1",
+      "title": "Landing page",
+      "kind": "prd",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/WEB/PRDs/WEB-1 Landing page.md",
+      "rev": "500e0146a3ff",
+      "author": "talvor",
+      "body": "Explain otman in one screen.",
+      "created": "2026-01-01T08:00:00Z",
+      "updated": "2026-01-01T08:00:00Z",
+      "comments": [],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman view Projects/WEB/PRDs/WEB-1 Landing page.md --project OTM
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: project_mismatch
+  message: "Projects/WEB/PRDs/WEB-1 Landing page.md is in Project WEB, but --project is OTM"
+  details:
+    flag: OTM
+    project: WEB
+    ref: Projects/WEB/PRDs/WEB-1 Landing page.md
+  hint: "drop --project, or pass --project WEB"
+
+$ otman view OTM-3 --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "ambiguous_reference",
+    "message": "OTM-3 matches 2 Items: Projects/OTM/Issues/OTM-3 First copy.md, Projects/OTM/Issues/OTM-3 Second copy.md",
+    "details": {
+      "paths": [
+        "Projects/OTM/Issues/OTM-3 First copy.md",
+        "Projects/OTM/Issues/OTM-3 Second copy.md"
+      ],
+      "ref": "OTM-3"
+    },
+    "hint": "name one by its Vault-relative path, or run 'otman doctor --fix' to renumber the duplicate"
+  }
+}
+
+$ otman view Projects/OTM/Issues/OTM-3 Second copy.md --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-3",
+      "title": "Second copy",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-3 Second copy.md",
+      "rev": "094abb3b5f66",
+      "author": null,
+      "body": "",
+      "created": null,
+      "updated": null,
+      "comments": [],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman view 99 --json
+exit: 3
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "item_not_found",
+    "message": "no Item matches \"99\" in Project OTM",
+    "details": {
+      "project": "OTM",
+      "ref": "99"
+    },
+    "hint": "name an Item by its ID (OTM-12), its number, its full filename or its Vault-relative path; titles do not match"
+  }
+}
+
+$ otman view OTM-99
+tty: true
+exit: 3
+-- stdout --
+-- stderr --
+error[item_not_found]: no Item matches "OTM-99" in Project OTM
+hint: name an Item by its ID (OTM-12), its number, its full filename or its Vault-relative path; titles do not match
+
+$ otman view NOPE-1
+exit: 3
+-- stdout --
+-- stderr --
+error:
+  code: project_not_found
+  message: no Project NOPE in the Vault
+  details:
+    key: NOPE
+  hint: "run 'otman project list' to see the Projects, or 'otman project create NOPE --name NAME'"
+
+$ otman view Handle sync collisions --json
+exit: 3
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "item_not_found",
+    "message": "no Item matches \"Handle sync collisions\"",
+    "details": {
+      "ref": "Handle sync collisions"
+    },
+    "hint": "name an Item by its ID (OTM-12), its number, its full filename or its Vault-relative path; titles do not match"
+  }
+}
+
+$ otman view OTM-1 Handle sync
+exit: 3
+-- stdout --
+-- stderr --
+error:
+  code: item_not_found
+  message: "no Item matches \"OTM-1 Handle sync\""
+  details:
+    ref: OTM-1 Handle sync
+  hint: "name an Item by its ID (OTM-12), its number, its full filename or its Vault-relative path; titles do not match"
+
+$ otman view Projects/OTM/Templates/OTM-9 Sample.md
+exit: 3
+-- stdout --
+-- stderr --
+error:
+  code: item_not_found
+  message: "no Item matches \"Projects/OTM/Templates/OTM-9 Sample.md\""
+  details:
+    ref: Projects/OTM/Templates/OTM-9 Sample.md
+  hint: "name an Item by its ID (OTM-12), its number, its full filename or its Vault-relative path; titles do not match"
+
+$ otman view Projects/OTM/Issues/../Issues/OTM-1 Handle sync collisions.md
+exit: 3
+-- stdout --
+-- stderr --
+error:
+  code: item_not_found
+  message: "no Item matches \"Projects/OTM/Issues/../Issues/OTM-1 Handle sync collisions.md\""
+  details:
+    ref: Projects/OTM/Issues/../Issues/OTM-1 Handle sync collisions.md
+  hint: "name an Item by its ID (OTM-12), its number, its full filename or its Vault-relative path; titles do not match"
+
+$ otman view outside.md
+exit: 3
+-- stdout --
+-- stderr --
+error:
+  code: item_not_found
+  message: "no Item matches \"outside.md\""
+  details:
+    ref: outside.md
+  hint: "name an Item by its ID (OTM-12), its number, its full filename or its Vault-relative path; titles do not match"
+
+$ otman view
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_arguments
+  message: "accepts 1 arg(s), received 0"
+  details: null
+  hint: run 'otman --help' for usage
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Handle sync collisions.md --
+---
+id: OTM-1
+title: Handle sync collisions
+aliases:
+  - Handle sync collisions
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: agent-b
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+Detect duplicate numbers and report both paths.
+
+## Comments
+
+This body has its own Comments heading; the marker is the boundary.
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+Reproduced with a copied note.
+
+### 2026-01-01T11:00:00Z · agent-b
+Fixed in the scanner.
+
+### A heading inside the comment
+stays part of it.
+-- vault/Projects/OTM/Issues/OTM-3 First copy.md --
+---
+id: OTM-3
+title: First copy
+kind: issue
+status: open
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-3 Second copy.md --
+---
+id: OTM-3
+title: Second copy
+kind: issue
+status: open
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/OTM/Specs/
+-- vault/Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md --
+---
+id: OTM-2
+title: 'Item file format: frontmatter and body'
+aliases:
+  - 'Item file format: frontmatter and body'
+kind: spec
+status: closed
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T09:00:00Z
+updated: 2026-01-01T09:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/OTM/Templates/
+-- vault/Projects/OTM/Templates/OTM-9 Sample.md --
+not an Item
+vault/Projects/WEB/
+vault/Projects/WEB/PRDs/
+-- vault/Projects/WEB/PRDs/WEB-1 Landing page.md --
+---
+id: WEB-1
+title: Landing page
+aliases:
+  - Landing page
+kind: prd
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T08:00:00Z
+updated: 2026-01-01T08:00:00Z
+---
+Explain otman in one screen.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/WEB/WEB.md --
+---
+name: otman website
+kind: project
+---
+-- vault/outside.md --
+not an Item

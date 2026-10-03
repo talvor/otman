@@ -1,7 +1,6 @@
 package vault
 
 import (
-	"bytes"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -12,6 +11,7 @@ import (
 	"sort"
 
 	"github.com/talvor/otman/internal/fsutil"
+	"github.com/talvor/otman/internal/item"
 	"github.com/talvor/otman/internal/output"
 	"go.yaml.in/yaml/v3"
 )
@@ -22,7 +22,7 @@ const ProjectsDir = "Projects"
 // ErrProjectExists means a Project folder already exists for the key.
 var ErrProjectExists = errors.New("project already exists")
 
-var keyPattern = regexp.MustCompile(`^[A-Z][A-Z0-9]{0,15}$`)
+var keyPattern = regexp.MustCompile(`^` + item.KeyPattern + `$`)
 
 // ValidKey reports whether key can name a Project: an uppercase letter
 // followed by up to 15 uppercase letters or digits, such as OTM.
@@ -126,7 +126,7 @@ func (v *Vault) loadProject(key string) (Project, []output.Problem, error) {
 		return p, nil, err
 	}
 	p.Note = &note
-	fm, ok := frontmatter(b)
+	fm, _, ok := item.SplitFrontmatter(b)
 	if !ok {
 		return p, nil, nil
 	}
@@ -143,35 +143,41 @@ func (v *Vault) loadProject(key string) (Project, []output.Problem, error) {
 	return p, nil, nil
 }
 
-// frontmatter returns the YAML between a leading --- line and the next
-// --- line, and false when the file has none.
-func frontmatter(b []byte) ([]byte, bool) {
-	lines := bytes.SplitAfter(b, []byte("\n"))
-	if len(lines) == 0 || !isFence(lines[0]) {
-		return nil, false
-	}
-	n := len(lines[0])
-	for _, l := range lines[1:] {
-		if isFence(l) {
-			return b[len(lines[0]):n], true
-		}
-		n += len(l)
-	}
-	return nil, false
-}
-
-func isFence(line []byte) bool {
-	return string(bytes.TrimRight(line, "\r\n")) == "---"
-}
-
 // adopt records every Project folder in the db registry, so a fresh or
-// rebuilt db knows every Project in the Vault.
+// rebuilt db knows every Project in the Vault, and reconciles each
+// Project's high-water mark with its Item files (ADR 0003): the mark is
+// raised to the highest number on disk and never lowered.
 func (v *Vault) adopt() error {
 	keys, _, err := v.projectKeys()
 	if err != nil || len(keys) == 0 {
 		return err
 	}
-	return v.register(keys...)
+	highest := make(map[string]int, len(keys))
+	for _, k := range keys {
+		files, err := v.ItemFiles(k)
+		if err != nil {
+			return err
+		}
+		highest[k] = highestNumber(files)
+	}
+	return inImmediateTx(v.db, func(tx *sql.Tx) error {
+		for _, k := range keys {
+			if err := raiseHighWater(tx, k, highest[k]); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+// raiseHighWater registers Project key if needed and raises its high-water
+// mark to at least n.
+func raiseHighWater(tx *sql.Tx, key string, n int) error {
+	if _, err := tx.Exec(`INSERT OR IGNORE INTO projects (key) VALUES (?)`, key); err != nil {
+		return err
+	}
+	_, err := tx.Exec(`UPDATE projects SET high_water = MAX(high_water, ?) WHERE key = ?`, n, key)
+	return err
 }
 
 // register adds Projects to the db registry, keeping any existing row and
@@ -179,7 +185,7 @@ func (v *Vault) adopt() error {
 func (v *Vault) register(keys ...string) error {
 	return inImmediateTx(v.db, func(tx *sql.Tx) error {
 		for _, k := range keys {
-			if _, err := tx.Exec(`INSERT OR IGNORE INTO projects (key) VALUES (?)`, k); err != nil {
+			if err := raiseHighWater(tx, k, 0); err != nil {
 				return err
 			}
 		}

@@ -253,8 +253,6 @@ var ErrNoActor = errors.New("no actor configured")
 // ResolveUser maps a user name given on the command line to the name to
 // store. "@me" means the configured actor; there is deliberately no git or
 // OS identity fallback, so "@me" with no actor fails with ErrNoActor.
-// No command takes @me yet, so config_test.go covers it below the cli.Run
-// seam for now.
 func (s Settings) ResolveUser(name string) (string, error) {
 	if name != "@me" {
 		return name, nil

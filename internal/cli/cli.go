@@ -117,6 +117,8 @@ func (a *app) newRoot() *cobra.Command {
 	pf.BoolVar(&a.jsonFlag, "json", false, "shorthand for --format json")
 	root.Flags().BoolVarP(&a.version, "version", "v", false, "version for otman")
 
+	root.AddCommand(a.newCreateCmd())
+	root.AddCommand(a.newViewCmd())
 	root.AddCommand(a.newConfigCmd())
 	root.AddCommand(a.newProjectCmd())
 	return root

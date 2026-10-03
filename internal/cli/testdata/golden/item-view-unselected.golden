@@ -1,0 +1,139 @@
+$ otman view 1 --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "no_project",
+    "message": "no Project selected",
+    "details": null,
+    "hint": "pass --project, set OTM_PROJECT, run 'otman project link KEY', or 'otman config set project KEY'"
+  }
+}
+
+$ otman view OTM-1 --format axi
+exit: 0
+-- stdout --
+item:
+  id: OTM-1
+  title: Handle sync collisions
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: agent-b
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-1 Handle sync collisions.md
+  rev: 8c015b8d4fe9
+  author: talvor
+  body: "Detect duplicate numbers and report both paths.\n\n## Comments\n\nThis body has its own Comments heading; the marker is the boundary."
+  created: "2026-01-01T10:00:00Z"
+  updated: "2026-01-01T11:00:00Z"
+  children[0]:
+  blocks[0]:
+truncated: false
+comments_omitted: 2
+read_all: otman view OTM-1 --comments --full
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Handle sync collisions.md --
+---
+id: OTM-1
+title: Handle sync collisions
+aliases:
+  - Handle sync collisions
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: agent-b
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+Detect duplicate numbers and report both paths.
+
+## Comments
+
+This body has its own Comments heading; the marker is the boundary.
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+Reproduced with a copied note.
+
+### 2026-01-01T11:00:00Z · agent-b
+Fixed in the scanner.
+
+### A heading inside the comment
+stays part of it.
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/OTM/Specs/
+-- vault/Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md --
+---
+id: OTM-2
+title: 'Item file format: frontmatter and body'
+aliases:
+  - 'Item file format: frontmatter and body'
+kind: spec
+status: closed
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T09:00:00Z
+updated: 2026-01-01T09:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/WEB/
+vault/Projects/WEB/PRDs/
+-- vault/Projects/WEB/PRDs/WEB-1 Landing page.md --
+---
+id: WEB-1
+title: Landing page
+aliases:
+  - Landing page
+kind: prd
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T08:00:00Z
+updated: 2026-01-01T08:00:00Z
+---
+Explain otman in one screen.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/WEB/WEB.md --
+---
+name: otman website
+kind: project
+---

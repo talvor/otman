@@ -27,6 +27,8 @@ type step struct {
 	tty   bool
 	// dir is the working directory, relative to $WORK ("" means $WORK).
 	dir string
+	// rm lists files to delete before the step, relative to $WORK.
+	rm []string
 }
 
 // goldenCase copies a testdata/vaults fixture to $WORK/vault, gives the run a
@@ -64,6 +66,12 @@ func runGolden(t *testing.T, gc goldenCase) {
 
 	var transcript bytes.Buffer
 	for _, s := range gc.steps {
+		for _, p := range s.rm {
+			if err := os.Remove(filepath.Join(work, p)); err != nil {
+				t.Fatal(err)
+			}
+			fmt.Fprintf(&transcript, "$ rm %q\n\n", p)
+		}
 		env := []string{
 			"XDG_CONFIG_HOME=" + filepath.Join(work, "config"),
 			"HOME=" + filepath.Join(work, "home"),

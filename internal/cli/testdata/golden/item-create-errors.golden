@@ -1,0 +1,269 @@
+$ otman create
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[invalid_arguments]: --title is required and cannot be empty
+hint: pass the Item's title with --title
+
+$ otman create --title     --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "--title is required and cannot be empty",
+    "details": {
+      "flag": "--title"
+    },
+    "hint": "pass the Item's title with --title"
+  }
+}
+
+$ otman create --title two
+lines
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_arguments
+  message: "--title must be a single line of UTF-8 text"
+  details:
+    flag: "--title"
+  hint: null
+
+$ otman create --title Bug --kind bug --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_kind",
+    "message": "unknown Kind \"bug\"",
+    "details": {
+      "allowed": [
+        "issue",
+        "prd",
+        "spec"
+      ],
+      "kind": "bug"
+    },
+    "hint": "use --kind issue, prd or spec"
+  }
+}
+
+$ otman create --title Both --body x --body-file -
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: conflicting_flags
+  message: "--body conflicts with --body-file"
+  details:
+    flags[2]: "--body","--body-file"
+  hint: "pass the body with either --body or --body-file, not both"
+
+$ otman create --title Marker --body Text
+<!-- otman:comments -->
+more --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "reserved_marker",
+    "message": "the body from --body contains the reserved line <!-- otman:comments -->",
+    "details": {
+      "marker": "<!-- otman:comments -->",
+      "source": "--body"
+    },
+    "hint": "remove that line; otman uses it to mark where comments begin"
+  }
+}
+
+$ otman create --title Marker --body-file -
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[reserved_marker]: the body from stdin contains the reserved line <!-- otman:comments -->
+hint: remove that line; otman uses it to mark where comments begin
+
+$ otman create --title Missing --body-file nope.md --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "unreadable_body_file",
+    "message": "cannot read --body-file: no such file nope.md",
+    "details": {
+      "path": "nope.md"
+    },
+    "hint": "pass a readable file, or - for stdin"
+  }
+}
+
+$ otman create --title Mine --assignee @me --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "no_actor",
+    "message": "--assignee @me needs an actor, and none is configured",
+    "details": {
+      "flag": "--assignee"
+    },
+    "hint": "pass --actor NAME, set OTM_ACTOR, or run 'otman config set actor NAME'"
+  }
+}
+
+$ otman create --title Nobody --assignee  
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_arguments
+  message: "--assignee needs a single-line UTF-8 name or @me"
+  details:
+    flag: "--assignee"
+  hint: null
+
+$ otman create --title Bad ÿ title --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "--title must be a single line of UTF-8 text",
+    "details": {
+      "flag": "--title"
+    },
+    "hint": null
+  }
+}
+
+$ otman create --title Bad assignee --assignee badÿname --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "--assignee needs a single-line UTF-8 name or @me",
+    "details": {
+      "flag": "--assignee"
+    },
+    "hint": null
+  }
+}
+
+$ otman create --title Bad actor --actor badÿactor --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "the actor is not valid UTF-8",
+    "details": {
+      "source": "flag"
+    },
+    "hint": null
+  }
+}
+
+$ otman create --title Elsewhere --project NOPE --json
+exit: 3
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "project_not_found",
+    "message": "no Project NOPE in the Vault",
+    "details": {
+      "key": "NOPE",
+      "source": "flag"
+    },
+    "hint": "run 'otman project list' to see the Projects, or 'otman project create NOPE --name NAME'"
+  }
+}
+
+$ otman create --title Marker inline is fine --body Say <!-- otman:comments --> inline --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-1",
+      "title": "Marker inline is fine",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-1 Marker inline is fine.md",
+      "rev": "6bf82d88b019"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Marker inline is fine.md --
+---
+id: OTM-1
+title: Marker inline is fine
+aliases:
+  - Marker inline is fine
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+Say <!-- otman:comments --> inline
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---

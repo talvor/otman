@@ -1,0 +1,187 @@
+$ otman create --title From the flag --assignee @me --actor flag-actor
+env: OTM_ACTOR=env-actor
+exit: 0
+-- stdout --
+item:
+  id: OTM-1
+  title: From the flag
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: flag-actor
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-1 From the flag.md
+  rev: 2b59062291a6
+changed: true
+-- stderr --
+
+$ otman create --title From the environment --assignee @me
+env: OTM_ACTOR=env-actor
+exit: 0
+-- stdout --
+item:
+  id: OTM-2
+  title: From the environment
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: env-actor
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-2 From the environment.md
+  rev: 7893bc3ee0e4
+changed: true
+-- stderr --
+
+$ otman create --title No actor --assignee alice
+env: GIT_AUTHOR_NAME=git-user LOGNAME=os-user USER=os-user
+exit: 0
+-- stdout --
+item:
+  id: OTM-3
+  title: No actor
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: alice
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-3 No actor.md
+  rev: 32f312399b94
+changed: true
+-- stderr --
+
+$ otman create --title No actor for me --assignee @me
+env: GIT_AUTHOR_NAME=git-user LOGNAME=os-user USER=os-user
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: no_actor
+  message: "--assignee @me needs an actor, and none is configured"
+  details:
+    flag: "--assignee"
+  hint: "pass --actor NAME, set OTM_ACTOR, or run 'otman config set actor NAME'"
+
+$ otman config set actor config-actor
+exit: 0
+-- stdout --
+key: actor
+value: config-actor
+path: $WORK/config/otman/config.toml
+changed: true
+-- stderr --
+
+$ otman create --title From config --assignee @me
+exit: 0
+-- stdout --
+item:
+  id: OTM-4
+  title: From config
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: config-actor
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-4 From config.md
+  rev: 88705f8cc95c
+changed: true
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+actor = "config-actor"
+project = "OTM"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 From the flag.md --
+---
+id: OTM-1
+title: From the flag
+aliases:
+  - From the flag
+kind: issue
+status: open
+author: flag-actor
+parent: null
+blocked_by: []
+labels: []
+assignee: flag-actor
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-2 From the environment.md --
+---
+id: OTM-2
+title: From the environment
+aliases:
+  - From the environment
+kind: issue
+status: open
+author: env-actor
+parent: null
+blocked_by: []
+labels: []
+assignee: env-actor
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-3 No actor.md --
+---
+id: OTM-3
+title: No actor
+aliases:
+  - No actor
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: alice
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-4 From config.md --
+---
+id: OTM-4
+title: From config
+aliases:
+  - From config
+kind: issue
+status: open
+author: config-actor
+parent: null
+blocked_by: []
+labels: []
+assignee: config-actor
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
