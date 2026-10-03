@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en" data-theme="luxury">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tracker template: Round 1</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :where(.grid, .flex) > * { min-width: 0; }
+  :where(p, h1, h2, h3, li, .badge, label) { overflow-wrap: anywhere; }
+  .opt:has(input:checked) { border-color: var(--color-primary); background: color-mix(in oklab, var(--color-primary) 10%, transparent); }
+</style>
+</head>
+<body class="bg-base-100 text-base-content min-h-screen">
+<main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
+
+<header class="space-y-2">
+  <p class="text-sm uppercase tracking-widest opacity-60">wayfinder · work the map · Tracker template</p>
+  <h1 class="text-3xl font-bold">Tracker template, Round 1</h1>
+  <p class="opacity-80">I compared every tracker operation used by triage, to-spec, to-tickets, implement-spec, code-review and wayfinder against the confirmed CLI contract. Most map one-to-one: create, view, list, comment, labels, close/reopen, claim, <code>parent set</code>, <code>block --by</code>, <code>frontier --parent</code>. The questions below are the <b>gaps and the choices the template has to make</b>. Recommendations are pre-selected; <span class="badge badge-sm badge-soft badge-accent">ticket</span> turns a question into its own map ticket.</p>
+</header>
+
+<div class="overflow-x-auto"><table class="table table-sm bg-base-200 rounded-box">
+<thead><tr><th>Skill operation</th><th>otman</th><th></th></tr></thead><tbody>
+<tr><td>publish / fetch ticket</td><td><code>create</code> · <code>view REF --full --comments</code></td><td>✅</td></tr>
+<tr><td>labels, triage transitions</td><td><code>edit --add-label --remove-label</code>, <code>reopen</code></td><td>✅</td></tr>
+<tr><td>child ticket, blocking, frontier, claim</td><td><code>create --parent</code> · <code>block --by</code> · <code>frontier --parent MAP</code> · <code>claim</code></td><td>✅</td></tr>
+<tr><td>close with a comment</td><td>comment, then close (two calls)</td><td>Q1</td></tr>
+<tr><td>append to the map's Decisions-so-far</td><td>read-modify-write of the whole body</td><td>Q2</td></tr>
+<tr><td>triage “Unlabeled” bucket</td><td>no way to filter on a missing label</td><td>Q3</td></tr>
+<tr><td>triage reads “author, dates”</td><td>Items have no author</td><td>Q4</td></tr>
+</tbody></table></div>
+
+<form id="round" class="space-y-5" onsubmit="event.preventDefault(); submitAll(event.currentTarget);">
+</form>
+
+<div class="card card-border bg-base-200">
+  <div class="card-body gap-3">
+    <h2 class="card-title text-lg">Anything the round missed?</h2>
+    <div data-lavish-question="extra">
+      <textarea name="extra" class="textarea w-full" rows="3" placeholder="Optional"></textarea>
+    </div>
+    <div class="card-actions items-center justify-between">
+      <span id="status" class="text-sm opacity-70" role="status" aria-live="polite">Nothing queued yet.</span>
+      <button form="round" type="submit" class="btn btn-primary">Submit all answers</button>
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+const Q = [
+  { id: "T1", title: "Closing with a comment",
+    body: "GitHub's template uses <code>gh issue close --comment</code>. Wayfinder resolve, triage wontfix and implement-spec all close with an explanation. otman's <code>close REF</code> takes no text.",
+    opts: [["flag", "Add <code>close REF [--comment TEXT | --comment-file PATH|-]</code>: one locked write that appends the comment and closes. A no-op close with a comment still appends it", true],
+           ["two", "No CLI change: the template says to comment, then close (the GitLab pattern)"]],
+    why: "Doing it in one call means a closed Item never lacks its explanation, and it matches the GitHub template that most skill text was written against." },
+  { id: "T2", title: "Concurrent edits to the map body",
+    body: "Wayfinder appends to the map's Decisions-so-far, edits fog, and says to <i>expect other sessions editing concurrently</i>. With otman that is <code>view --json</code> → modify → <code>edit --body-file -</code>. The lock covers each command, but not the gap between them, so two sessions can overwrite each other's lines.",
+    opts: [["cas", "Add optimistic concurrency: <code>edit … --if-updated &lt;RFC3339&gt;</code> fails with exit 4 (<code>stale_item</code>) if the Item changed since that timestamp. The template says: on conflict, re-read and re-apply", true],
+           ["section", "Add a section-level append: <code>edit REF --append-to-section \"Decisions so far\" --body-file -</code>"],
+           ["accept", "Accept the race; the template warns about it"]],
+    why: "This is general, small and composable. It protects every read-modify-write (fog edits too), not just appends, and it uses the <code>updated</code> field that JSON already returns." },
+  { id: "T3", title: "Listing by a missing label",
+    body: "Triage needs the <b>Unlabeled</b> bucket (never triaged). <code>list --label</code> is AND-only, and nothing excludes a label.",
+    opts: [["both", "Add <code>--unlabeled</code> (no labels at all) and repeatable <code>--without-label LABEL</code>. Both combine with the other filters; <code>--unlabeled</code> conflicts with <code>--label</code>", true],
+           ["unlabeled", "Add only <code>--unlabeled</code>"],
+           ["client", "No change: list all open Items as JSON and filter on the client"]],
+    why: "Without these, triage would need an unbounded <code>--all</code> list. <code>--without-label</code> also gives clean buckets such as “ready-for-agent but not wayfinder:*”." },
+  { id: "T4", title: "Does an Item record who created it?",
+    body: "Triage reads <i>author</i> to tell reporter from maintainer, and <code>needs-info</code> waits for the <i>reporter</i> to reply. The CLI contract says only comment/claim/release need an actor, and other operations “do not invent an author”.",
+    opts: [["author", "<code>create</code> records <code>author:</code> in frontmatter from the actor when one is configured (null otherwise, never required). Shown in view/JSON", true],
+           ["none", "No author; triage infers the reporter from the first comment"],
+           ["ticket", "Ticket it"]],
+    why: "Recording an actor that was supplied isn't inventing one, so this stays within the contract. One optional field is enough to make reporter replies traceable." },
+  { id: "T5", title: "Which Kind does each skill create?",
+    body: "otman has Kinds issue / PRD / spec. Skills create specs (to-spec), implementation tickets (to-tickets), triage issues, and wayfinder maps and tickets.",
+    opts: [["map", "to-spec → <code>spec</code>; to-tickets → <code>issue</code> with <code>--parent SPEC</code>; triage and wayfinder (map and tickets) → <code>issue</code>. <code>prd</code> is used only when a user or skill asks for a PRD by name", true],
+           ["map-spec", "Same, but the wayfinder map is a <code>spec</code> (the map leads to one)"]],
+    why: "The map is a planning index, not the spec it leads to. When the map ends, to-spec creates the real spec." },
+  { id: "T6", title: "How is the template shipped?",
+    body: "setup-matt-pocock-skills copies a peer template into <code>docs/agents/issue-tracker.md</code>. otman is a separate binary, and it lives outside the skills repo.",
+    opts: [["both", "The canonical file is <code>docs/agents/issue-tracker-otman.md</code> in the otman repo, embedded in the binary and printed by <code>otman tracker-template</code> (substituting the linked Project key) so setup can write it in one step", true],
+           ["repo", "Only as a file in the otman repo; the user copies it"],
+           ["upstream", "Contribute it upstream to setup-matt-pocock-skills as a fourth template"]],
+    why: "The template always matches the installed binary's commands, with no version skew." },
+  { id: "T7", title: "Labels before the vocabulary is decided",
+    body: "The template uses <code>wayfinder:map</code>, <code>wayfinder:&lt;type&gt;</code> and the five triage labels. <b>Label vocabulary and triage seeding</b> is an open ticket: if it ends up with a configured vocabulary, these labels must be seeded.",
+    opts: [["block", "Write the template against free-form labels now, and block nothing. Leave a note on Label vocabulary and triage seeding: whatever it picks must accept or seed these labels, and must keep the <code>:</code> character", true],
+           ["wait", "Block this ticket on Label vocabulary and triage seeding"]],
+    why: "The template needs labels to exist, not a particular vocabulary model, so the dependency points the other way." },
+  { id: "T8", title: "References and identity in the template",
+    body: "Skills say <code>#42</code> and <code>@me</code>. Code-review scans commit messages for references, and implement-spec closes work “the way the tracker closes work”.",
+    opts: [["rules", "The template says: refer to Items as <code>&lt;KEY&gt;-&lt;n&gt;</code> and in prose by name; in Item bodies, link with full-filename wikilinks <code>[[OTM-5 Title]]</code>. Agents run as the human's configured actor (like <code>gh</code>'s @me). Commits mention <code>OTM-12</code>, which code-review fetches with <code>view</code>. Nothing closes Items automatically: work is closed with <code>otman close</code>, so implement-spec opens no PR unless asked. PRs as a triage surface: not applicable", true],
+           ["agent-actor", "Same, but agents get their own actor (for example <code>claude</code>), set through <code>OTM_ACTOR</code>"]],
+    why: "This matches how the GitHub template treats @me, and it keeps claims meaning “this dev's work”, as wayfinder expects." },
+];
+
+const form = document.getElementById("round");
+form.innerHTML = Q.map(q => `
+  <fieldset class="card card-border bg-base-200" data-lavish-question="${q.id}">
+    <div class="card-body gap-3">
+      <legend class="sr-only">${q.id} ${q.title}</legend>
+      <div class="flex items-baseline gap-3">
+        <span class="badge badge-primary badge-outline font-mono">${q.id}</span>
+        <h2 class="card-title text-lg">${q.title}</h2>
+      </div>
+      <p class="opacity-85">${q.body}</p>
+      <div class="grid gap-2">
+        ${q.opts.map(([v, label, rec]) => `
+          <label class="opt flex items-start gap-3 rounded-box border border-base-content/10 p-3 cursor-pointer">
+            <input type="radio" class="radio radio-primary radio-sm mt-0.5" name="${q.id}" value="${v}" data-label="${label.replace(/<[^>]+>/g,'').replace(/"/g,'&quot;')}" ${rec ? "checked" : ""}>
+            <span class="flex-1">${label} ${rec ? '<span class="badge badge-sm badge-soft badge-success ml-1">recommended</span>' : ""}</span>
+          </label>`).join("")}
+      </div>
+      <p class="text-sm opacity-60">➡️ ${q.why}</p>
+      <input type="text" name="${q.id}-note" class="input input-sm w-full" placeholder="Optional note">
+    </div>
+  </fieldset>`).join("");
+
+function submitAll(f) {
+  const fd = new FormData(f);
+  const items = Q.map(q => {
+    const v = fd.get(q.id);
+    const input = f.querySelector(`input[name="${q.id}"][value="${v}"]`);
+    const rec = q.opts.find(o => o[2])[0] === v;
+    return { id: q.id, question: q.title, answer: input ? input.dataset.label : null, accepted_recommendation: rec, note: (fd.get(q.id + "-note") || "").trim() };
+  });
+  const extra = document.querySelector('textarea[name=extra]').value.trim();
+  const lines = items.map(i => `${i.id} ${i.question}: ${i.answer}${i.accepted_recommendation ? " (rec)" : " (CHANGED)"}${i.note ? " | note: " + i.note : ""}`);
+  if (extra) lines.push("Extra: " + extra);
+  const text = "Tracker template round 1 answers:\n" + lines.join("\n");
+  const status = document.getElementById("status");
+  if (window.lavish?.queuePrompt) {
+    window.lavish.queuePrompt(text + "\n\nAccount for every question ID T1–T8 when updating the design tree.", { tag: "choice", text: "Tracker template round 1 (T1–T8)", queueKey: "tt-round1", element: f, data: { items, extra } });
+    status.textContent = "Queued. Press Send to Agent to deliver it.";
+  } else {
+    navigator.clipboard?.writeText(text);
+    status.textContent = "Lavish isn't running, so the answers were copied to your clipboard. Paste them into the chat.";
+  }
+}
+</script>
+</body>
+</html>type html>
+<html lang="en" data-theme="luxury">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tracker template: Round 1</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :where(.grid, .flex) > * { min-width: 0; }
+  :where(p, h1, h2, h3, li, .badge, label) { overflow-wrap: anywhere; }
+  .opt:has(input:checked) { border-color: var(--color-primary); background: color-mix(in oklab, var(--color-primary) 10%, transparent); }
+</style>
+</head>
+<body class="bg-base-100 text-base-content min-h-screen">
+<main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
+
+<header class="space-y-2">
+  <p class="text-sm uppercase tracking-widest opacity-60">wayfinder · work the map · Tracker template</p>
+  <h1 class="text-3xl font-bold">Tracker template, Round 1</h1>
+  <p class="opacity-80">I compared every tracker operation used by triage, to-spec, to-tickets, implement-spec, code-review and wayfinder against the confirmed CLI contract. Most map one-to-one: create, view, list, comment, labels, close/reopen, claim, <code>parent set</code>, <code>block --by</code>, <code>frontier --parent</code>. The questions below are the <b>gaps and the choices the template has to make</b>. Recommendations are pre-selected; <span class="badge badge-sm badge-soft badge-accent">ticket</span> turns a question into its own map ticket.</p>
+</header>
+
+<div class="overflow-x-auto"><table class="table table-sm bg-base-200 rounded-box">
+<thead><tr><th>Skill operation</th><th>otman</th><th></th></tr></thead><tbody>
+<tr><td>publish / fetch ticket</td><td><code>create</code> · <code>view REF --full --comments</code></td><td>✅</td></tr>
+<tr><td>labels, triage transitions</td><td><code>edit --add-label --remove-label</code>, <code>reopen</code></td><td>✅</td></tr>
+<tr><td>child ticket, blocking, frontier, claim</td><td><code>create --parent</code> · <code>block --by</code> · <code>frontier --parent MAP</code> · <code>claim</code></td><td>✅</td></tr>
+<tr><td>close with a comment</td><td>comment, then close (two calls)</td><td>Q1</td></tr>
+<tr><td>append to the map's Decisions-so-far</td><td>read-modify-write of the whole body</td><td>Q2</td></tr>
+<tr><td>triage “Unlabeled” bucket</td><td>no way to filter on a missing label</td><td>Q3</td></tr>
+<tr><td>triage reads “author, dates”</td><td>Items have no author</td><td>Q4</td></tr>
+</tbody></table></div>
+
+<form id="round" class="space-y-5" onsubmit="event.preventDefault(); submitAll(event.currentTarget);">
+</form>
+
+<div class="card card-border bg-base-200">
+  <div class="card-body gap-3">
+    <h2 class="card-title text-lg">Anything the round missed?</h2>
+    <div data-lavish-question="extra">
+      <textarea name="extra" class="textarea w-full" rows="3" placeholder="Optional"></textarea>
+    </div>
+    <div class="card-actions items-center justify-between">
+      <span id="status" class="text-sm opacity-70" role="status" aria-live="polite">Nothing queued yet.</span>
+      <button form="round" type="submit" class="btn btn-primary">Submit all answers</button>
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+const Q = [
+  { id: "T1", title: "Closing with a comment",
+    body: "GitHub's template uses <code>gh issue close --comment</code>. Wayfinder resolve, triage wontfix and implement-spec all close with an explanation. otman's <code>close REF</code> takes no text.",
+    opts: [["flag", "Add <code>close REF [--comment TEXT | --comment-file PATH|-]</code>: one locked write that appends the comment and closes. A no-op close with a comment still appends it", true],
+           ["two", "No CLI change: the template says to comment, then close (the GitLab pattern)"]],
+    why: "Doing it in one call means a closed Item never lacks its explanation, and it matches the GitHub template that most skill text was written against." },
+  { id: "T2", title: "Concurrent edits to the map body",
+    body: "Wayfinder appends to the map's Decisions-so-far, edits fog, and says to <i>expect other sessions editing concurrently</i>. With otman that is <code>view --json</code> → modify → <code>edit --body-file -</code>. The lock covers each command, but not the gap between them, so two sessions can overwrite each other's lines.",
+    opts: [["cas", "Add optimistic concurrency: <code>edit … --if-updated &lt;RFC3339&gt;</code> fails with exit 4 (<code>stale_item</code>) if the Item changed since that timestamp. The template says: on conflict, re-read and re-apply", true],
+           ["section", "Add a section-level append: <code>edit REF --append-to-section \"Decisions so far\" --body-file -</code>"],
+           ["accept", "Accept the race; the template warns about it"]],
+    why: "This is general, small and composable. It protects every read-modify-write (fog edits too), not just appends, and it uses the <code>updated</code> field that JSON already returns." },
+  { id: "T3", title: "Listing by a missing label",
+    body: "Triage needs the <b>Unlabeled</b> bucket (never triaged). <code>list --label</code> is AND-only, and nothing excludes a label.",
+    opts: [["both", "Add <code>--unlabeled</code> (no labels at all) and repeatable <code>--without-label LABEL</code>. Both combine with the other filters; <code>--unlabeled</code> conflicts with <code>--label</code>", true],
+           ["unlabeled", "Add only <code>--unlabeled</code>"],
+           ["client", "No change: list all open Items as JSON and filter on the client"]],
+    why: "Without these, triage would need an unbounded <code>--all</code> list. <code>--without-label</code> also gives clean buckets such as “ready-for-agent but not wayfinder:*”." },
+  { id: "T4", title: "Does an Item record who created it?",
+    body: "Triage reads <i>author</i> to tell reporter from maintainer, and <code>needs-info</code> waits for the <i>reporter</i> to reply. The CLI contract says only comment/claim/release need an actor, and other operations “do not invent an author”.",
+    opts: [["author", "<code>create</code> records <code>author:</code> in frontmatter from the actor when one is configured (null otherwise, never required). Shown in view/JSON", true],
+           ["none", "No author; triage infers the reporter from the first comment"],
+           ["ticket", "Ticket it"]],
+    why: "Recording an actor that was supplied isn't inventing one, so this stays within the contract. One optional field is enough to make reporter replies traceable." },
+  { id: "T5", title: "Which Kind does each skill create?",
+    body: "otman has Kinds issue / PRD / spec. Skills create specs (to-spec), implementation tickets (to-tickets), triage issues, and wayfinder maps and tickets.",
+    opts: [["map", "to-spec → <code>spec</code>; to-tickets → <code>issue</code> with <code>--parent SPEC</code>; triage and wayfinder (map and tickets) → <code>issue</code>. <code>prd</code> is used only when a user or skill asks for a PRD by name", true],
+           ["map-spec", "Same, but the wayfinder map is a <code>spec</code> (the map leads to one)"]],
+    why: "The map is a planning index, not the spec it leads to. When the map ends, to-spec creates the real spec." },
+  { id: "T6", title: "How is the template shipped?",
+    body: "setup-matt-pocock-skills copies a peer template into <code>docs/agents/issue-tracker.md</code>. otman is a separate binary, and it lives outside the skills repo.",
+    opts: [["both", "The canonical file is <code>docs/agents/issue-tracker-otman.md</code> in the otman repo, embedded in the binary and printed by <code>otman tracker-template</code> (substituting the linked Project key) so setup can write it in one step", true],
+           ["repo", "Only as a file in the otman repo; the user copies it"],
+           ["upstream", "Contribute it upstream to setup-matt-pocock-skills as a fourth template"]],
+    why: "The template always matches the installed binary's commands, with no version skew." },
+  { id: "T7", title: "Labels before the vocabulary is decided",
+    body: "The template uses <code>wayfinder:map</code>, <code>wayfinder:&lt;type&gt;</code> and the five triage labels. <b>Label vocabulary and triage seeding</b> is an open ticket: if it ends up with a configured vocabulary, these labels must be seeded.",
+    opts: [["block", "Write the template against free-form labels now, and block nothing. Leave a note on Label vocabulary and triage seeding: whatever it picks must accept or seed these labels, and must keep the <code>:</code> character", true],
+           ["wait", "Block this ticket on Label vocabulary and triage seeding"]],
+    why: "The template needs labels to exist, not a particular vocabulary model, so the dependency points the other way." },
+  { id: "T8", title: "References and identity in the template",
+    body: "Skills say <code>#42</code> and <code>@me</code>. Code-review scans commit messages for references, and implement-spec closes work “the way the tracker closes work”.",
+    opts: [["rules", "The template says: refer to Items as <code>&lt;KEY&gt;-&lt;n&gt;</code> and in prose by name; in Item bodies, link with full-filename wikilinks <code>[[OTM-5 Title]]</code>. Agents run as the human's configured actor (like <code>gh</code>'s @me). Commits mention <code>OTM-12</code>, which code-review fetches with <code>view</code>. Nothing closes Items automatically: work is closed with <code>otman close</code>, so implement-spec opens no PR unless asked. PRs as a triage surface: not applicable", true],
+           ["agent-actor", "Same, but agents get their own actor (for example <code>claude</code>), set through <code>OTM_ACTOR</code>"]],
+    why: "This matches how the GitHub template treats @me, and it keeps claims meaning “this dev's work”, as wayfinder expects." },
+];
+
+const form = document.getElementById("round");
+form.innerHTML = Q.map(q => `
+  <fieldset class="card card-border bg-base-200" data-lavish-question="${q.id}">
+    <div class="card-body gap-3">
+      <legend class="sr-only">${q.id} ${q.title}</legend>
+      <div class="flex items-baseline gap-3">
+        <span class="badge badge-primary badge-outline font-mono">${q.id}</span>
+        <h2 class="card-title text-lg">${q.title}</h2>
+      </div>
+      <p class="opacity-85">${q.body}</p>
+      <div class="grid gap-2">
+        ${q.opts.map(([v, label, rec]) => `
+          <label class="opt flex items-start gap-3 rounded-box border border-base-content/10 p-3 cursor-pointer">
+            <input type="radio" class="radio radio-primary radio-sm mt-0.5" name="${q.id}" value="${v}" data-label="${label.replace(/<[^>]+>/g,'').replace(/"/g,'&quot;')}" ${rec ? "checked" : ""}>
+            <span class="flex-1">${label} ${rec ? '<span class="badge badge-sm badge-soft badge-success ml-1">recommended</span>' : ""}</span>
+          </label>`).join("")}
+      </div>
+      <p class="text-sm opacity-60">➡️ ${q.why}</p>
+      <input type="text" name="${q.id}-note" class="input input-sm w-full" placeholder="Optional note">
+    </div>
+  </fieldset>`).join("");
+
+function submitAll(f) {
+  const fd = new FormData(f);
+  const items = Q.map(q => {
+    const v = fd.get(q.id);
+    const input = f.querySelector(`input[name="${q.id}"][value="${v}"]`);
+    const rec = q.opts.find(o => o[2])[0] === v;
+    return { id: q.id, question: q.title, answer: input ? input.dataset.label : null, accepted_recommendation: rec, note: (fd.get(q.id + "-note") || "").trim() };
+  });
+  const extra = document.querySelector('textarea[name=extra]').value.trim();
+  const lines = items.map(i => `${i.id} ${i.question}: ${i.answer}${i.accepted_recommendation ? " (rec)" : " (CHANGED)"}${i.note ? " | note: " + i.note : ""}`);
+  if (extra) lines.push("Extra: " + extra);
+  const text = "Tracker template round 1 answers:\n" + lines.join("\n");
+  const status = document.getElementById("status");
+  if (window.lavish?.queuePrompt) {
+    window.lavish.queuePrompt(text + "\n\nAccount for every question ID T1–T8 when updating the design tree.", { tag: "choice", text: "Tracker template round 1 (T1–T8)", queueKey: "tt-round1", element: f, data: { items, extra } });
+    status.textContent = "Queued. Press Send to Agent to deliver it.";
+  } else {
+    navigator.clipboard?.writeText(text);
+    status.textContent = "Lavish isn't running, so the answers were copied to your clipboard. Paste them into the chat.";
+  }
+}
+</script>
+</body>
+</html>

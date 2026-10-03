@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en" data-theme="luxury">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tracker template: Round 2</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :where(.grid, .flex) > * { min-width: 0; }
+  :where(p, h1, h2, h3, li, .badge, label) { overflow-wrap: anywhere; }
+  .opt:has(input:checked) { border-color: var(--color-primary); background: color-mix(in oklab, var(--color-primary) 10%, transparent); }
+</style>
+</head>
+<body class="bg-base-100 text-base-content min-h-screen">
+<main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
+
+<header class="space-y-2">
+  <p class="text-sm uppercase tracking-widest opacity-60">wayfinder · work the map · Tracker template</p>
+  <h1 class="text-3xl font-bold">Tracker template, Round 2</h1>
+  <p class="opacity-80">All of round 1 was accepted. Below is the <b>draft <code>issue-tracker-otman.md</code></b> (with <code>{{KEY}}</code> substituted by <code>otman tracker-template</code>), followed by the questions it raised. Annotate any line of the draft directly, or use the note fields.</p>
+</header>
+
+<section class="space-y-2">
+  <h2 class="text-xl font-semibold">Draft: <code>docs/agents/issue-tracker-otman.md</code></h2>
+  <div id="draft" class="rounded-box overflow-hidden"></div>
+</section>
+
+<form id="round" class="space-y-5" onsubmit="event.preventDefault(); submitAll(event.currentTarget);">
+</form>
+
+<div class="card card-border bg-base-200">
+  <div class="card-body gap-3">
+    <h2 class="card-title text-lg">Anything the round missed?</h2>
+    <div data-lavish-question="extra">
+      <textarea name="extra" class="textarea w-full" rows="3" placeholder="Optional"></textarea>
+    </div>
+    <div class="card-actions items-center justify-between">
+      <span id="status" class="text-sm opacity-70" role="status" aria-live="polite">Nothing queued yet.</span>
+      <button form="round" type="submit" class="btn btn-primary">Submit all answers</button>
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+const Q = [
+  { id: "U1", title: "What token guards a body edit?",
+    body: "Round 1 chose <code>--if-updated &lt;RFC3339&gt;</code>. But <code>updated</code> has second precision, so two edits in the same second pass the check. A hand edit in Obsidian doesn't change <code>updated</code> at all, so a stale read slips through.",
+    opts: [["rev", "Rename it <code>--if-rev REV</code>, where <code>rev</code> is a short content hash of the Item file, returned in every JSON Item and mutation result. Any byte change (including in Obsidian) invalidates it", true],
+           ["ts", "Keep <code>--if-updated</code> and accept the gaps"]],
+    why: "A hash catches every change, needs no stored field, and costs one read under the lock that is already held." },
+  { id: "U2", title: "Which commands accept the guard?",
+    body: "Wayfinder only needs it for body edits. Other mutations (labels, close, comment) are deltas or appends, so a stale read can't make them lose data.",
+    opts: [["edit", "<code>edit</code> only, for v1", true],
+           ["all", "Every mutating Item command"]],
+    why: "Only a full replacement can lose another writer's work. Deltas compose safely under the per-command lock." },
+  { id: "U3", title: "Does the draft read right?",
+    body: "Check its scope and tone against the GitHub/GitLab peers: the Conventions bullets, the Wayfinding section, and how much CLI detail (flags, exit codes) belongs in it versus in <code>otman --help</code>.",
+    opts: [["ok", "Approve the draft as written (annotate or note any line-level fixes)", true],
+           ["trim", "Trim it closer to the GitHub peer's length; leave flag detail to <code>--help</code>"],
+           ["redo", "Needs another pass (explain in the note)"]],
+    why: "Agents read this file cold. The extra detail (JSON envelope, exit 4, <code>--if-rev</code>) is exactly what they would otherwise have to discover by trial." },
+];
+
+const form = document.getElementById("round");
+form.innerHTML = Q.map(q => `
+  <fieldset class="card card-border bg-base-200" data-lavish-question="${q.id}">
+    <div class="card-body gap-3">
+      <legend class="sr-only">${q.id} ${q.title}</legend>
+      <div class="flex items-baseline gap-3">
+        <span class="badge badge-primary badge-outline font-mono">${q.id}</span>
+        <h2 class="card-title text-lg">${q.title}</h2>
+      </div>
+      <p class="opacity-85">${q.body}</p>
+      <div class="grid gap-2">
+        ${q.opts.map(([v, label, rec]) => `
+          <label class="opt flex items-start gap-3 rounded-box border border-base-content/10 p-3 cursor-pointer">
+            <input type="radio" class="radio radio-primary radio-sm mt-0.5" name="${q.id}" value="${v}" data-label="${label.replace(/<[^>]+>/g,'').replace(/"/g,'&quot;')}" ${rec ? "checked" : ""}>
+            <span class="flex-1">${label} ${rec ? '<span class="badge badge-sm badge-soft badge-success ml-1">recommended</span>' : ""}</span>
+          </label>`).join("")}
+      </div>
+      <p class="text-sm opacity-60">➡️ ${q.why}</p>
+      <input type="text" name="${q.id}-note" class="input input-sm w-full" placeholder="Optional note">
+    </div>
+  </fieldset>`).join("");
+
+function submitAll(f) {
+  const fd = new FormData(f);
+  const items = Q.map(q => {
+    const v = fd.get(q.id);
+    const input = f.querySelector(`input[name="${q.id}"][value="${v}"]`);
+    const rec = q.opts.find(o => o[2])[0] === v;
+    return { id: q.id, question: q.title, answer: input ? input.dataset.label : null, accepted_recommendation: rec, note: (fd.get(q.id + "-note") || "").trim() };
+  });
+  const extra = document.querySelector('textarea[name=extra]').value.trim();
+  const lines = items.map(i => `${i.id} ${i.question}: ${i.answer}${i.accepted_recommendation ? " (rec)" : " (CHANGED)"}${i.note ? " | note: " + i.note : ""}`);
+  if (extra) lines.push("Extra: " + extra);
+  const text = "Tracker template round 2 answers:\n" + lines.join("\n");
+  const status = document.getElementById("status");
+  if (window.lavish?.queuePrompt) {
+    window.lavish.queuePrompt(text + "\n\nAccount for every question ID U1–U3 when updating the design tree.", { tag: "choice", text: "Tracker template round 2 (U1–U3)", queueKey: "tt-round2", element: f, data: { items, extra } });
+    status.textContent = "Queued. Press Send to Agent to deliver it.";
+  } else {
+    navigator.clipboard?.writeText(text);
+    status.textContent = "Lavish isn't running, so the answers were copied to your clipboard. Paste them into the chat.";
+  }
+}
+</script>
+<script>const DRAFT = "# Issue tracker: otman\n\nIssues and specs for this repo live as Items in an Obsidian Vault managed by [otman](https://github.com/talvor/otman). Use the `otman` CLI for all operations; never edit Item files directly.\n\nThis repo is linked to Project `{{KEY}}` by `.otman.toml` at the repo root (`otman project link {{KEY}}`). The Vault path and your actor name come from `~/.config/otman/config.toml` (`otman config show` prints the effective values). Agents run as the human's configured actor: `@me` means that actor.\n\n## Conventions\n\n- **Refer to Items** as `{{KEY}}-<n>` (e.g. `{{KEY}}-12`), and in prose by their title. Inside Item bodies, link with a full-filename wikilink: `[[{{KEY}}-12 Allocate item numbers]]`. A bare number like `12` or `#12` means `{{KEY}}-12`.\n- **Output**: piped output is compact AXI-style. Add `--json` whenever you parse a result; it is the stable contract (`{\"schema_version\":1,\"data\":\u2026,\"warnings\":[]}`). On failure, stdout is empty and stderr carries `error.code`/`error.hint`. Exit 3 means not found, and 4 means a conflict (already claimed, an ambiguous ID, or a stale edit).\n- **Multi-line text**: pass it with `--body-file -` and a heredoc, never with `--body \"\u2026\"`.\n- **Create an issue**: `otman create --title \"...\" --body-file - <<'EOF' \u2026 EOF`. Add `--kind spec` for a spec and `--kind prd` only when a PRD is asked for by name. Add `--label`, `--parent REF` and `--blocked-by REF` as needed.\n- **Read an issue**: `otman view <REF> --full --comments` (or `--json`, which always includes body and comments).\n- **List issues**: `otman list --json` with `--label L` (repeatable, AND), `--without-label L`, `--unlabeled`, `--state open|closed|all`, `--kind`, `--assignee @me|NAME`, `--unassigned`, `--parent REF`, `--blocked-by REF` and `--search TEXT`. The default is the 50 oldest open Items; follow `has_more` with `--offset`, or pass `--all`.\n- **Comment on an issue**: `otman comment <REF> --body-file - <<'EOF' \u2026 EOF`\n- **Apply / remove labels**: `otman edit <REF> --add-label \"...\" --remove-label \"...\"` in one call. Repeated adds or removes are no-ops.\n- **Close**: `otman close <REF> --comment-file - <<'EOF' \u2026 EOF`. Reopen with `otman reopen <REF>`.\n- **Edit a body safely**: read `rev` from `otman view <REF> --json`, write the new body with `otman edit <REF> --body-file - --if-rev <rev>`. On exit 4 `stale_item`, re-read, re-apply your change and retry.\n- **Nothing closes Items automatically.** Commits and PRs should mention `{{KEY}}-<n>`, but only `otman close` closes work.\n\n## Pull requests as a triage surface\n\n**PRs as a request surface: not applicable.** otman tracks no pull requests; `/triage` covers Items only.\n\n## When a skill says \"publish to the issue tracker\"\n\nCreate an Item with `otman create`: `--kind spec` for a spec (to-spec), `--kind issue --parent <spec>` for implementation tickets (to-tickets), and `--kind issue` otherwise.\n\n## When a skill says \"fetch the relevant ticket\"\n\nRun `otman view <REF> --full --comments`.\n\n## Wayfinding operations\n\nUsed by `/wayfinder`. The **map** is a single Item with **child** Items as tickets.\n\n- **Map**: an Item of Kind `issue` labelled `wayfinder:map`, holding the Destination / Notes / Decisions-so-far / Not yet specified / Out of scope body. `otman create --label wayfinder:map --title \"...\" --body-file -`.\n- **Child ticket**: `otman create --parent <map> --label wayfinder:<type> --title \"...\" --body-file -`, where type is `research`/`prototype`/`grilling`/`task`. List them with `otman list --parent <map> --state all`. Map order is number order.\n- **Blocking**: otman's native `blocked_by` relation, which also renders in Obsidian Bases. Add an edge with `otman block <child> --by <blocker>` (or `--blocked-by` at create). Both Items must be in the same Project, and cycles are rejected. A ticket is unblocked when every blocker is closed.\n- **Frontier query**: `otman frontier --parent <map> --json` returns the open, unassigned children with no open blocker, in map order. Take the first.\n- **Claim**: `otman claim <n>`, the session's first write. Exit 4 means someone else holds it: take the next frontier ticket.\n- **Resolve**: `otman close <n> --comment-file - <<'EOF' <answer> EOF`. Then append a context pointer (`- [[{{KEY}}-n Title]]: gist`) to the map's Decisions-so-far with a guarded body edit (`--if-rev`, above), because other sessions may be editing the map at the same time.\n- **Drop a ticket** that the map no longer needs: close it with a comment saying why. otman has no delete.\n";</script>
+<script type="module">
+  import { File } from "https://esm.sh/@pierre/diffs@1.2.10?bundle";
+  new File({ theme: { light: "github-light", dark: "github-dark" }, themeType: "dark", overflow: "wrap" })
+    .render({ containerWrapper: document.querySelector("#draft"), file: { name: "docs/agents/issue-tracker-otman.md", contents: DRAFT } });
+</script>
+</body>
+</html>type html>
+<html lang="en" data-theme="luxury">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tracker template: Round 2</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :where(.grid, .flex) > * { min-width: 0; }
+  :where(p, h1, h2, h3, li, .badge, label) { overflow-wrap: anywhere; }
+  .opt:has(input:checked) { border-color: var(--color-primary); background: color-mix(in oklab, var(--color-primary) 10%, transparent); }
+</style>
+</head>
+<body class="bg-base-100 text-base-content min-h-screen">
+<main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
+
+<header class="space-y-2">
+  <p class="text-sm uppercase tracking-widest opacity-60">wayfinder · work the map · Tracker template</p>
+  <h1 class="text-3xl font-bold">Tracker template, Round 1</h1>
+  <p class="opacity-80">I compared every tracker operation used by triage, to-spec, to-tickets, implement-spec, code-review and wayfinder against the confirmed CLI contract. Most map one-to-one: create, view, list, comment, labels, close/reopen, claim, <code>parent set</code>, <code>block --by</code>, <code>frontier --parent</code>. The questions below are the <b>gaps and the choices the template has to make</b>. Recommendations are pre-selected; <span class="badge badge-sm badge-soft badge-accent">ticket</span> turns a question into its own map ticket.</p>
+</header>
+
+
+
+<form id="round" class="space-y-5" onsubmit="event.preventDefault(); submitAll(event.currentTarget);">
+</form>
+
+<div class="card card-border bg-base-200">
+  <div class="card-body gap-3">
+    <h2 class="card-title text-lg">Anything the round missed?</h2>
+    <div data-lavish-question="extra">
+      <textarea name="extra" class="textarea w-full" rows="3" placeholder="Optional"></textarea>
+    </div>
+    <div class="card-actions items-center justify-between">
+      <span id="status" class="text-sm opacity-70" role="status" aria-live="polite">Nothing queued yet.</span>
+      <button form="round" type="submit" class="btn btn-primary">Submit all answers</button>
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+const Q = [
+  { id: "T1", title: "Closing with a comment",
+    body: "GitHub's template uses <code>gh issue close --comment</code>. Wayfinder resolve, triage wontfix and implement-spec all close with an explanation. otman's <code>close REF</code> takes no text.",
+    opts: [["flag", "Add <code>close REF [--comment TEXT | --comment-file PATH|-]</code>: one locked write that appends the comment and closes. A no-op close with a comment still appends it", true],
+           ["two", "No CLI change: the template says to comment, then close (the GitLab pattern)"]],
+    why: "Doing it in one call means a closed Item never lacks its explanation, and it matches the GitHub template that most skill text was written against." },
+  { id: "T2", title: "Concurrent edits to the map body",
+    body: "Wayfinder appends to the map's Decisions-so-far, edits fog, and says to <i>expect other sessions editing concurrently</i>. With otman that is <code>view --json</code> → modify → <code>edit --body-file -</code>. The lock covers each command, but not the gap between them, so two sessions can overwrite each other's lines.",
+    opts: [["cas", "Add optimistic concurrency: <code>edit … --if-updated &lt;RFC3339&gt;</code> fails with exit 4 (<code>stale_item</code>) if the Item changed since that timestamp. The template says: on conflict, re-read and re-apply", true],
+           ["section", "Add a section-level append: <code>edit REF --append-to-section \"Decisions so far\" --body-file -</code>"],
+           ["accept", "Accept the race; the template warns about it"]],
+    why: "This is general, small and composable. It protects every read-modify-write (fog edits too), not just appends, and it uses the <code>updated</code> field that JSON already returns." },
+  { id: "T3", title: "Listing by a missing label",
+    body: "Triage needs the <b>Unlabeled</b> bucket (never triaged). <code>list --label</code> is AND-only, and nothing excludes a label.",
+    opts: [["both", "Add <code>--unlabeled</code> (no labels at all) and repeatable <code>--without-label LABEL</code>. Both combine with the other filters; <code>--unlabeled</code> conflicts with <code>--label</code>", true],
+           ["unlabeled", "Add only <code>--unlabeled</code>"],
+           ["client", "No change: list all open Items as JSON and filter on the client"]],
+    why: "Without these, triage would need an unbounded <code>--all</code> list. <code>--without-label</code> also gives clean buckets such as “ready-for-agent but not wayfinder:*”." },
+  { id: "T4", title: "Does an Item record who created it?",
+    body: "Triage reads <i>author</i> to tell reporter from maintainer, and <code>needs-info</code> waits for the <i>reporter</i> to reply. The CLI contract says only comment/claim/release need an actor, and other operations “do not invent an author”.",
+    opts: [["author", "<code>create</code> records <code>author:</code> in frontmatter from the actor when one is configured (null otherwise, never required). Shown in view/JSON", true],
+           ["none", "No author; triage infers the reporter from the first comment"],
+           ["ticket", "Ticket it"]],
+    why: "Recording an actor that was supplied isn't inventing one, so this stays within the contract. One optional field is enough to make reporter replies traceable." },
+  { id: "T5", title: "Which Kind does each skill create?",
+    body: "otman has Kinds issue / PRD / spec. Skills create specs (to-spec), implementation tickets (to-tickets), triage issues, and wayfinder maps and tickets.",
+    opts: [["map", "to-spec → <code>spec</code>; to-tickets → <code>issue</code> with <code>--parent SPEC</code>; triage and wayfinder (map and tickets) → <code>issue</code>. <code>prd</code> is used only when a user or skill asks for a PRD by name", true],
+           ["map-spec", "Same, but the wayfinder map is a <code>spec</code> (the map leads to one)"]],
+    why: "The map is a planning index, not the spec it leads to. When the map ends, to-spec creates the real spec." },
+  { id: "T6", title: "How is the template shipped?",
+    body: "setup-matt-pocock-skills copies a peer template into <code>docs/agents/issue-tracker.md</code>. otman is a separate binary, and it lives outside the skills repo.",
+    opts: [["both", "The canonical file is <code>docs/agents/issue-tracker-otman.md</code> in the otman repo, embedded in the binary and printed by <code>otman tracker-template</code> (substituting the linked Project key) so setup can write it in one step", true],
+           ["repo", "Only as a file in the otman repo; the user copies it"],
+           ["upstream", "Contribute it upstream to setup-matt-pocock-skills as a fourth template"]],
+    why: "The template always matches the installed binary's commands, with no version skew." },
+  { id: "T7", title: "Labels before the vocabulary is decided",
+    body: "The template uses <code>wayfinder:map</code>, <code>wayfinder:&lt;type&gt;</code> and the five triage labels. <b>Label vocabulary and triage seeding</b> is an open ticket: if it ends up with a configured vocabulary, these labels must be seeded.",
+    opts: [["block", "Write the template against free-form labels now, and block nothing. Leave a note on Label vocabulary and triage seeding: whatever it picks must accept or seed these labels, and must keep the <code>:</code> character", true],
+           ["wait", "Block this ticket on Label vocabulary and triage seeding"]],
+    why: "The template needs labels to exist, not a particular vocabulary model, so the dependency points the other way." },
+  { id: "T8", title: "References and identity in the template",
+    body: "Skills say <code>#42</code> and <code>@me</code>. Code-review scans commit messages for references, and implement-spec closes work “the way the tracker closes work”.",
+    opts: [["rules", "The template says: refer to Items as <code>&lt;KEY&gt;-&lt;n&gt;</code> and in prose by name; in Item bodies, link with full-filename wikilinks <code>[[OTM-5 Title]]</code>. Agents run as the human's configured actor (like <code>gh</code>'s @me). Commits mention <code>OTM-12</code>, which code-review fetches with <code>view</code>. Nothing closes Items automatically: work is closed with <code>otman close</code>, so implement-spec opens no PR unless asked. PRs as a triage surface: not applicable", true],
+           ["agent-actor", "Same, but agents get their own actor (for example <code>claude</code>), set through <code>OTM_ACTOR</code>"]],
+    why: "This matches how the GitHub template treats @me, and it keeps claims meaning “this dev's work”, as wayfinder expects." },
+];
+
+const form = document.getElementById("round");
+form.innerHTML = Q.map(q => `
+  <fieldset class="card card-border bg-base-200" data-lavish-question="${q.id}">
+    <div class="card-body gap-3">
+      <legend class="sr-only">${q.id} ${q.title}</legend>
+      <div class="flex items-baseline gap-3">
+        <span class="badge badge-primary badge-outline font-mono">${q.id}</span>
+        <h2 class="card-title text-lg">${q.title}</h2>
+      </div>
+      <p class="opacity-85">${q.body}</p>
+      <div class="grid gap-2">
+        ${q.opts.map(([v, label, rec]) => `
+          <label class="opt flex items-start gap-3 rounded-box border border-base-content/10 p-3 cursor-pointer">
+            <input type="radio" class="radio radio-primary radio-sm mt-0.5" name="${q.id}" value="${v}" data-label="${label.replace(/<[^>]+>/g,'').replace(/"/g,'&quot;')}" ${rec ? "checked" : ""}>
+            <span class="flex-1">${label} ${rec ? '<span class="badge badge-sm badge-soft badge-success ml-1">recommended</span>' : ""}</span>
+          </label>`).join("")}
+      </div>
+      <p class="text-sm opacity-60">➡️ ${q.why}</p>
+      <input type="text" name="${q.id}-note" class="input input-sm w-full" placeholder="Optional note">
+    </div>
+  </fieldset>`).join("");
+
+function submitAll(f) {
+  const fd = new FormData(f);
+  const items = Q.map(q => {
+    const v = fd.get(q.id);
+    const input = f.querySelector(`input[name="${q.id}"][value="${v}"]`);
+    const rec = q.opts.find(o => o[2])[0] === v;
+    return { id: q.id, question: q.title, answer: input ? input.dataset.label : null, accepted_recommendation: rec, note: (fd.get(q.id + "-note") || "").trim() };
+  });
+  const extra = document.querySelector('textarea[name=extra]').value.trim();
+  const lines = items.map(i => `${i.id} ${i.question}: ${i.answer}${i.accepted_recommendation ? " (rec)" : " (CHANGED)"}${i.note ? " | note: " + i.note : ""}`);
+  if (extra) lines.push("Extra: " + extra);
+  const text = "Tracker template round 2 answers:\n" + lines.join("\n");
+  const status = document.getElementById("status");
+  if (window.lavish?.queuePrompt) {
+    window.lavish.queuePrompt(text + "\n\nAccount for every question ID U1–U3 when updating the design tree.", { tag: "choice", text: "Tracker template round 2 (U1–U3)", queueKey: "tt-round2", element: f, data: { items, extra } });
+    status.textContent = "Queued. Press Send to Agent to deliver it.";
+  } else {
+    navigator.clipboard?.writeText(text);
+    status.textContent = "Lavish isn't running, so the answers were copied to your clipboard. Paste them into the chat.";
+  }
+}
+</script>
+<script>const DRAFT = "# Issue tracker: otman\n\nIssues and specs for this repo live as Items in an Obsidian Vault managed by [otman](https://github.com/talvor/otman). Use the `otman` CLI for all operations; never edit Item files directly.\n\nThis repo is linked to Project `{{KEY}}` by `.otman.toml` at the repo root (`otman project link {{KEY}}`). The Vault path and your actor name come from `~/.config/otman/config.toml` (`otman config show` prints the effective values). Agents run as the human's configured actor: `@me` means that actor.\n\n## Conventions\n\n- **Refer to Items** as `{{KEY}}-<n>` (e.g. `{{KEY}}-12`), and in prose by their title. Inside Item bodies, link with a full-filename wikilink: `[[{{KEY}}-12 Allocate item numbers]]`. A bare number like `12` or `#12` means `{{KEY}}-12`.\n- **Output**: piped output is compact AXI-style. Add `--json` whenever you parse a result; it is the stable contract (`{\"schema_version\":1,\"data\":\u2026,\"warnings\":[]}`). On failure, stdout is empty and stderr carries `error.code`/`error.hint`. Exit 3 means not found, and 4 means a conflict (already claimed, an ambiguous ID, or a stale edit).\n- **Multi-line text**: pass it with `--body-file -` and a heredoc, never with `--body \"\u2026\"`.\n- **Create an issue**: `otman create --title \"...\" --body-file - <<'EOF' \u2026 EOF`. Add `--kind spec` for a spec and `--kind prd` only when a PRD is asked for by name. Add `--label`, `--parent REF` and `--blocked-by REF` as needed.\n- **Read an issue**: `otman view <REF> --full --comments` (or `--json`, which always includes body and comments).\n- **List issues**: `otman list --json` with `--label L` (repeatable, AND), `--without-label L`, `--unlabeled`, `--state open|closed|all`, `--kind`, `--assignee @me|NAME`, `--unassigned`, `--parent REF`, `--blocked-by REF` and `--search TEXT`. The default is the 50 oldest open Items; follow `has_more` with `--offset`, or pass `--all`.\n- **Comment on an issue**: `otman comment <REF> --body-file - <<'EOF' \u2026 EOF`\n- **Apply / remove labels**: `otman edit <REF> --add-label \"...\" --remove-label \"...\"` in one call. Repeated adds or removes are no-ops.\n- **Close**: `otman close <REF> --comment-file - <<'EOF' \u2026 EOF`. Reopen with `otman reopen <REF>`.\n- **Edit a body safely**: read `rev` from `otman view <REF> --json`, write the new body with `otman edit <REF> --body-file - --if-rev <rev>`. On exit 4 `stale_item`, re-read, re-apply your change and retry.\n- **Nothing closes Items automatically.** Commits and PRs should mention `{{KEY}}-<n>`, but only `otman close` closes work.\n\n## Pull requests as a triage surface\n\n**PRs as a request surface: not applicable.** otman tracks no pull requests; `/triage` covers Items only.\n\n## When a skill says \"publish to the issue tracker\"\n\nCreate an Item with `otman create`: `--kind spec` for a spec (to-spec), `--kind issue --parent <spec>` for implementation tickets (to-tickets), and `--kind issue` otherwise.\n\n## When a skill says \"fetch the relevant ticket\"\n\nRun `otman view <REF> --full --comments`.\n\n## Wayfinding operations\n\nUsed by `/wayfinder`. The **map** is a single Item with **child** Items as tickets.\n\n- **Map**: an Item of Kind `issue` labelled `wayfinder:map`, holding the Destination / Notes / Decisions-so-far / Not yet specified / Out of scope body. `otman create --label wayfinder:map --title \"...\" --body-file -`.\n- **Child ticket**: `otman create --parent <map> --label wayfinder:<type> --title \"...\" --body-file -`, where type is `research`/`prototype`/`grilling`/`task`. List them with `otman list --parent <map> --state all`. Map order is number order.\n- **Blocking**: otman's native `blocked_by` relation, which also renders in Obsidian Bases. Add an edge with `otman block <child> --by <blocker>` (or `--blocked-by` at create). Both Items must be in the same Project, and cycles are rejected. A ticket is unblocked when every blocker is closed.\n- **Frontier query**: `otman frontier --parent <map> --json` returns the open, unassigned children with no open blocker, in map order. Take the first.\n- **Claim**: `otman claim <n>`, the session's first write. Exit 4 means someone else holds it: take the next frontier ticket.\n- **Resolve**: `otman close <n> --comment-file - <<'EOF' <answer> EOF`. Then append a context pointer (`- [[{{KEY}}-n Title]]: gist`) to the map's Decisions-so-far with a guarded body edit (`--if-rev`, above), because other sessions may be editing the map at the same time.\n- **Drop a ticket** that the map no longer needs: close it with a comment saying why. otman has no delete.\n";</script>
+<script type="module">
+  import { File } from "https://esm.sh/@pierre/diffs@1.2.10?bundle";
+  new File({ theme: { light: "github-light", dark: "github-dark" }, themeType: "dark", overflow: "wrap" })
+    .render({ containerWrapper: document.querySelector("#draft"), file: { name: "docs/agents/issue-tracker-otman.md", contents: DRAFT } });
+</script>
+</body>
+</html>
