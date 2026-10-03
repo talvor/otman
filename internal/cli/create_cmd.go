@@ -20,12 +20,13 @@ type createFlags struct {
 	bodyFile   string
 	noTemplate bool
 	assignee   string
+	labels     []string
 }
 
 func (a *app) newCreateCmd() *cobra.Command {
 	var f createFlags
 	cmd := &cobra.Command{
-		Use:   "create --title TEXT [--kind issue|prd|spec] [--body TEXT | --body-file PATH|- | --no-template] [--assignee NAME|@me]",
+		Use:   "create --title TEXT [--kind issue|prd|spec] [--body TEXT | --body-file PATH|- | --no-template] [--label L]... [--assignee NAME|@me]",
 		Short: "Create an Item in the selected Project",
 		Args:  cobra.NoArgs,
 	}
@@ -35,6 +36,7 @@ func (a *app) newCreateCmd() *cobra.Command {
 	fl.StringVar(&f.body, "body", "", "the Item's body, as Markdown")
 	fl.StringVar(&f.bodyFile, "body-file", "", "read the body from PATH, or from stdin with -")
 	fl.BoolVar(&f.noTemplate, "no-template", false, "start with an empty body instead of the Kind's Template")
+	fl.StringArrayVar(&f.labels, "label", nil, "add the Label L (repeatable)")
 	fl.StringVar(&f.assignee, "assignee", "", "assign the Item to NAME, or to the actor with @me")
 	cmd.RunE = func(cmd *cobra.Command, _ []string) error { return a.create(cmd, f) }
 	return cmd
@@ -86,6 +88,10 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 	if err != nil {
 		return err
 	}
+	labels, err := parseLabels("--label", f.labels)
+	if err != nil {
+		return err
+	}
 	s, err := a.settings()
 	if err != nil {
 		return err
@@ -119,13 +125,18 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 				return err
 			}
 		}
+		inUse, err := labelsInUse(v, key.Value, "")
+		if err != nil {
+			return ioError(err)
+		}
 		file, data, err := v.CreateItem(key.Value, vault.NewItem{
 			Title: title, Kind: kind, Body: body,
-			Author: author, Assignee: assignee, Now: a.opts.Now(),
+			Author: author, Assignee: assignee, Labels: labels, Now: a.opts.Now(),
 		})
 		if err != nil {
 			return ioError(err)
 		}
+		warnings = append(warnings, newLabelWarnings(key.Value, labels, inUse)...)
 		files, err := v.ItemFiles(key.Value)
 		if err != nil {
 			return ioError(err)

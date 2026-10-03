@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -18,14 +19,16 @@ type editFlags struct {
 	clearBody     bool
 	assignee      string
 	clearAssignee bool
+	addLabels     []string
+	removeLabels  []string
 	ifRev         string
 }
 
 func (a *app) newEditCmd() *cobra.Command {
 	var f editFlags
 	cmd := &cobra.Command{
-		Use:   "edit REF [--kind K] [--body T | --body-file P|- | --clear-body] [--assignee NAME|@me | --clear-assignee] [--if-rev REV]",
-		Short: "Change an Item's Kind, body or assignee",
+		Use:   "edit REF [--kind K] [--body T | --body-file P|- | --clear-body] [--assignee NAME|@me | --clear-assignee] [--add-label L]... [--remove-label L]... [--if-rev REV]",
+		Short: "Change an Item's Kind, body, assignee or Labels",
 		Args:  cobra.ExactArgs(1),
 	}
 	fl := cmd.Flags()
@@ -35,6 +38,8 @@ func (a *app) newEditCmd() *cobra.Command {
 	fl.BoolVar(&f.clearBody, "clear-body", false, "empty the body, keeping the comments")
 	fl.StringVar(&f.assignee, "assignee", "", "assign the Item to NAME, or to the actor with @me")
 	fl.BoolVar(&f.clearAssignee, "clear-assignee", false, "unassign the Item")
+	fl.StringArrayVar(&f.addLabels, "add-label", nil, "add the Label L (repeatable)")
+	fl.StringArrayVar(&f.removeLabels, "remove-label", nil, "remove the Label L (repeatable)")
 	fl.StringVar(&f.ifRev, "if-rev", "", "fail with stale_item unless the Item's rev is REV")
 	cmd.RunE = func(cmd *cobra.Command, args []string) error { return a.edit(cmd, args[0], f) }
 	return cmd
@@ -81,6 +86,20 @@ func (a *app) edit(cmd *cobra.Command, ref string, f editFlags) error {
 		}
 		update.Body = &body
 	}
+	var err error
+	if update.AddLabels, err = parseLabels("--add-label", f.addLabels); err != nil {
+		return err
+	}
+	if update.RemoveLabels, err = parseLabels("--remove-label", f.removeLabels); err != nil {
+		return err
+	}
+	for _, l := range update.AddLabels {
+		if slices.Contains(update.RemoveLabels, l) {
+			return invalid("conflicting_labels", "--add-label and --remove-label both name "+quoteArg(l),
+				map[string]any{"label": l, "flags": []string{"--add-label", "--remove-label"}},
+				"either add or remove each Label, not both")
+		}
+	}
 	if fl.Changed("if-rev") && strings.TrimSpace(f.ifRev) == "" {
 		return invalid("invalid_arguments", "--if-rev cannot be empty",
 			map[string]any{"flag": "--if-rev"}, "pass the rev a view or earlier edit reported")
@@ -119,6 +138,19 @@ func (a *app) edit(cmd *cobra.Command, ref string, f editFlags) error {
 		data, changed, err := item.Apply(data, update, a.opts.Now())
 		if err != nil {
 			return writeError(file, err)
+		}
+		if changed && len(update.AddLabels) > 0 {
+			var added []string
+			for _, l := range update.AddLabels {
+				if !item.HasLabel(before.Labels, l) {
+					added = append(added, l)
+				}
+			}
+			inUse, err := labelsInUse(v, file.Key, file.Path)
+			if err != nil {
+				return ioError(err)
+			}
+			warnings = append(warnings, newLabelWarnings(file.Key, added, inUse)...)
 		}
 		if changed {
 			to := file.Path

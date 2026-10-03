@@ -20,6 +20,9 @@ type listFlags struct {
 	assignee    string
 	unassigned  bool
 	search      string
+	labels      []string
+	without     []string
+	unlabeled   bool
 	allProjects bool
 	paging      *paging
 }
@@ -30,13 +33,16 @@ var listStates = []string{item.Open, item.Closed, "all"}
 func (a *app) newListCmd() *cobra.Command {
 	var f listFlags
 	cmd := &cobra.Command{
-		Use:   "list [--state open|closed|all] [--kind K] [--assignee NAME|@me | --unassigned] [--search TEXT] [--all-projects] [--limit N] [--offset N] [--all]",
+		Use:   "list [--state open|closed|all] [--kind K] [--label L]... [--without-label L]... [--unlabeled] [--assignee NAME|@me | --unassigned] [--search TEXT] [--all-projects] [--limit N] [--offset N] [--all]",
 		Short: "List the Items of the selected Project (default: open ones)",
 		Args:  cobra.NoArgs,
 	}
 	fl := cmd.Flags()
 	fl.StringVar(&f.state, "state", "open", "open, closed or all")
 	fl.StringVar(&f.kind, "kind", "", "only Items of this Kind: issue, prd or spec")
+	fl.StringArrayVar(&f.labels, "label", nil, "only Items with the Label L (repeatable; Items must have every one)")
+	fl.StringArrayVar(&f.without, "without-label", nil, "only Items without the Label L (repeatable)")
+	fl.BoolVar(&f.unlabeled, "unlabeled", false, "only Items with no Labels (conflicts with --label)")
 	fl.StringVar(&f.assignee, "assignee", "", "only Items assigned to NAME, or to the actor with @me")
 	fl.BoolVar(&f.unassigned, "unassigned", false, "only Items with no assignee (conflicts with --assignee)")
 	fl.StringVar(&f.search, "search", "", "only Items whose title or body contains TEXT, ignoring case")
@@ -80,6 +86,10 @@ type itemQuery struct {
 	// search is the lowercased text the title or body must contain; ""
 	// for no search.
 	search string
+	// labels are Labels an Item must all have, without those it must not
+	// have, both lowercase; unlabeled keeps only Items with no Labels.
+	labels, without []string
+	unlabeled       bool
 }
 
 // match reports whether the Item summarised by s, with body, passes every
@@ -94,6 +104,19 @@ func (q itemQuery) match(s itemSummary, body string) bool {
 	if q.unassigned && s.Assignee != nil {
 		return false
 	}
+	if q.unlabeled && len(s.Labels) > 0 {
+		return false
+	}
+	for _, l := range q.labels {
+		if !item.HasLabel(s.Labels, l) {
+			return false
+		}
+	}
+	for _, l := range q.without {
+		if item.HasLabel(s.Labels, l) {
+			return false
+		}
+	}
 	if q.search != "" && !strings.Contains(strings.ToLower(s.Title), q.search) &&
 		!strings.Contains(strings.ToLower(body), q.search) {
 		return false
@@ -104,7 +127,7 @@ func (q itemQuery) match(s itemSummary, body string) bool {
 // query validates the filter flags. The caller resolves --assignee, which
 // may name the actor.
 func (f listFlags) query(cmd *cobra.Command) (itemQuery, error) {
-	q := itemQuery{state: f.state, unassigned: f.unassigned, search: strings.ToLower(f.search)}
+	q := itemQuery{state: f.state, unassigned: f.unassigned, unlabeled: f.unlabeled, search: strings.ToLower(f.search)}
 	if !slices.Contains(listStates, f.state) {
 		return itemQuery{}, invalid("invalid_state", "unknown state "+quoteArg(f.state),
 			map[string]any{"state": f.state, "allowed": listStates}, "use --state open, closed or all")
@@ -119,6 +142,17 @@ func (f listFlags) query(cmd *cobra.Command) (itemQuery, error) {
 	if f.unassigned && cmd.Flags().Changed("assignee") {
 		return itemQuery{}, conflictingFlags("--assignee", "--unassigned",
 			"pass either --assignee or --unassigned, not both")
+	}
+	if f.unlabeled && cmd.Flags().Changed("label") {
+		return itemQuery{}, conflictingFlags("--label", "--unlabeled",
+			"pass either --label or --unlabeled, not both")
+	}
+	var err error
+	if q.labels, err = parseLabels("--label", f.labels); err != nil {
+		return itemQuery{}, err
+	}
+	if q.without, err = parseLabels("--without-label", f.without); err != nil {
+		return itemQuery{}, err
 	}
 	if cmd.Flags().Changed("search") && f.search == "" {
 		return itemQuery{}, invalid("invalid_arguments", "--search cannot be empty",
@@ -163,14 +197,17 @@ func (a *app) list(cmd *cobra.Command, f listFlags) error {
 			return err
 		}
 		all := []itemSummary{}
+		inUse := labelSet{}
 		for _, key := range keys {
-			found, pws, err := listProject(v, key, q)
+			found, pws, err := listProject(v, key, q, inUse)
 			if err != nil {
 				return ioError(err)
 			}
 			all = append(all, found...)
 			ws = append(ws, pws...)
 		}
+		ws = append(ws, unknownLabelWarnings("--label", q.labels, inUse)...)
+		ws = append(ws, unknownLabelWarnings("--without-label", q.without, inUse)...)
 		return a.emit(listResult{page(f.paging, all)}, append(warnings, ws...))
 	})
 }
@@ -199,8 +236,9 @@ func listScope(v *vault.Vault, sel config.Value) ([]string, []output.Problem, er
 // sorted by number, then path, and a warning for each Item left out
 // because it drifted: its frontmatter cannot be read, or only its status,
 // missing or neither open nor closed, kept it from --state open or closed.
-// --state all keeps any status.
-func listProject(v *vault.Vault, key string, q itemQuery) ([]itemSummary, []output.Problem, error) {
+// --state all keeps any status. It adds the Labels of every Item it reads,
+// kept or not, to inUse.
+func listProject(v *vault.Vault, key string, q itemQuery, inUse labelSet) ([]itemSummary, []output.Problem, error) {
 	files, err := v.ItemFiles(key)
 	if err != nil {
 		return nil, nil, err
@@ -215,12 +253,10 @@ func listProject(v *vault.Vault, key string, q itemQuery) ([]itemSummary, []outp
 		}
 		p := item.Parse(data)
 		if p.FrontmatterErr != nil {
-			warnings = append(warnings, output.Warning("malformed_frontmatter",
-				"cannot read the frontmatter of "+f.Path+": "+p.FrontmatterErr.Error(),
-				map[string]any{"path": f.Path},
-				"fix the YAML between the --- lines in "+f.Path))
+			warnings = append(warnings, malformedFrontmatter(f, p.FrontmatterErr))
 			continue
 		}
+		inUse.add(p.Labels)
 		s := newItemSummary(f, p, data, links)
 		if !q.match(s, p.Body) {
 			continue
@@ -234,6 +270,15 @@ func listProject(v *vault.Vault, key string, q itemQuery) ([]itemSummary, []outp
 		}
 	}
 	return found, warnings, nil
+}
+
+// malformedFrontmatter warns that the Item file f was left out because
+// its frontmatter cannot be read.
+func malformedFrontmatter(f vault.ItemFile, err error) output.Problem {
+	return output.Warning("malformed_frontmatter",
+		"cannot read the frontmatter of "+f.Path+": "+err.Error(),
+		map[string]any{"path": f.Path},
+		"fix the YAML between the --- lines in "+f.Path)
 }
 
 // invalidStatus warns that the Item summarised by s was left out of a

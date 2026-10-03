@@ -1,0 +1,366 @@
+$ otman list --label bug
+tty: true
+exit: 0
+-- stdout --
+ID     KIND   STATUS  ASSIGNEE  TITLE
+OTM-1  issue  open    -         Triage me
+OTM-2  issue  open    -         Map the way
+OTM-5  issue  open    -         Hand edited case
+-- stderr --
+
+$ otman list --label BUG --label needs-triage --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [
+      {
+        "id": "OTM-1",
+        "title": "Triage me",
+        "kind": "issue",
+        "status": "open",
+        "labels": [
+          "bug",
+          "needs-triage"
+        ],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/OTM/Issues/OTM-1 Triage me.md",
+        "rev": "4e8bf6d1f249"
+      }
+    ],
+    "total": 1,
+    "count": 1,
+    "has_more": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman list --label bug --state closed
+tty: true
+exit: 0
+-- stdout --
+ID     KIND   STATUS  ASSIGNEE  TITLE
+OTM-3  issue  closed  -         Fixed already
+-- stderr --
+
+$ otman list --without-label bug --state all
+tty: true
+exit: 0
+-- stdout --
+ID     KIND   STATUS  ASSIGNEE  TITLE
+OTM-4  issue  open    -         Empty labels
+OTM-6  issue  open    -         No labels key
+-- stderr --
+
+$ otman list --without-label needs-triage --without-label wayfinder:map --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [
+      {
+        "id": "OTM-4",
+        "title": "Empty labels",
+        "kind": "issue",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/OTM/Issues/OTM-4 Empty labels.md",
+        "rev": "db95f79a85e6"
+      },
+      {
+        "id": "OTM-5",
+        "title": "Hand edited case",
+        "kind": "issue",
+        "status": "open",
+        "labels": [
+          "Bug",
+          "BUG",
+          "Enhancement"
+        ],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/OTM/Issues/OTM-5 Hand edited case.md",
+        "rev": "8e9a4aa16cbb"
+      },
+      {
+        "id": "OTM-6",
+        "title": "No labels key",
+        "kind": "issue",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/OTM/Issues/OTM-6 No labels key.md",
+        "rev": "fc0561a20fd7"
+      }
+    ],
+    "total": 3,
+    "count": 3,
+    "has_more": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman list --unlabeled --state all --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [
+      {
+        "id": "OTM-4",
+        "title": "Empty labels",
+        "kind": "issue",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/OTM/Issues/OTM-4 Empty labels.md",
+        "rev": "db95f79a85e6"
+      },
+      {
+        "id": "OTM-6",
+        "title": "No labels key",
+        "kind": "issue",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/OTM/Issues/OTM-6 No labels key.md",
+        "rev": "fc0561a20fd7"
+      }
+    ],
+    "total": 2,
+    "count": 2,
+    "has_more": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman list --unlabeled --without-label bug --all-projects
+tty: true
+exit: 0
+-- stdout --
+ID     KIND   STATUS  ASSIGNEE  TITLE
+OTM-4  issue  open    -         Empty labels
+OTM-6  issue  open    -         No labels key
+-- stderr --
+
+$ otman list --label bgu --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [],
+    "total": 0,
+    "count": 0,
+    "has_more": false
+  },
+  "warnings": [
+    {
+      "code": "unknown_label",
+      "message": "no Item in scope has the label \"bgu\" that --label names",
+      "details": {
+        "closest": [
+          "bug"
+        ],
+        "flag": "--label",
+        "label": "bgu"
+      },
+      "hint": "did you mean bug? 'otman label list' shows the labels in use"
+    }
+  ]
+}
+-- stderr --
+
+$ otman list --label bug --without-label nope
+tty: true
+exit: 0
+-- stdout --
+ID     KIND   STATUS  ASSIGNEE  TITLE
+OTM-1  issue  open    -         Triage me
+OTM-2  issue  open    -         Map the way
+OTM-5  issue  open    -         Hand edited case
+-- stderr --
+warning[unknown_label]: no Item in scope has the label "nope" that --without-label names
+hint: check the spelling; 'otman label list' shows the labels in use
+
+$ otman list --label design
+exit: 0
+-- stdout --
+items[0]:
+total: 0
+count: 0
+has_more: false
+-- stderr --
+warning:
+  code: unknown_label
+  message: "no Item in scope has the label \"design\" that --label names"
+  details:
+    closest[0]:
+    flag: "--label"
+    label: design
+  hint: check the spelling; 'otman label list' shows the labels in use
+
+$ otman list --label design --all-projects --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [
+      {
+        "id": "WEB-1",
+        "title": "Redesign",
+        "kind": "issue",
+        "status": "open",
+        "labels": [
+          "design"
+        ],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/WEB/Issues/WEB-1 Redesign.md",
+        "rev": "99ccd9b6b5ab"
+      }
+    ],
+    "total": 1,
+    "count": 1,
+    "has_more": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/AAA/
+-- vault/Projects/AAA/AAA.md --
+---
+name: unlabelled
+kind: project
+---
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Triage me.md --
+---
+id: OTM-1
+title: Triage me
+kind: issue
+status: open
+labels: [bug, needs-triage]
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-2 Map the way.md --
+---
+id: OTM-2
+title: Map the way
+kind: issue
+status: open
+labels: 
+  - bug
+  - wayfinder:map
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-3 Fixed already.md --
+---
+id: OTM-3
+title: Fixed already
+kind: issue
+status: closed
+labels: [bug]
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-4 Empty labels.md --
+---
+id: OTM-4
+title: Empty labels
+kind: issue
+status: open
+labels: []
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-5 Hand edited case.md --
+---
+id: OTM-5
+title: Hand edited case
+kind: issue
+status: open
+labels: 
+  - Bug
+  - BUG
+  - Enhancement
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-6 No labels key.md --
+---
+id: OTM-6
+title: No labels key
+kind: issue
+status: open
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/WEB/
+vault/Projects/WEB/Issues/
+-- vault/Projects/WEB/Issues/WEB-1 Redesign.md --
+---
+id: WEB-1
+title: Redesign
+kind: issue
+status: open
+labels: [design]
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/WEB/WEB.md --
+---
+name: otman website
+kind: project
+---
