@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en" data-theme="luxury">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Body templates: Round 2</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :where(.grid, .flex) > * { min-width: 0; }
+  :where(p, h1, h2, h3, li, .badge, label) { overflow-wrap: anywhere; }
+  .opt:has(input:checked) { border-color: var(--color-primary); background: color-mix(in oklab, var(--color-primary) 10%, transparent); }
+</style>
+</head>
+<body class="bg-base-100 text-base-content min-h-screen">
+<main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
+
+<header class="space-y-2">
+  <p class="text-sm uppercase tracking-widest opacity-60">wayfinder · work the map · Body templates</p>
+  <h1 class="text-3xl font-bold">Body templates, Round 2</h1>
+  <p class="opacity-80">Settled: <b>a per-Kind skeleton when the body is omitted</b> (built-in, overridable in the Vault) · <b>no <code># Title</code> H1</b> · <b><code>&lt;!-- otman:comments --&gt;</code></b> marks where comments start (a body may contain <code>## Comments</code>; a body containing the marker line is rejected). Recommendations are pre-selected.</p>
+</header>
+
+<form id="round" class="space-y-5" onsubmit="event.preventDefault(); submitAll(event.currentTarget);">
+</form>
+
+<div class="card card-border bg-base-200">
+  <div class="card-body gap-3">
+    <h2 class="card-title text-lg">Anything the round missed?</h2>
+    <div data-lavish-question="extra">
+      <textarea name="extra" class="textarea w-full" rows="3" placeholder="Optional"></textarea>
+    </div>
+    <div class="card-actions items-center justify-between">
+      <span id="status" class="text-sm opacity-70" role="status" aria-live="polite">Nothing queued yet.</span>
+      <button form="round" type="submit" class="btn btn-primary">Submit all answers</button>
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+const Q = [
+  { id: "C1", title: "Where do override templates live?",
+    body: "They must sync, so not in <code>.otman/</code>, which is per device and gitignored. Item discovery matches <code>&lt;KEY&gt;-n</code> filenames, so template files can't be mistaken for Items.",
+    opts: [["layered", "Two layers: <code>Projects/&lt;KEY&gt;/Templates/&lt;kind&gt;.md</code> overrides <code>Templates/otman/&lt;kind&gt;.md</code> (Vault-wide), which overrides the built-in. Kind names are <code>issue</code>, <code>prd</code>, <code>spec</code>", true],
+           ["vault", "Vault-wide only: <code>Templates/otman/&lt;kind&gt;.md</code>"],
+           ["project", "Per-Project only"]],
+    why: "Teams usually want one house style with an occasional per-Project exception, and the lookup order is easy to explain in <code>config show</code>." },
+  { id: "C2", title: "What can a template contain?",
+    body: "Obsidian's Templates and Templater plugins use <code>{{date}}</code> and <code>&lt;% %&gt;</code> syntax, so otman placeholders could clash with them.",
+    opts: [["verbatim", "Plain Markdown, copied verbatim with no placeholders in v1. It must not contain the comments marker (exit 2, <code>invalid_template</code>, naming the file). An empty template file means an empty body", true],
+           ["vars", "Support a small set of placeholders: <code>{{otman.id}}</code>, <code>{{otman.title}}</code>, <code>{{otman.date}}</code>"]],
+    why: "The ID and title already live in frontmatter and the filename, and dates in <code>created</code>. Placeholders would only duplicate them in the body." },
+  { id: "C3", title: "How does a caller opt out of, or choose, a template?",
+    body: "An explicit body always wins. Without one, the Kind's template applies.",
+    opts: [["notemplate", "Add <code>create --no-template</code> for an empty body; conflicts with <code>--body</code>/<code>--body-file</code>. No named alternative templates in v1", true],
+           ["named", "Also <code>--template NAME</code> to pick another file from the template folders"],
+           ["none", "No flag; pass <code>--body \"\"</code> to get an empty body"]],
+    why: "This covers the one real need, a deliberately empty Item, without adding a template catalogue." },
+  { id: "C4", title: "What distinguishes a PRD from a spec?",
+    body: "The glossary lists both Kinds but doesn't say how they differ, and the skills only write specs (to-spec). Without a distinction their skeletons can't differ, and people won't know which to pick.",
+    opts: [["whywhat-how", "<b>PRD</b> is the <i>why and what</i>: the problem, who it's for, goals, non-goals and success measures. <b>Spec</b> is the <i>how</i>: the solution and the implementation and testing decisions an agent can build from. A spec may have a PRD as its parent", true],
+           ["synonym", "They are the same document; keep <code>prd</code> only as an alias for teams who say PRD"],
+           ["drop", "Drop the PRD Kind from v1"]],
+    why: "This matches common use, gives the two skeletons distinct content, and lets PRD → spec → issues form a parent chain." },
+];
+
+const form = document.getElementById("round");
+form.innerHTML = Q.map(q => `
+  <fieldset class="card card-border bg-base-200" data-lavish-question="${q.id}">
+    <div class="card-body gap-3">
+      <legend class="sr-only">${q.id} ${q.title}</legend>
+      <div class="flex items-baseline gap-3">
+        <span class="badge badge-primary badge-outline font-mono">${q.id}</span>
+        <h2 class="card-title text-lg">${q.title}</h2>
+      </div>
+      <p class="opacity-85">${q.body}</p>
+      <div class="grid gap-2">
+        ${q.opts.map(([v, label, rec]) => `
+          <label class="opt flex items-start gap-3 rounded-box border border-base-content/10 p-3 cursor-pointer">
+            <input type="radio" class="radio radio-primary radio-sm mt-0.5" name="${q.id}" value="${v}" data-label="${label.replace(/<[^>]+>/g,'').replace(/"/g,'&quot;')}" ${rec ? "checked" : ""}>
+            <span class="flex-1">${label} ${rec ? '<span class="badge badge-sm badge-soft badge-success ml-1">recommended</span>' : ""}</span>
+          </label>`).join("")}
+      </div>
+      <p class="text-sm opacity-60">➡️ ${q.why}</p>
+      <input type="text" name="${q.id}-note" class="input input-sm w-full" placeholder="Optional note">
+    </div>
+  </fieldset>`).join("");
+
+function submitAll(f) {
+  const fd = new FormData(f);
+  const items = Q.map(q => {
+    const v = fd.get(q.id);
+    const input = f.querySelector(`input[name="${q.id}"][value="${v}"]`);
+    const rec = q.opts.find(o => o[2])[0] === v;
+    return { id: q.id, question: q.title, answer: input ? input.dataset.label : null, accepted_recommendation: rec, note: (fd.get(q.id + "-note") || "").trim() };
+  });
+  const extra = document.querySelector('textarea[name=extra]').value.trim();
+  const lines = items.map(i => `${i.id} ${i.question}: ${i.answer}${i.accepted_recommendation ? " (rec)" : " (CHANGED)"}${i.note ? " | note: " + i.note : ""}`);
+  if (extra) lines.push("Extra: " + extra);
+  const text = "Body templates round 2 answers:\n" + lines.join("\n");
+  const status = document.getElementById("status");
+  if (window.lavish?.queuePrompt) {
+    window.lavish.queuePrompt(text + "\n\nAccount for every question ID C1–C4 when updating the design tree.", { tag: "choice", text: "Body templates round 2 (C1–C4)", queueKey: "bt-round2", element: f, data: { items, extra } });
+    status.textContent = "Queued. Press Send to Agent to deliver it.";
+  } else {
+    navigator.clipboard?.writeText(text);
+    status.textContent = "Lavish isn't running, so the answers were copied to your clipboard. Paste them into the chat.";
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en" data-theme="luxury">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Body templates: Round 1</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :where(.grid, .flex) > * { min-width: 0; }
+  :where(p, h1, h2, h3, li, .badge, label) { overflow-wrap: anywhere; }
+  .opt:has(input:checked) { border-color: var(--color-primary); background: color-mix(in oklab, var(--color-primary) 10%, transparent); }
+</style>
+</head>
+<body class="bg-base-100 text-base-content min-h-screen">
+<main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
+
+<header class="space-y-2">
+  <p class="text-sm uppercase tracking-widest opacity-60">wayfinder · work the map · Body templates</p>
+  <h1 class="text-3xl font-bold">Body templates, Round 1</h1>
+  <p class="opacity-80">The question: what body structure, if any, <code>otman create</code> scaffolds per Kind, and how that interacts with an explicit body. Context: agents (to-spec, to-tickets, triage, wayfinder) <b>always pass their own body</b>. A human can't create Items in Obsidian (numbering needs otman), so a scaffold mainly helps someone running <code>otman create --title …</code> and then filling the note in Obsidian. Recommendations are pre-selected.</p>
+</header>
+
+<form id="round" class="space-y-5" onsubmit="event.preventDefault(); submitAll(event.currentTarget);">
+</form>
+
+<div class="card card-border bg-base-200">
+  <div class="card-body gap-3">
+    <h2 class="card-title text-lg">Anything the round missed?</h2>
+    <div data-lavish-question="extra">
+      <textarea name="extra" class="textarea w-full" rows="3" placeholder="Optional"></textarea>
+    </div>
+    <div class="card-actions items-center justify-between">
+      <span id="status" class="text-sm opacity-70" role="status" aria-live="polite">Nothing queued yet.</span>
+      <button form="round" type="submit" class="btn btn-primary">Submit all answers</button>
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+const Q = [
+  { id: "B1", title: "Does create scaffold a body at all?",
+    body: "An explicit <code>--body</code>/<code>--body-file</code> is always stored verbatim, never merged with a template. The question is only what an <b>omitted</b> body produces.",
+    opts: [["builtin", "A per-Kind skeleton when the body is omitted: built-in defaults, overridable by a template file in the Vault", true],
+           ["vault-only", "Vault template files only; otman ships none, so with no file the body is empty"],
+           ["none", "No scaffolding in v1: an omitted body stays empty, and structure is the skills' concern"]],
+    why: "Opening a new spec in Obsidian and finding its sections already there is the human path's main convenience. Making it overridable keeps teams in control, and agents never hit it." },
+  { id: "B2", title: "Does the body start with a <code># Title</code> H1?",
+    body: "The vault-layout prototype opens each body with <code># Title</code>. The filename and <code>title</code> already carry the title, and Obsidian shows the filename as the note's inline title by default. An H1 is a third copy that a retitle must keep in sync, and an agent's <code>--body-file</code> might include or omit it.",
+    opts: [["none", "No H1: the body is free Markdown, and the title lives only in <code>title</code> and the filename (Obsidian's inline title shows it)", true],
+           ["owned", "otman owns the H1: it writes it above the body, rewrites it on retitle, and strips it from <code>body</code> in JSON and from <code>--body</code> input"],
+           ["keep", "Keep the H1 as part of the free-form body; retitle leaves it alone"]],
+    why: "One less copy to drift, and nothing for <i>Hand edits, drift diagnostics and repair</i> to police. Readers of the raw file still see the title in its name." },
+  { id: "B3", title: "What if a body contains <code>## Comments</code>?",
+    body: "Comments live in an otman-managed <code>## Comments</code> section at the end of the file. A body (from a template, <code>--body</code>, or edit) containing that exact heading would make the split between body and comments ambiguous.",
+    opts: [["reject", "Reject it: create/edit fail with exit 2 (<code>reserved_heading</code>) if the body has a line that is exactly <code>## Comments</code>. A template containing it is invalid", true],
+           ["last", "Allow it; the <i>last</i> <code>## Comments</code> heading starts the comments section"],
+           ["escape", "Silently demote it to <code>### Comments</code>"]],
+    why: "The parse stays unambiguous with a clear, rare error. Silent rewriting would surprise the author." },
+];
+
+const form = document.getElementById("round");
+form.innerHTML = Q.map(q => `
+  <fieldset class="card card-border bg-base-200" data-lavish-question="${q.id}">
+    <div class="card-body gap-3">
+      <legend class="sr-only">${q.id} ${q.title}</legend>
+      <div class="flex items-baseline gap-3">
+        <span class="badge badge-primary badge-outline font-mono">${q.id}</span>
+        <h2 class="card-title text-lg">${q.title}</h2>
+      </div>
+      <p class="opacity-85">${q.body}</p>
+      <div class="grid gap-2">
+        ${q.opts.map(([v, label, rec]) => `
+          <label class="opt flex items-start gap-3 rounded-box border border-base-content/10 p-3 cursor-pointer">
+            <input type="radio" class="radio radio-primary radio-sm mt-0.5" name="${q.id}" value="${v}" data-label="${label.replace(/<[^>]+>/g,'').replace(/"/g,'&quot;')}" ${rec ? "checked" : ""}>
+            <span class="flex-1">${label} ${rec ? '<span class="badge badge-sm badge-soft badge-success ml-1">recommended</span>' : ""}</span>
+          </label>`).join("")}
+      </div>
+      <p class="text-sm opacity-60">➡️ ${q.why}</p>
+      <input type="text" name="${q.id}-note" class="input input-sm w-full" placeholder="Optional note">
+    </div>
+  </fieldset>`).join("");
+
+function submitAll(f) {
+  const fd = new FormData(f);
+  const items = Q.map(q => {
+    const v = fd.get(q.id);
+    const input = f.querySelector(`input[name="${q.id}"][value="${v}"]`);
+    const rec = q.opts.find(o => o[2])[0] === v;
+    return { id: q.id, question: q.title, answer: input ? input.dataset.label : null, accepted_recommendation: rec, note: (fd.get(q.id + "-note") || "").trim() };
+  });
+  const extra = document.querySelector('textarea[name=extra]').value.trim();
+  const lines = items.map(i => `${i.id} ${i.question}: ${i.answer}${i.accepted_recommendation ? " (rec)" : " (CHANGED)"}${i.note ? " | note: " + i.note : ""}`);
+  if (extra) lines.push("Extra: " + extra);
+  const text = "Body templates round 1 answers:\n" + lines.join("\n");
+  const status = document.getElementById("status");
+  if (window.lavish?.queuePrompt) {
+    window.lavish.queuePrompt(text + "\n\nAccount for every question ID B1–B3 when updating the design tree.", { tag: "choice", text: "Body templates round 1 (B1–B3)", queueKey: "bt-round1", element: f, data: { items, extra } });
+    status.textContent = "Queued. Press Send to Agent to deliver it.";
+  } else {
+    navigator.clipboard?.writeText(text);
+    status.textContent = "Lavish isn't running, so the answers were copied to your clipboard. Paste them into the chat.";
+  }
+}
+</script>
+</body>
+</html>

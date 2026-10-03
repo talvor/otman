@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en" data-theme="luxury">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Body templates: Round 3</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :where(.grid, .flex) > * { min-width: 0; }
+  :where(p, h1, h2, h3, li, .badge, label) { overflow-wrap: anywhere; }
+  .opt:has(input:checked) { border-color: var(--color-primary); background: color-mix(in oklab, var(--color-primary) 10%, transparent); }
+</style>
+</head>
+<body class="bg-base-100 text-base-content min-h-screen">
+<main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
+
+<header class="space-y-2">
+  <p class="text-sm uppercase tracking-widest opacity-60">wayfinder · work the map · Body templates</p>
+  <h1 class="text-3xl font-bold">Body templates, Round 3: the built-in skeletons</h1>
+  <p class="opacity-80">Settled in round 2: two override layers (Project, then Vault-wide <code>Templates/otman/</code>), templates copied verbatim, <code>--no-template</code>, and PRD = why/what, spec = how. Below are the drafted <b>built-in</b> templates. Annotate lines directly or use the notes.</p>
+</header>
+
+<section class="grid gap-4">
+  <div><h2 class="text-lg font-semibold mb-1">issue</h2><div id="t-issue" class="rounded-box overflow-hidden"></div></div>
+  <div><h2 class="text-lg font-semibold mb-1">prd</h2><div id="t-prd" class="rounded-box overflow-hidden"></div></div>
+  <div><h2 class="text-lg font-semibold mb-1">spec</h2><div id="t-spec" class="rounded-box overflow-hidden"></div></div>
+</section>
+
+<form id="round" class="space-y-5" onsubmit="event.preventDefault(); submitAll(event.currentTarget);">
+</form>
+
+<div class="card card-border bg-base-200">
+  <div class="card-body gap-3">
+    <h2 class="card-title text-lg">Anything the round missed?</h2>
+    <div data-lavish-question="extra">
+      <textarea name="extra" class="textarea w-full" rows="3" placeholder="Optional"></textarea>
+    </div>
+    <div class="card-actions items-center justify-between">
+      <span id="status" class="text-sm opacity-70" role="status" aria-live="polite">Nothing queued yet.</span>
+      <button form="round" type="submit" class="btn btn-primary">Submit all answers</button>
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+const Q = [
+  { id: "D1", title: "How do the skeletons guide the writer?",
+    body: "Each heading carries a one-line hint as an HTML comment, which reading view hides, the same convention as the comments marker.",
+    opts: [["hints", "Headings plus <code>&lt;!-- hint --&gt;</code> lines, as drafted", true],
+           ["bare", "Headings only"],
+           ["visible", "Visible italic placeholder text the writer deletes"]],
+    why: "A newcomer gets the hint, the rendered note stays clean, and an unfilled section doesn't look like content." },
+  { id: "D2", title: "The issue skeleton",
+    body: "It is deliberately minimal: Summary and Acceptance criteria. Parent and blockers are frontmatter relations, so the to-tickets “Parent” and “Blocked by” sections are left out.",
+    opts: [["ok", "Approve as drafted", true], ["bug", "Add a separate <code>## Steps to reproduce</code> section"], ["edit", "Change it (see note)"]],
+    why: "Bugs and tasks share one Kind, so the bug guidance goes in a hint rather than a section that most issues would leave empty." },
+  { id: "D3", title: "The PRD skeleton",
+    body: "Problem, Users, Goals, Non-goals, Success measures, Open questions: straight from the C4 definition.",
+    opts: [["ok", "Approve as drafted", true], ["edit", "Change it (see note)"]],
+    why: "Open questions is where a PRD hands off to a spec, or to a wayfinder map." },
+  { id: "D4", title: "The spec skeleton",
+    body: "The headings mirror to-spec's template exactly, so a spec written by the skill and one created by hand have the same shape.",
+    opts: [["ok", "Approve: mirror to-spec", true], ["edit", "Change it (see note)"]],
+    why: "One shape for specs, whoever writes them. If to-spec's template changes, users can track it with a Vault override." },
+];
+
+const form = document.getElementById("round");
+form.innerHTML = Q.map(q => `
+  <fieldset class="card card-border bg-base-200" data-lavish-question="${q.id}">
+    <div class="card-body gap-3">
+      <legend class="sr-only">${q.id} ${q.title}</legend>
+      <div class="flex items-baseline gap-3">
+        <span class="badge badge-primary badge-outline font-mono">${q.id}</span>
+        <h2 class="card-title text-lg">${q.title}</h2>
+      </div>
+      <p class="opacity-85">${q.body}</p>
+      <div class="grid gap-2">
+        ${q.opts.map(([v, label, rec]) => `
+          <label class="opt flex items-start gap-3 rounded-box border border-base-content/10 p-3 cursor-pointer">
+            <input type="radio" class="radio radio-primary radio-sm mt-0.5" name="${q.id}" value="${v}" data-label="${label.replace(/<[^>]+>/g,'').replace(/"/g,'&quot;')}" ${rec ? "checked" : ""}>
+            <span class="flex-1">${label} ${rec ? '<span class="badge badge-sm badge-soft badge-success ml-1">recommended</span>' : ""}</span>
+          </label>`).join("")}
+      </div>
+      <p class="text-sm opacity-60">➡️ ${q.why}</p>
+      <input type="text" name="${q.id}-note" class="input input-sm w-full" placeholder="Optional note">
+    </div>
+  </fieldset>`).join("");
+
+function submitAll(f) {
+  const fd = new FormData(f);
+  const items = Q.map(q => {
+    const v = fd.get(q.id);
+    const input = f.querySelector(`input[name="${q.id}"][value="${v}"]`);
+    const rec = q.opts.find(o => o[2])[0] === v;
+    return { id: q.id, question: q.title, answer: input ? input.dataset.label : null, accepted_recommendation: rec, note: (fd.get(q.id + "-note") || "").trim() };
+  });
+  const extra = document.querySelector('textarea[name=extra]').value.trim();
+  const lines = items.map(i => `${i.id} ${i.question}: ${i.answer}${i.accepted_recommendation ? " (rec)" : " (CHANGED)"}${i.note ? " | note: " + i.note : ""}`);
+  if (extra) lines.push("Extra: " + extra);
+  const text = "Body templates round 3 answers:\n" + lines.join("\n");
+  const status = document.getElementById("status");
+  if (window.lavish?.queuePrompt) {
+    window.lavish.queuePrompt(text + "\n\nAccount for every question ID D1–D4 when updating the design tree.", { tag: "choice", text: "Body templates round 3 (D1–D4)", queueKey: "bt-round3", element: f, data: { items, extra } });
+    status.textContent = "Queued. Press Send to Agent to deliver it.";
+  } else {
+    navigator.clipboard?.writeText(text);
+    status.textContent = "Lavish isn't running, so the answers were copied to your clipboard. Paste them into the chat.";
+  }
+}
+</script>
+<script>const TPL = {"issue": "## Summary\n\n<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->\n\n## Acceptance criteria\n\n<!-- A checklist that tells anyone, human or agent, when this is done. -->\n- [ ] \n", "prd": "## Problem\n\n<!-- The problem, from the user's perspective. Why it matters now. -->\n\n## Users\n\n<!-- Who has the problem, and in what situation. -->\n\n## Goals\n\n<!-- What success looks like for those users. -->\n\n## Non-goals\n\n<!-- What this deliberately won't do. -->\n\n## Success measures\n\n<!-- How we'll know it worked. -->\n\n## Open questions\n\n<!-- Decisions still to be made before a spec can be written. -->\n", "spec": "## Problem Statement\n\n<!-- The problem, from the user's perspective. Link the parent PRD if there is one. -->\n\n## Solution\n\n<!-- The solution, from the user's perspective. -->\n\n## User Stories\n\n<!-- A long, numbered list: 1. As an <actor>, I want a <feature>, so that <benefit> -->\n\n## Implementation Decisions\n\n<!-- Modules, interfaces, architecture, schema and API contracts. No file paths. -->\n\n## Testing Decisions\n\n<!-- What makes a good test here, which modules are tested, and prior art. -->\n\n## Out of Scope\n\n## Further Notes\n"};</script>
+<script type="module">
+  import { File } from "https://esm.sh/@pierre/diffs@1.2.10?bundle";
+  const opts = { theme: { light: "github-light", dark: "github-dark" }, themeType: "dark", overflow: "wrap" };
+  for (const k of ["issue","prd","spec"]) new File(opts).render({ containerWrapper: document.querySelector("#t-"+k), file: { name: "built-in/"+k+".md", contents: TPL[k] } });
+</script>
+</body>
+</html>
