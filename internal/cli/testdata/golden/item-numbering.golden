@@ -11,7 +11,7 @@ item:
   parent: null
   blocked_by[0]:
   path: Projects/OTM/Issues/OTM-8 Eight.md
-  rev: 36cfa444d046
+  rev: 3d3818abfef8
 changed: true
 -- stderr --
 
@@ -28,7 +28,7 @@ item:
   parent: null
   blocked_by[0]:
   path: Projects/OTM/Issues/OTM-9 Nine.md
-  rev: 0ed81d988984
+  rev: 782ad187ec88
 changed: true
 -- stderr --
 
@@ -47,7 +47,7 @@ item:
   parent: null
   blocked_by[0]:
   path: "Projects/OTM/Issues/OTM-10 Ten, not nine again.md"
-  rev: f98bb6e18d1d
+  rev: c97df73fa5e2
 changed: true
 -- stderr --
 
@@ -68,7 +68,7 @@ item:
   parent: null
   blocked_by[0]:
   path: Projects/OTM/Issues/OTM-11 Eleven.md
-  rev: e42d17291881
+  rev: fdf815708beb
 changed: true
 -- stderr --
 
@@ -112,6 +112,15 @@ assignee: null
 created: 2026-01-02T03:04:05Z
 updated: 2026-01-02T03:04:05Z
 ---
+## Summary
+
+<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->
+
+## Acceptance criteria
+
+<!-- A checklist that tells anyone, human or agent, when this is done. -->
+- [ ] 
+
 <!-- otman:comments -->
 ## Comments
 -- vault/Projects/OTM/Issues/OTM-12x.md --

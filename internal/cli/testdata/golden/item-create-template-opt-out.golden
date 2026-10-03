@@ -1,0 +1,323 @@
+$ otman create --title Explicit body --body Just this.
+exit: 0
+-- stdout --
+item:
+  id: OTM-1
+  title: Explicit body
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-1 Explicit body.md
+  rev: b0b03c4bee82
+changed: true
+-- stderr --
+
+$ otman create --title Explicit empty body --body ""
+exit: 0
+-- stdout --
+item:
+  id: OTM-2
+  title: Explicit empty body
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-2 Explicit empty body.md
+  rev: 7d3d21167b99
+changed: true
+-- stderr --
+
+$ otman create --title Body from a file --body-file notes/body.md
+exit: 0
+-- stdout --
+item:
+  id: OTM-3
+  title: Body from a file
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-3 Body from a file.md
+  rev: 137384b81e54
+changed: true
+-- stderr --
+
+$ otman create --title Body from stdin --body-file -
+exit: 0
+-- stdout --
+item:
+  id: OTM-4
+  title: Body from stdin
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-4 Body from stdin.md
+  rev: 9f538ea99515
+changed: true
+-- stderr --
+
+$ otman create --title No template --no-template
+exit: 0
+-- stdout --
+item:
+  id: OTM-5
+  title: No template
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-5 No template.md
+  rev: 643b0e5fafd4
+changed: true
+-- stderr --
+
+$ otman create --title No built-in either --kind spec --no-template --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-6",
+      "title": "No built-in either",
+      "kind": "spec",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Specs/OTM-6 No built-in either.md",
+      "rev": "e5a6d219cade"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman create --title Empty template --kind prd --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-7",
+      "title": "Empty template",
+      "kind": "prd",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/PRDs/OTM-7 Empty template.md",
+      "rev": "a4cb9a03ba8c"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman create --title Both --no-template --body x --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "conflicting_flags",
+    "message": "--no-template conflicts with --body",
+    "details": {
+      "flags": [
+        "--no-template",
+        "--body"
+      ]
+    },
+    "hint": "pass a body, or --no-template for an empty one, not both"
+  }
+}
+
+$ otman create --title Both --no-template --body-file -
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[conflicting_flags]: --no-template conflicts with --body-file
+hint: pass a body, or --no-template for an empty one, not both
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+notes/
+-- notes/body.md --
+From a file.
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Explicit body.md --
+---
+id: OTM-1
+title: Explicit body
+aliases:
+  - Explicit body
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+Just this.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-2 Explicit empty body.md --
+---
+id: OTM-2
+title: Explicit empty body
+aliases:
+  - Explicit empty body
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-3 Body from a file.md --
+---
+id: OTM-3
+title: Body from a file
+aliases:
+  - Body from a file
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+From a file.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-4 Body from stdin.md --
+---
+id: OTM-4
+title: Body from stdin
+aliases:
+  - Body from stdin
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+From stdin.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-5 No template.md --
+---
+id: OTM-5
+title: No template
+aliases:
+  - No template
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/OTM/PRDs/
+-- vault/Projects/OTM/PRDs/OTM-7 Empty template.md --
+---
+id: OTM-7
+title: Empty template
+aliases:
+  - Empty template
+kind: prd
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/OTM/Specs/
+-- vault/Projects/OTM/Specs/OTM-6 No built-in either.md --
+---
+id: OTM-6
+title: No built-in either
+aliases:
+  - No built-in either
+kind: spec
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/OTM/Templates/
+-- vault/Projects/OTM/Templates/issue.md --
+## Project issue
+-- vault/Projects/OTM/Templates/prd.md --

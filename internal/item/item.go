@@ -151,9 +151,9 @@ func ParseFilename(name string) (key string, n int, title string, ok bool) {
 }
 
 // ContainsMarker reports whether text has the reserved comments marker as
-// one of its lines.
+// one of its lines, splitting on every line break Render normalises.
 func ContainsMarker(text string) bool {
-	for line := range strings.Lines(text) {
+	for line := range strings.Lines(normalizeLineEndings(text)) {
 		if isLine(line, CommentsMarker) {
 			return true
 		}
@@ -221,13 +221,18 @@ func Render(f Fields, body string) ([]byte, error) {
 		return nil, err
 	}
 	b.WriteString("---\n")
-	body = strings.NewReplacer("\r\n", "\n", "\r", "\n").Replace(body)
+	body = normalizeLineEndings(body)
 	if body = strings.TrimRight(body, "\n"); body != "" {
 		b.WriteString(body)
 		b.WriteString("\n\n")
 	}
 	b.WriteString(CommentsMarker + "\n" + CommentsHeading + "\n")
 	return b.Bytes(), nil
+}
+
+// normalizeLineEndings turns CRLF and lone CR line breaks into LF.
+func normalizeLineEndings(s string) string {
+	return strings.NewReplacer("\r\n", "\n", "\r", "\n").Replace(s)
 }
 
 func str(s string) *yaml.Node {
