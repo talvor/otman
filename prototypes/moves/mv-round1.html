@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en" data-theme="luxury">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moves: Round 1</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :where(.grid, .flex) > * { min-width: 0; }
+  :where(p, h1, h2, h3, li, .badge, label) { overflow-wrap: anywhere; }
+  .opt:has(input:checked) { border-color: var(--color-primary); background: color-mix(in oklab, var(--color-primary) 10%, transparent); }
+</style>
+</head>
+<body class="bg-base-100 text-base-content min-h-screen">
+<main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
+
+<header class="space-y-2">
+  <p class="text-sm uppercase tracking-widest opacity-60">wayfinder · work the map · Moving Items</p>
+  <h1 class="text-3xl font-bold">Moves, Round 1</h1>
+  <p class="opacity-80">Constraints already in place: <b>per-Project numbering</b> with a never-reused high-water mark; <b>the filename prefix is the identity</b> (ADR 0005), so moving to another Project <i>means</i> a new ID; <b>relations are same-Project only</b>; multi-file rewrites use the <b>roll-forward journal</b>; renumbering already leaves a “Renumbered from …” comment. Recommendations are pre-selected.</p>
+</header>
+
+<form id="round" class="space-y-5" onsubmit="event.preventDefault(); submitAll(event.currentTarget);">
+</form>
+
+<div class="card card-border bg-base-200">
+  <div class="card-body gap-3">
+    <h2 class="card-title text-lg">Anything the round missed?</h2>
+    <div data-lavish-question="extra">
+      <textarea name="extra" class="textarea w-full" rows="3" placeholder="Optional"></textarea>
+    </div>
+    <div class="card-actions items-center justify-between">
+      <span id="status" class="text-sm opacity-70" role="status" aria-live="polite">Nothing queued yet.</span>
+      <button form="round" type="submit" class="btn btn-primary">Submit all answers</button>
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+const Q = [
+  { id: "V1", title: "Does v1 have a move command?",
+    body: "The common case is an issue triaged into the wrong Project. Without a command, the workaround is create-in-target, copy the body, close the original with a pointer, and it loses comments and history.",
+    opts: [["move", "Yes: <code>move REF --to KEY</code>. It takes the target's next number, renames and moves the file into the target's Kind folder, rewrites links Vault-wide through the journal, keeps labels, assignee, status, body and comments, appends a “Moved from OTM-12” comment and prints old → new. The source number is never reused", true],
+           ["defer", "No: defer <code>move</code> to v2 (add it to the Deferred to v2 list). v1 handles only the <code>misplaced_item</code> drift"]],
+    why: "It is the same mechanics as <code>doctor --fix</code> renumbering (allocate, rename, rewrite, comment), so it adds little new machinery for a real triage need." },
+  { id: "V2", title: "A hand-moved file whose prefix doesn't match its folder",
+    body: "<code>WEB-3 Fix header.md</code> turns up under <code>Projects/OTM/</code>, usually dragged there in Obsidian. By ADR 0005 its identity is <code>WEB-3</code>.",
+    opts: [["home", "It is read as <code>WEB-3</code> of Project WEB, with a <code>misplaced_item</code> warning, and writes are allowed. <code>doctor --fix</code> moves the file back to WEB's Kind folder (deterministic: the identity wins). If <code>WEB-3</code> already exists there it becomes a duplicate (existing rules); if the KEY has no Project, report only", true],
+           ["stay", "Report only; a human decides"]],
+    why: "This follows directly from the identity rule, and the fix is a lossless file move because links resolve by filename." },
+];
+
+const form = document.getElementById("round");
+form.innerHTML = Q.map(q => `
+  <fieldset class="card card-border bg-base-200" data-lavish-question="${q.id}">
+    <div class="card-body gap-3">
+      <legend class="sr-only">${q.id} ${q.title}</legend>
+      <div class="flex items-baseline gap-3">
+        <span class="badge badge-primary badge-outline font-mono">${q.id}</span>
+        <h2 class="card-title text-lg">${q.title}</h2>
+      </div>
+      <p class="opacity-85">${q.body}</p>
+      <div class="grid gap-2">
+        ${q.opts.map(([v, label, rec]) => `
+          <label class="opt flex items-start gap-3 rounded-box border border-base-content/10 p-3 cursor-pointer">
+            <input type="radio" class="radio radio-primary radio-sm mt-0.5" name="${q.id}" value="${v}" data-label="${label.replace(/<[^>]+>/g,'').replace(/"/g,'&quot;')}" ${rec ? "checked" : ""}>
+            <span class="flex-1">${label} ${rec ? '<span class="badge badge-sm badge-soft badge-success ml-1">recommended</span>' : ""}</span>
+          </label>`).join("")}
+      </div>
+      <p class="text-sm opacity-60">➡️ ${q.why}</p>
+      <input type="text" name="${q.id}-note" class="input input-sm w-full" placeholder="Optional note">
+    </div>
+  </fieldset>`).join("");
+
+function submitAll(f) {
+  const fd = new FormData(f);
+  const items = Q.map(q => {
+    const v = fd.get(q.id);
+    const input = f.querySelector(`input[name="${q.id}"][value="${v}"]`);
+    const rec = q.opts.find(o => o[2])[0] === v;
+    return { id: q.id, question: q.title, answer: input ? input.dataset.label : null, accepted_recommendation: rec, note: (fd.get(q.id + "-note") || "").trim() };
+  });
+  const extra = document.querySelector('textarea[name=extra]').value.trim();
+  const lines = items.map(i => `${i.id} ${i.question}: ${i.answer}${i.accepted_recommendation ? " (rec)" : " (CHANGED)"}${i.note ? " | note: " + i.note : ""}`);
+  if (extra) lines.push("Extra: " + extra);
+  const text = "Moves round 1 answers:\n" + lines.join("\n");
+  const status = document.getElementById("status");
+  if (window.lavish?.queuePrompt) {
+    window.lavish.queuePrompt(text + "\n\nAccount for every question ID V1–V2 when updating the design tree.", { tag: "choice", text: "Moves round 1 (V1–V2)", queueKey: "mv-round1", element: f, data: { items, extra } });
+    status.textContent = "Queued. Press Send to Agent to deliver it.";
+  } else {
+    navigator.clipboard?.writeText(text);
+    status.textContent = "Lavish isn't running, so the answers were copied to your clipboard. Paste them into the chat.";
+  }
+}
+</script>
+</body>
+</html>
