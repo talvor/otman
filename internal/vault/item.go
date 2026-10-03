@@ -152,6 +152,11 @@ func (v *Vault) ReadItemFile(f ItemFile) ([]byte, error) {
 	return os.ReadFile(filepath.Join(v.Root, filepath.FromSlash(f.Path)))
 }
 
+// WriteItemFile replaces the bytes of an Item file atomically.
+func (v *Vault) WriteItemFile(f ItemFile, data []byte) error {
+	return fsutil.WriteFile(filepath.Join(v.Root, filepath.FromSlash(f.Path)), data)
+}
+
 // ItemAt returns the Item file at the Vault-relative path p, and false
 // when p is not an Item file: outside Projects/<KEY>/, in Templates/,
 // without the <KEY>-<n> prefix, or missing.

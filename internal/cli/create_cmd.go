@@ -43,15 +43,17 @@ func (a *app) newCreateCmd() *cobra.Command {
 	return cmd
 }
 
-// createResult is a mutation result: the Item's summary and whether
-// anything changed, which for create is always true.
-type createResult struct {
+// mutationResult is the result of every mutation: the Item's summary and
+// whether anything changed. human is what a terminal shows.
+type mutationResult struct {
 	Item    itemSummary `json:"item"`
 	Changed bool        `json:"changed"`
+
+	human string
 }
 
-func (r createResult) RenderHuman(w io.Writer) error {
-	_, err := fmt.Fprintf(w, "Created %s · %s\n%s\n", r.Item.ID, r.Item.Title, r.Item.Path)
+func (r mutationResult) RenderHuman(w io.Writer) error {
+	_, err := io.WriteString(w, r.human)
 	return err
 }
 
@@ -133,7 +135,8 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 			return ioError(err)
 		}
 		summary := newItemSummary(file, item.Parse(data), data, newItemLinks(files))
-		return a.emit(createResult{summary, true}, warnings)
+		human := fmt.Sprintf("Created %s · %s\n%s\n", summary.ID, summary.Title, summary.Path)
+		return a.emit(mutationResult{summary, true, human}, warnings)
 	})
 }
 

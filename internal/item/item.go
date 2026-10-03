@@ -14,6 +14,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/talvor/otman/internal/frontmatter"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -390,23 +391,16 @@ func scalars(n *yaml.Node) []string {
 
 // SplitFrontmatter returns the YAML between a leading --- line and the next
 // --- line, and what follows it, and false when the file has none.
-func SplitFrontmatter(b []byte) (fm, rest []byte, ok bool) {
-	lines := bytes.SplitAfter(b, []byte("\n"))
-	if len(lines) == 0 || !isFence(lines[0]) {
-		return nil, b, false
-	}
-	n := len(lines[0])
-	for _, l := range lines[1:] {
-		if isFence(l) {
-			return b[len(lines[0]):n], b[n+len(l):], true
-		}
-		n += len(l)
-	}
-	return nil, b, false
-}
+func SplitFrontmatter(b []byte) (fm, rest []byte, ok bool) { return frontmatter.Split(b) }
 
-func isFence(line []byte) bool {
-	return string(bytes.TrimRight(line, "\r\n")) == "---"
+// SetStatus sets an Item file's status and its updated time to now,
+// splicing only those two keys (ADR 0006). It fails with a
+// *frontmatter.UnsafeError when the file cannot be rewritten safely.
+func SetStatus(file []byte, status string, now time.Time) ([]byte, error) {
+	return frontmatter.Splice(file, []frontmatter.Edit{
+		{Key: "status", Value: str(status)},
+		{Key: "updated", Value: timestamp(now)},
+	})
 }
 
 // splitComments splits text after the frontmatter at the comments marker
