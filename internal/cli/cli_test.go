@@ -2,10 +2,17 @@ package cli_test
 
 import "testing"
 
+// --version needs no config and honours the output format: plain text for
+// humans, the normal envelope for AXI and JSON.
 func TestVersionWithoutConfig(t *testing.T) {
 	runGolden(t, goldenCase{
-		name:  "version",
-		steps: []step{{args: []string{"--version"}}},
+		name: "version",
+		steps: []step{
+			{args: []string{"--version"}, tty: true},
+			{args: []string{"--version"}},
+			{args: []string{"--version", "--json"}, tty: true},
+			{args: []string{"-v", "--format", "human"}},
+		},
 	})
 }
 
@@ -97,6 +104,7 @@ func TestErrorFormats(t *testing.T) {
 			{args: args, tty: true},
 			{args: args},
 			{args: append(args, "--json")},
+			{args: []string{"config", "set", "co\"lour\\", "blue"}, tty: true},
 		},
 	})
 }
@@ -109,6 +117,8 @@ func TestFormatFlagErrors(t *testing.T) {
 			{args: []string{"config", "show", "--format", "xml"}},
 			{args: []string{"bogus", "--json"}},
 			{args: []string{"config", "show", "--nope", "--format=json"}},
+			{args: []string{"bogus", "--json=true"}},
+			{args: []string{"bogus", "--json", "--json=false"}, tty: true},
 		},
 	})
 }
@@ -151,6 +161,38 @@ func TestConfigSetThenShowJSON(t *testing.T) {
 			{args: []string{"config", "set", "actor", "phillip", "--json"}},
 			{args: []string{"config", "set", "project", "OTM", "--json"}},
 			{args: []string{"config", "show", "--json"}},
+		},
+	})
+}
+
+// An explicit empty --vault, --actor or --project is a usage error, but an
+// empty OTM_* variable just counts as unset and falls through to config.
+func TestEmptySettings(t *testing.T) {
+	runGolden(t, goldenCase{
+		name:   "empty-settings",
+		config: fullConfig,
+		steps: []step{
+			{args: []string{"config", "show", "--json", "--vault", ""}},
+			{args: []string{"config", "show", "--actor="}, tty: true},
+			{args: []string{"config", "show", "--project", ""}},
+			{
+				args: []string{"config", "show", "--json"},
+				env:  map[string]string{"OTM_VAULT": "", "OTM_ACTOR": "", "OTM_PROJECT": ""},
+			},
+		},
+	})
+}
+
+// Following ADR 0005, unknown config keys are read leniently with an
+// unknown_config_key warning, and config set keeps them.
+func TestUnknownConfigKeys(t *testing.T) {
+	runGolden(t, goldenCase{
+		name:   "config-unknown-keys",
+		config: "vault = \"/from/config\"\ncolour = \"blue\"\n\n[editor]\nname = \"vim\"\n",
+		steps: []step{
+			{args: []string{"config", "show", "--json"}},
+			{args: []string{"config", "show"}, tty: true},
+			{args: []string{"config", "set", "project", "OTM"}},
 		},
 	})
 }

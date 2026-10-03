@@ -33,9 +33,12 @@ func (e *Error) problem() output.Problem {
 	return p
 }
 
-func invalidArgs(msg, hint string) *Error {
-	return &Error{Exit: ExitInvalid, Code: "invalid_arguments", Message: msg, Hint: hint}
+// invalid is a failure with exit 2: invalid arguments, config or input.
+func invalid(code, msg string, details map[string]any, hint string) *Error {
+	return &Error{Exit: ExitInvalid, Code: code, Message: msg, Details: details, Hint: hint}
 }
+
+func invalidArgs(msg, hint string) *Error { return invalid("invalid_arguments", msg, nil, hint) }
 
 func ioError(err error) *Error {
 	return &Error{Exit: ExitFailure, Code: "io_error", Message: err.Error()}

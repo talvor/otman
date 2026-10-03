@@ -87,7 +87,14 @@ func runGolden(t *testing.T, gc goldenCase) {
 			IsTTY:  s.tty,
 		})
 
-		fmt.Fprintf(&transcript, "$ otman %s\n", strings.Join(s.args, " "))
+		shown := make([]string, len(s.args))
+		for i, a := range s.args {
+			shown[i] = a
+			if a == "" {
+				shown[i] = `""`
+			}
+		}
+		fmt.Fprintf(&transcript, "$ otman %s\n", strings.Join(shown, " "))
 		if len(s.env) > 0 {
 			fmt.Fprintf(&transcript, "env: %s\n", sortedEnv(s.env))
 		}

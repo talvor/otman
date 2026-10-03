@@ -102,7 +102,8 @@ func writeProblem(f Format, w io.Writer, label string, p Problem) error {
 	if f == AXI {
 		return EncodeTOON(w, map[string]any{label: p})
 	}
-	if _, err := fmt.Fprintf(w, "%s: %s\n", label, p.Message); err != nil {
+	// Human output names the stable code but leaves details to AXI and JSON.
+	if _, err := fmt.Fprintf(w, "%s[%s]: %s\n", label, p.Code, p.Message); err != nil {
 		return err
 	}
 	if p.Hint != nil {
@@ -114,8 +115,15 @@ func writeProblem(f Format, w io.Writer, label string, p Problem) error {
 }
 
 func writeJSON(w io.Writer, v any) error {
-	enc := json.NewEncoder(w)
-	enc.SetEscapeHTML(false)
+	enc := newJSONEncoder(w)
 	enc.SetIndent("", "  ")
 	return enc.Encode(v)
+}
+
+// newJSONEncoder is the one JSON encoder setup every format shares: <, >
+// and & stay literal rather than becoming \u003c and friends.
+func newJSONEncoder(w io.Writer) *json.Encoder {
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	return enc
 }

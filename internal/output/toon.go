@@ -240,8 +240,6 @@ func needsQuote(s string) bool {
 
 func quote(s string) string {
 	var b bytes.Buffer
-	enc := json.NewEncoder(&b)
-	enc.SetEscapeHTML(false)
-	_ = enc.Encode(s)
+	_ = newJSONEncoder(&b).Encode(s)
 	return strings.TrimSuffix(b.String(), "\n")
 }

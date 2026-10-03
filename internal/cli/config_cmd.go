@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
@@ -50,34 +52,32 @@ func (r configSetResult) RenderHuman(w io.Writer) error {
 	return err
 }
 
-func (a *app) configSet(key, value string) error {
-	if !config.IsKey(key) {
-		return &Error{
-			Exit: ExitInvalid, Code: "invalid_config_key",
-			Message: fmt.Sprintf("unknown config key %s", quoteArg(key)),
-			Details: map[string]any{"key": key, "allowed": config.Keys},
-			Hint:    "use one of: " + strings.Join(config.Keys, ", "),
-		}
+func (a *app) configSet(name, value string) error {
+	k, ok := config.LookupKey(name)
+	if !ok {
+		names := config.KeyNames()
+		return invalid("invalid_config_key",
+			"unknown config key "+quoteArg(name),
+			map[string]any{"key": name, "allowed": names},
+			"use one of: "+strings.Join(names, ", "))
 	}
 	if strings.TrimSpace(value) == "" {
-		return &Error{
-			Exit: ExitInvalid, Code: "invalid_config_value",
-			Message: fmt.Sprintf("%s cannot be empty", key),
-			Details: map[string]any{"key": key},
-		}
+		return invalid("invalid_config_value", k.Name+" cannot be empty",
+			map[string]any{"key": k.Name}, "")
 	}
-	if key == "vault" {
+	if k.IsPath {
 		value = a.abs(value)
 	}
 	path, err := a.configPath()
 	if err != nil {
 		return err
 	}
-	changed, err := config.Set(path, key, value)
+	file, changed, err := config.Set(path, k, value)
 	if err != nil {
 		return configLoadError(err)
 	}
-	return a.emit(configSetResult{Key: key, Value: value, Path: path, Changed: changed}, nil)
+	return a.emit(configSetResult{Key: k.Name, Value: value, Path: path, Changed: changed},
+		configWarnings(file, path))
 }
 
 // setting is one effective value in config show; both fields are null when
@@ -95,25 +95,42 @@ func newSetting(v config.Value) setting {
 	return setting{&val, &src}
 }
 
+// configShowResult has one field per config key, in display order, after
+// config_path.
 type configShowResult struct {
-	ConfigPath string  `json:"config_path"`
-	Vault      setting `json:"vault"`
-	Actor      setting `json:"actor"`
-	Project    setting `json:"project"`
+	ConfigPath string
+	Settings   []setting // parallel to config.Keys
+}
+
+func (r configShowResult) MarshalJSON() ([]byte, error) {
+	var b bytes.Buffer
+	b.WriteString(`{"config_path":`)
+	p, err := json.Marshal(r.ConfigPath)
+	if err != nil {
+		return nil, err
+	}
+	b.Write(p)
+	for i, k := range config.Keys {
+		v, err := json.Marshal(r.Settings[i])
+		if err != nil {
+			return nil, err
+		}
+		fmt.Fprintf(&b, ",%q:", k.Name)
+		b.Write(v)
+	}
+	b.WriteByte('}')
+	return b.Bytes(), nil
 }
 
 func (r configShowResult) RenderHuman(w io.Writer) error {
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(tw, "KEY\tVALUE\tSOURCE")
-	for _, row := range []struct {
-		key string
-		s   setting
-	}{{"vault", r.Vault}, {"actor", r.Actor}, {"project", r.Project}} {
+	for i, k := range config.Keys {
 		val, src := "-", "unset"
-		if row.s.Value != nil {
-			val, src = *row.s.Value, *row.s.Source
+		if s := r.Settings[i]; s.Value != nil {
+			val, src = *s.Value, *s.Source
 		}
-		fmt.Fprintf(tw, "%s\t%s\t%s\n", row.key, val, src)
+		fmt.Fprintf(tw, "%s\t%s\t%s\n", k.Name, val, src)
 	}
 	if err := tw.Flush(); err != nil {
 		return err
@@ -123,14 +140,13 @@ func (r configShowResult) RenderHuman(w io.Writer) error {
 }
 
 func (a *app) configShow() error {
-	s, path, err := a.settings()
+	s, path, warnings, err := a.settings()
 	if err != nil {
 		return err
 	}
-	return a.emit(configShowResult{
-		ConfigPath: path,
-		Vault:      newSetting(s.Vault),
-		Actor:      newSetting(s.Actor),
-		Project:    newSetting(s.Project),
-	}, nil)
+	r := configShowResult{ConfigPath: path}
+	for _, k := range config.Keys {
+		r.Settings = append(r.Settings, newSetting(s.Get(k)))
+	}
+	return a.emit(r, warnings)
 }
