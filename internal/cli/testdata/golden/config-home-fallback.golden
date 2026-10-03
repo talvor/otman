@@ -1,0 +1,49 @@
+$ otman config set actor phillip --json
+env: XDG_CONFIG_HOME=
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "key": "actor",
+    "value": "phillip",
+    "path": "$WORK/home/.config/otman/config.toml",
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman config show --json
+env: XDG_CONFIG_HOME=
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "config_path": "$WORK/home/.config/otman/config.toml",
+    "vault": {
+      "value": null,
+      "source": null
+    },
+    "actor": {
+      "value": "phillip",
+      "source": "config"
+    },
+    "project": {
+      "value": null,
+      "source": null
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+home/
+home/.config/
+home/.config/otman/
+-- home/.config/otman/config.toml --
+actor = "phillip"
+vault/

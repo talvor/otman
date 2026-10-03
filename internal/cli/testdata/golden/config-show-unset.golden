@@ -1,0 +1,52 @@
+$ otman config show --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "config_path": "$WORK/config/otman/config.toml",
+    "vault": {
+      "value": null,
+      "source": null
+    },
+    "actor": {
+      "value": null,
+      "source": null
+    },
+    "project": {
+      "value": null,
+      "source": null
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman config show --json --vault vault
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "config_path": "$WORK/config/otman/config.toml",
+    "vault": {
+      "value": "$WORK/vault",
+      "source": "flag"
+    },
+    "actor": {
+      "value": null,
+      "source": null
+    },
+    "project": {
+      "value": null,
+      "source": null
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+home/
+vault/
