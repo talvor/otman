@@ -67,10 +67,9 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 		return invalid("invalid_arguments", "--title must be a single line of UTF-8 text",
 			map[string]any{"flag": "--title"}, "")
 	}
-	kind, ok := item.ParseKind(f.kind)
-	if !ok {
-		return invalid("invalid_kind", "unknown Kind "+quoteArg(f.kind),
-			map[string]any{"kind": f.kind, "allowed": item.Kinds}, "use --kind issue, prd or spec")
+	kind, err := parseKind(f.kind)
+	if err != nil {
+		return err
 	}
 	// An explicit body, even an empty one, is stored as given; only an
 	// omitted body takes the Kind's Template.
@@ -143,8 +142,7 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 func (a *app) readBody(cmd *cobra.Command, body, bodyFile string) (string, error) {
 	fl := cmd.Flags()
 	if fl.Changed("body") && fl.Changed("body-file") {
-		return "", invalid("conflicting_flags", "--body conflicts with --body-file",
-			map[string]any{"flags": []string{"--body", "--body-file"}},
+		return "", conflictingFlags("--body", "--body-file",
 			"pass the body with either --body or --body-file, not both")
 	}
 	source := "--body"
@@ -204,39 +202,26 @@ func templateBody(v *vault.Vault, key string, kind item.Kind) (string, error) {
 	return t.Text, nil
 }
 
-// nameOrActor maps the value of a NAME|@me flag to the name to store: the
-// name as given, or the Actor for @me, which fails when no Actor is
-// configured.
-func nameOrActor(s resolved, flag, value string) (string, error) {
-	value = strings.TrimSpace(value)
-	if value == "" || strings.ContainsAny(value, "\r\n") || !utf8.ValidString(value) {
-		return "", invalid("invalid_arguments", flag+" needs a single-line UTF-8 name or @me",
-			map[string]any{"flag": flag}, "")
-	}
-	name, err := s.ResolveUser(value)
-	if errors.Is(err, config.ErrNoActor) {
-		return "", invalid("no_actor", flag+" @me needs an actor, and none is configured",
-			map[string]any{"flag": flag},
-			"pass --actor NAME, set "+config.Actor.EnvVar+", or run 'otman config set actor NAME'")
-	}
-	return name, err
-}
-
 // selectedProject is the selected Project, failing when there is none.
-func selectedProject(s resolved) (config.Value, error) {
+// altFlags name other flags that would do instead of --project, such as
+// "--all-projects", for the failure's hint.
+func selectedProject(s resolved, altFlags ...string) (config.Value, error) {
 	sel, err := s.project()
 	if err != nil {
 		return config.Value{}, err
 	}
 	if !sel.IsSet() {
-		return config.Value{}, noProject()
+		return config.Value{}, noProject(altFlags...)
 	}
 	return sel, nil
 }
 
-func noProject() error {
+// noProject reports that no Project is selected. altFlags name other flags
+// that would do instead of --project.
+func noProject(altFlags ...string) error {
+	flags := strings.Join(append([]string{"--project"}, altFlags...), " or ")
 	return invalid("no_project", "no Project selected", nil,
-		"pass --project, set "+config.Project.EnvVar+", run 'otman project link KEY', or 'otman config set project KEY'")
+		"pass "+flags+", set "+config.Project.EnvVar+", run 'otman project link KEY', or 'otman config set project KEY'")
 }
 
 // requireProject fails with project_not_found unless Project key exists.

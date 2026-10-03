@@ -40,6 +40,13 @@ func invalid(code, msg string, details map[string]any, hint string) *Error {
 
 func invalidArgs(msg, hint string) *Error { return invalid("invalid_arguments", msg, nil, hint) }
 
+// conflictingFlags reports that flag and other were passed together but
+// exclude each other.
+func conflictingFlags(flag, other, hint string) *Error {
+	return invalid("conflicting_flags", flag+" conflicts with "+other,
+		map[string]any{"flags": []string{flag, other}}, hint)
+}
+
 func ioError(err error) *Error {
 	return &Error{Exit: ExitFailure, Code: "io_error", Message: err.Error()}
 }

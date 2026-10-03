@@ -131,11 +131,7 @@ func (d viewDisplay) RenderHuman(w io.Writer) error {
 	if it.Assignee != nil {
 		assignment = "assigned to " + *it.Assignee
 	}
-	kind := "-"
-	if it.Kind != nil {
-		kind = string(*it.Kind)
-	}
-	fmt.Fprintf(&b, "%s · %s · %s\n", kind, orDash(it.Status), assignment)
+	fmt.Fprintf(&b, "%s · %s · %s\n", kindOrDash(it.Kind), orDash(it.Status), assignment)
 	if len(it.Labels) > 0 {
 		fmt.Fprintf(&b, "Labels: %s\n", strings.Join(it.Labels, ", "))
 	}
@@ -200,6 +196,14 @@ func orDash(s *string) string {
 		return "-"
 	}
 	return *s
+}
+
+// kindOrDash names an Item's Kind for a human, or "-" when it has none.
+func kindOrDash(k *item.Kind) string {
+	if k == nil {
+		return "-"
+	}
+	return string(*k)
 }
 
 func withNewline(s string) string {

@@ -1,0 +1,465 @@
+$ otman list --state done --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_state",
+    "message": "unknown state \"done\"",
+    "details": {
+      "allowed": [
+        "open",
+        "closed",
+        "all"
+      ],
+      "state": "done"
+    },
+    "hint": "use --state open, closed or all"
+  }
+}
+
+$ otman list --state ""
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[invalid_state]: unknown state ""
+hint: use --state open, closed or all
+
+$ otman list --kind bug --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_kind",
+    "message": "unknown Kind \"bug\"",
+    "details": {
+      "allowed": [
+        "issue",
+        "prd",
+        "spec"
+      ],
+      "kind": "bug"
+    },
+    "hint": "use --kind issue, prd or spec"
+  }
+}
+
+$ otman list --kind ""
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_kind
+  message: "unknown Kind \"\""
+  details:
+    allowed[3]: issue,prd,spec
+    kind: ""
+  hint: "use --kind issue, prd or spec"
+
+$ otman list --assignee talvor --unassigned --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "conflicting_flags",
+    "message": "--assignee conflicts with --unassigned",
+    "details": {
+      "flags": [
+        "--assignee",
+        "--unassigned"
+      ]
+    },
+    "hint": "pass either --assignee or --unassigned, not both"
+  }
+}
+
+$ otman list --assignee @me --unassigned
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[conflicting_flags]: --assignee conflicts with --unassigned
+hint: pass either --assignee or --unassigned, not both
+
+$ otman list --assignee @me --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "no_actor",
+    "message": "--assignee @me needs an actor, and none is configured",
+    "details": {
+      "flag": "--assignee"
+    },
+    "hint": "pass --actor NAME, set OTM_ACTOR, or run 'otman config set actor NAME'"
+  }
+}
+
+$ otman list --assignee   --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "--assignee needs a single-line UTF-8 name or @me",
+    "details": {
+      "flag": "--assignee"
+    },
+    "hint": null
+  }
+}
+
+$ otman list --search "" --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "--search cannot be empty",
+    "details": {
+      "flag": "--search"
+    },
+    "hint": "pass the text to search for, or omit --search"
+  }
+}
+
+$ otman list --all-projects --project WEB --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "conflicting_flags",
+    "message": "--all-projects conflicts with --project",
+    "details": {
+      "flags": [
+        "--all-projects",
+        "--project"
+      ]
+    },
+    "hint": "pass either --all-projects or --project, not both"
+  }
+}
+
+$ otman list --all --limit 5 --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "conflicting_flags",
+    "message": "--all conflicts with --limit",
+    "details": {
+      "flags": [
+        "--all",
+        "--limit"
+      ]
+    },
+    "hint": "pass either --all or --limit/--offset"
+  }
+}
+
+$ otman list --all --offset 1
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[conflicting_flags]: --all conflicts with --offset
+hint: pass either --all or --limit/--offset
+
+$ otman list --limit 0 --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "--limit must be a positive integer",
+    "details": {
+      "flag": "--limit",
+      "value": 0
+    },
+    "hint": null
+  }
+}
+
+$ otman list --limit -3
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_arguments
+  message: "--limit must be a positive integer"
+  details:
+    flag: "--limit"
+    value: -3
+  hint: null
+
+$ otman list --offset -1 --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "--offset must be zero or more",
+    "details": {
+      "flag": "--offset",
+      "value": -1
+    },
+    "hint": null
+  }
+}
+
+$ otman list --limit many --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "invalid argument \"many\" for \"--limit\" flag: strconv.ParseInt: parsing \"many\": invalid syntax",
+    "details": null,
+    "hint": "run 'otman --help' for usage"
+  }
+}
+
+$ otman list OTM-1 --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "unknown command \"OTM-1\" for \"otman list\"",
+    "details": null,
+    "hint": "run 'otman --help' for usage"
+  }
+}
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+vault/
+vault/Projects/
+vault/Projects/AAA/
+-- vault/Projects/AAA/AAA.md --
+---
+name: first
+kind: project
+---
+vault/Projects/AAA/Issues/
+-- vault/Projects/AAA/Issues/AAA-1 Set up the repo.md --
+---
+id: AAA-1
+title: Set up the repo
+kind: issue
+status: open
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Handle sync collisions.md --
+---
+id: OTM-1
+title: Handle sync collisions
+kind: issue
+status: open
+parent: null
+blocked_by: []
+labels: []
+assignee: agent-b
+---
+Detect duplicate numbers and report both paths.
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+A needle only in a comment.
+-- vault/Projects/OTM/Issues/OTM-10 Sync tens after nines.md --
+---
+id: OTM-10
+title: Sync tens after nines
+kind: issue
+status: open
+parent: null
+blocked_by: []
+labels: []
+assignee: Talvor
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-4 Status bar.md --
+---
+id: OTM-4
+title: Status bar
+kind: issue
+status: open
+parent: null
+blocked_by: []
+labels: []
+assignee: talvor
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-5 No status.md --
+---
+id: OTM-5
+title: No status
+kind: issue
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-6 Odd status.md --
+---
+id: OTM-6
+title: Odd status
+kind: issue
+status: wip
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-7 Unreadable.md --
+---
+status: [open
+---
+Sync body.
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/OTM/PRDs/
+-- vault/Projects/OTM/PRDs/OTM-3 Why a tracker.md --
+---
+id: OTM-3
+title: Why a tracker
+kind: prd
+status: open
+parent: "[[OTM-2 Item file format]]"
+blocked_by:
+  - "[[OTM-1 Handle sync collisions]]"
+  - "[[OTM-99 Gone]]"
+labels: [needs-triage]
+assignee: null
+---
+Agents need somewhere to put work. RESYNC on wake.
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/PRDs/OTM-4 Status bar copy.md --
+---
+id: OTM-4
+title: Status bar copy
+kind: prd
+status: closed
+parent: null
+blocked_by: []
+labels: []
+assignee: talvor
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/OTM/Specs/
+-- vault/Projects/OTM/Specs/OTM-2 Item file format.md --
+---
+id: OTM-2
+title: Item file format
+kind: spec
+status: closed
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+---
+Frontmatter, body and comments.
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Specs/OTM-9 Paging spec.md --
+---
+id: OTM-9
+title: Paging spec
+kind: spec
+status: open
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/OTM/Templates/
+-- vault/Projects/OTM/Templates/OTM-50 Sample.md --
+---
+status: open
+---
+not an Item
+vault/Projects/WEB/
+vault/Projects/WEB/Issues/
+-- vault/Projects/WEB/Issues/WEB-2 Fix the logo.md --
+---
+id: WEB-2
+title: Fix the logo
+kind: issue
+status: closed
+parent: null
+blocked_by: []
+labels: []
+assignee: talvor
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/WEB/PRDs/
+-- vault/Projects/WEB/PRDs/WEB-1 Landing page.md --
+---
+id: WEB-1
+title: Landing page
+kind: prd
+status: open
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+---
+Explain otman in one screen.
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/WEB/WEB.md --
+---
+name: otman website
+kind: project
+---
