@@ -51,8 +51,12 @@ type listResult struct {
 }
 
 func (r listResult) RenderHuman(w io.Writer) error {
-	if r.Total == 0 {
+	switch {
+	case r.Total == 0:
 		_, err := fmt.Fprintln(w, "No Items match")
+		return err
+	case r.Count == 0:
+		_, err := fmt.Fprintf(w, "No Items at --offset %d; %d match\n", r.offset, r.Total)
 		return err
 	}
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)

@@ -101,3 +101,25 @@ func TestListSearch(t *testing.T) {
 		},
 	})
 }
+
+// list pages like every collection: 50 by default, --limit and --offset
+// over the sorted, filtered Items, or --all. Paging past the end is an
+// empty page, not an error.
+func TestListPaging(t *testing.T) {
+	runGolden(t, goldenCase{
+		name:    "list-paging",
+		fixture: "list",
+		files:   withOTM(nil),
+		steps: []step{
+			{args: []string{"list", "--limit", "2"}, tty: true},
+			{args: []string{"list", "--limit", "2", "--offset", "2"}, tty: true},
+			{args: []string{"list", "--limit", "2", "--offset", "4", "--json"}},
+			{args: []string{"list", "--limit", "2", "--offset", "2"}},
+			{args: []string{"list", "--offset", "5", "--json"}},
+			{args: []string{"list", "--offset", "99"}, tty: true},
+			{args: []string{"list", "--limit", "9223372036854775807", "--offset", "6", "--state", "all", "--all-projects", "--json"}},
+			{args: []string{"list", "--all", "--all-projects", "--state", "all"}, tty: true},
+			{args: []string{"list", "--limit", "1", "--all-projects", "--kind", "prd", "--json"}},
+		},
+	})
+}
