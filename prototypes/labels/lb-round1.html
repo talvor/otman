@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en" data-theme="luxury">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Labels: Round 1</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :where(.grid, .flex) > * { min-width: 0; }
+  :where(p, h1, h2, h3, li, .badge, label) { overflow-wrap: anywhere; }
+  .opt:has(input:checked) { border-color: var(--color-primary); background: color-mix(in oklab, var(--color-primary) 10%, transparent); }
+</style>
+</head>
+<body class="bg-base-100 text-base-content min-h-screen">
+<main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
+
+<header class="space-y-2">
+  <p class="text-sm uppercase tracking-widest opacity-60">wayfinder · work the map · Label vocabulary</p>
+  <h1 class="text-3xl font-bold">Labels, Round 1</h1>
+  <p class="opacity-80">Already fixed: <code>labels</code> is a flat List property (not Obsidian <code>tags</code>), the CLI has repeatable <code>--add-label</code>/<code>--remove-label</code>/<code>--label</code>/<code>--without-label</code>/<code>--unlabeled</code>, and the tracker template needs <code>wayfinder:*</code> plus the five triage labels to work, <code>:</code> included. Recommendations are pre-selected.</p>
+</header>
+
+<form id="round" class="space-y-5" onsubmit="event.preventDefault(); submitAll(event.currentTarget);">
+</form>
+
+<div class="card card-border bg-base-200">
+  <div class="card-body gap-3">
+    <h2 class="card-title text-lg">Anything the round missed?</h2>
+    <div data-lavish-question="extra">
+      <textarea name="extra" class="textarea w-full" rows="3" placeholder="Optional"></textarea>
+    </div>
+    <div class="card-actions items-center justify-between">
+      <span id="status" class="text-sm opacity-70" role="status" aria-live="polite">Nothing queued yet.</span>
+      <button form="round" type="submit" class="btn btn-primary">Submit all answers</button>
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+const Q = [
+  { id: "L1", title: "Free-form or a configured vocabulary?",
+    body: "<b>Free-form:</b> any well-formed label is accepted, and the vocabulary is whatever is in use. <b>Configured:</b> each Project declares its labels (for example in the Project note) and unknown labels are rejected, so the triage labels must be seeded at <code>project create</code>, and hand edits in Obsidian can introduce labels that aren't declared. The real risk with free-form is typos: <code>ready-for-agnet</code> silently creates a bucket that triage never looks at.",
+    opts: [["free", "Free-form, plus a derived <code>otman label list</code> (labels in use, with counts, per Project or <code>--all-projects</code>) so stray labels are visible. Nothing is seeded", true],
+           ["configured", "A configured per-Project vocabulary in the Project note, seeded with the triage and wayfinder labels; unknown labels are rejected"],
+           ["hybrid", "Free-form, with an optional declared list in the Project note: warn on undeclared labels, never reject"]],
+    why: "Nothing to seed, sync or keep in step with hand edits, and the tracker template works on day one. Typos are what Q3 in the next round will catch." },
+  { id: "L2", title: "Label syntax and case",
+    body: "Labels are stored as YAML strings, shown in Bases group-by, and typed on the command line. Teams may have their own triage strings (<code>bug:triage</code>).",
+    opts: [["strict", "Case-insensitive: stored and matched in lowercase, and otman lowercases on write. Pattern <code>[a-z0-9][a-z0-9._:/-]*</code>, max 64 characters, no spaces. Anything else fails with exit 2 <code>invalid_label</code>", true],
+           ["sensitive", "Same character set, but case-sensitive"],
+           ["any", "Any non-empty string without newlines, case-sensitive"]],
+    why: "Lowercasing removes a whole class of duplicate buckets (<code>Needs-Triage</code> vs <code>needs-triage</code>), and the character set covers every label the skills use, with no shell quoting needed." },
+];
+
+const form = document.getElementById("round");
+form.innerHTML = Q.map(q => `
+  <fieldset class="card card-border bg-base-200" data-lavish-question="${q.id}">
+    <div class="card-body gap-3">
+      <legend class="sr-only">${q.id} ${q.title}</legend>
+      <div class="flex items-baseline gap-3">
+        <span class="badge badge-primary badge-outline font-mono">${q.id}</span>
+        <h2 class="card-title text-lg">${q.title}</h2>
+      </div>
+      <p class="opacity-85">${q.body}</p>
+      <div class="grid gap-2">
+        ${q.opts.map(([v, label, rec]) => `
+          <label class="opt flex items-start gap-3 rounded-box border border-base-content/10 p-3 cursor-pointer">
+            <input type="radio" class="radio radio-primary radio-sm mt-0.5" name="${q.id}" value="${v}" data-label="${label.replace(/<[^>]+>/g,'').replace(/"/g,'&quot;')}" ${rec ? "checked" : ""}>
+            <span class="flex-1">${label} ${rec ? '<span class="badge badge-sm badge-soft badge-success ml-1">recommended</span>' : ""}</span>
+          </label>`).join("")}
+      </div>
+      <p class="text-sm opacity-60">➡️ ${q.why}</p>
+      <input type="text" name="${q.id}-note" class="input input-sm w-full" placeholder="Optional note">
+    </div>
+  </fieldset>`).join("");
+
+function submitAll(f) {
+  const fd = new FormData(f);
+  const items = Q.map(q => {
+    const v = fd.get(q.id);
+    const input = f.querySelector(`input[name="${q.id}"][value="${v}"]`);
+    const rec = q.opts.find(o => o[2])[0] === v;
+    return { id: q.id, question: q.title, answer: input ? input.dataset.label : null, accepted_recommendation: rec, note: (fd.get(q.id + "-note") || "").trim() };
+  });
+  const extra = document.querySelector('textarea[name=extra]').value.trim();
+  const lines = items.map(i => `${i.id} ${i.question}: ${i.answer}${i.accepted_recommendation ? " (rec)" : " (CHANGED)"}${i.note ? " | note: " + i.note : ""}`);
+  if (extra) lines.push("Extra: " + extra);
+  const text = "Labels round 1 answers:\n" + lines.join("\n");
+  const status = document.getElementById("status");
+  if (window.lavish?.queuePrompt) {
+    window.lavish.queuePrompt(text + "\n\nAccount for every question ID L1–L2 when updating the design tree.", { tag: "choice", text: "Labels round 1 (L1–L2)", queueKey: "lb-round1", element: f, data: { items, extra } });
+    status.textContent = "Queued. Press Send to Agent to deliver it.";
+  } else {
+    navigator.clipboard?.writeText(text);
+    status.textContent = "Lavish isn't running, so the answers were copied to your clipboard. Paste them into the chat.";
+  }
+}
+</script>
+</body>
+</html>

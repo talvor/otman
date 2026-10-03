@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en" data-theme="luxury">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Labels: Round 2</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :where(.grid, .flex) > * { min-width: 0; }
+  :where(p, h1, h2, h3, li, .badge, label) { overflow-wrap: anywhere; }
+  .opt:has(input:checked) { border-color: var(--color-primary); background: color-mix(in oklab, var(--color-primary) 10%, transparent); }
+</style>
+</head>
+<body class="bg-base-100 text-base-content min-h-screen">
+<main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
+
+<header class="space-y-2">
+  <p class="text-sm uppercase tracking-widest opacity-60">wayfinder · work the map · Label vocabulary</p>
+  <h1 class="text-3xl font-bold">Labels, Round 2</h1>
+  <p class="opacity-80">Settled: <b>free-form labels</b> with a derived <code>otman label list</code>, nothing seeded · <b>lowercase</b>, pattern <code>[a-z0-9][a-z0-9._:/-]*</code>, max 64 characters, <code>invalid_label</code> otherwise. These questions follow from that. Recommendations are pre-selected.</p>
+</header>
+
+<form id="round" class="space-y-5" onsubmit="event.preventDefault(); submitAll(event.currentTarget);">
+</form>
+
+<div class="card card-border bg-base-200">
+  <div class="card-body gap-3">
+    <h2 class="card-title text-lg">Anything the round missed?</h2>
+    <div data-lavish-question="extra">
+      <textarea name="extra" class="textarea w-full" rows="3" placeholder="Optional"></textarea>
+    </div>
+    <div class="card-actions items-center justify-between">
+      <span id="status" class="text-sm opacity-70" role="status" aria-live="polite">Nothing queued yet.</span>
+      <button form="round" type="submit" class="btn btn-primary">Submit all answers</button>
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+const Q = [
+  { id: "M1", title: "How are typos caught?",
+    body: "With no vocabulary, <code>edit OTM-4 --add-label ready-for-agnet</code> is valid, and so is <code>list --label ready-for-agnet</code>, which returns nothing.",
+    opts: [["both", "Warnings, never failures: a write that introduces a label no other Item in the Project uses gets <code>new_label</code>; a <code>--label</code>/<code>--without-label</code> filter naming a label nobody in scope uses gets <code>unknown_label</code>. Both list the closest labels already in use", true],
+           ["query", "Only the query-side <code>unknown_label</code> warning"],
+           ["none", "No warnings; <code>label list</code> is the check"]],
+    why: "This flags a typo the moment it happens, on both sides, and agents see it in the JSON <code>warnings</code> without the flow breaking." },
+  { id: "M2", title: "Labels hand-edited in Obsidian that break the rules",
+    body: "Someone types <code>Needs-Triage</code> or <code>needs triage</code> into the <code>labels</code> property.",
+    opts: [["tolerant", "Read tolerantly: match and output in lowercase, and warn <code>invalid_label</code> with the path. The next otman write to that Item lowercases and dedupes the labels that are then valid. Labels still invalid (spaces) are kept and warned about; repairing them belongs to Hand edits, drift diagnostics and repair", true],
+           ["strict", "Treat the Item as inconsistent data (exit 4) until it's fixed"],
+           ["ignore", "Ignore invalid labels entirely"]],
+    why: "One bad label never breaks queries, case drift heals the next time otman writes, and nothing is destroyed silently." },
+  { id: "M3", title: "What does <code>label list</code> return, and is there a bulk rename?",
+    body: "Fixing a typo or a renamed triage role across many Items is otherwise one <code>edit</code> per Item.",
+    opts: [["list-only", "<code>label list [--all-projects] [paging]</code> returns <code>{name, open, total}</code> sorted by name. No rename in v1: a script over <code>list --label X --json</code> does it", true],
+           ["rename", "Also <code>label rename OLD NEW [--all-projects]</code>: a bulk edit under one lock, with <code>changed</code> counts"]],
+    why: "Renames are rare in a free-form model, and the existing primitives already compose." },
+];
+
+const form = document.getElementById("round");
+form.innerHTML = Q.map(q => `
+  <fieldset class="card card-border bg-base-200" data-lavish-question="${q.id}">
+    <div class="card-body gap-3">
+      <legend class="sr-only">${q.id} ${q.title}</legend>
+      <div class="flex items-baseline gap-3">
+        <span class="badge badge-primary badge-outline font-mono">${q.id}</span>
+        <h2 class="card-title text-lg">${q.title}</h2>
+      </div>
+      <p class="opacity-85">${q.body}</p>
+      <div class="grid gap-2">
+        ${q.opts.map(([v, label, rec]) => `
+          <label class="opt flex items-start gap-3 rounded-box border border-base-content/10 p-3 cursor-pointer">
+            <input type="radio" class="radio radio-primary radio-sm mt-0.5" name="${q.id}" value="${v}" data-label="${label.replace(/<[^>]+>/g,'').replace(/"/g,'&quot;')}" ${rec ? "checked" : ""}>
+            <span class="flex-1">${label} ${rec ? '<span class="badge badge-sm badge-soft badge-success ml-1">recommended</span>' : ""}</span>
+          </label>`).join("")}
+      </div>
+      <p class="text-sm opacity-60">➡️ ${q.why}</p>
+      <input type="text" name="${q.id}-note" class="input input-sm w-full" placeholder="Optional note">
+    </div>
+  </fieldset>`).join("");
+
+function submitAll(f) {
+  const fd = new FormData(f);
+  const items = Q.map(q => {
+    const v = fd.get(q.id);
+    const input = f.querySelector(`input[name="${q.id}"][value="${v}"]`);
+    const rec = q.opts.find(o => o[2])[0] === v;
+    return { id: q.id, question: q.title, answer: input ? input.dataset.label : null, accepted_recommendation: rec, note: (fd.get(q.id + "-note") || "").trim() };
+  });
+  const extra = document.querySelector('textarea[name=extra]').value.trim();
+  const lines = items.map(i => `${i.id} ${i.question}: ${i.answer}${i.accepted_recommendation ? " (rec)" : " (CHANGED)"}${i.note ? " | note: " + i.note : ""}`);
+  if (extra) lines.push("Extra: " + extra);
+  const text = "Labels round 2 answers:\n" + lines.join("\n");
+  const status = document.getElementById("status");
+  if (window.lavish?.queuePrompt) {
+    window.lavish.queuePrompt(text + "\n\nAccount for every question ID M1–M3 when updating the design tree.", { tag: "choice", text: "Labels round 2 (M1–M3)", queueKey: "lb-round2", element: f, data: { items, extra } });
+    status.textContent = "Queued. Press Send to Agent to deliver it.";
+  } else {
+    navigator.clipboard?.writeText(text);
+    status.textContent = "Lavish isn't running, so the answers were copied to your clipboard. Paste them into the chat.";
+  }
+}
+</script>
+</body>
+</html>
