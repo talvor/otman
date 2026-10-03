@@ -1,0 +1,5 @@
+# PROTOTYPE. Project registry would be canonical in otman.db (ADR 0001); shown here for readability.
+[projects.OTM]
+name = "otman"
+[projects.WEB]
+name = "otman website"

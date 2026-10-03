@@ -134,7 +134,19 @@ def variant_c(root):
     config(root, ".otman")
     readme(root, "# Variant C: flat Items/, title in filename\n\n- `Items/<KEY>-n <Title>.md`, Project set by the `project:` property\n- Readable file explorer, but every title edit is a rename (otman must rewrite links itself; renames on disk don't update links)\n- Links look like `[[OTM-4 Allocate item numbers]]`\n")
 
-for v, fn in [("variant-a", variant_a), ("variant-b", variant_b), ("variant-c", variant_c)]:
+def variant_d(root):
+    """Chosen direction: B's Project/Kind folders, plus ID + title filenames (links carry the title)."""
+    sub = {"issue": "Issues", "prd": "PRDs", "spec": "Specs"}
+    name = {it["id"]: f"{it['id']} {it['title']}" for it in ITEMS}
+    for it in ITEMS:
+        key = it["id"].split("-")[0]
+        write(os.path.join(root, "Projects", key, sub[it["kind"]], name[it["id"]] + ".md"),
+              fm(it, link=lambda i: name[i]) + body(it))
+    for key in PROJECTS: bases(root, f'file.inFolder("Projects/{key}")', key)
+    config(root, ".otman")
+    readme(root, "# Variant D (chosen direction): B + title in filename\n\n- `Projects/<KEY>/{Issues,PRDs,Specs}/<KEY>-n <Title>.md`\n- Links: `[[OTM-4 Allocate item numbers]]`\n- Hidden `.otman/`\n")
+
+for v, fn in [("variant-a", variant_a), ("variant-b", variant_b), ("variant-c", variant_c), ("variant-d", variant_d)]:
     root = os.path.join(HERE, v)
     shutil.rmtree(root, ignore_errors=True)
     fn(root)
