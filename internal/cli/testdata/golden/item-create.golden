@@ -130,6 +130,15 @@ assignee: null
 created: 2026-01-02T03:04:05Z
 updated: 2026-01-02T03:04:05Z
 ---
+## Summary
+
+<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->
+
+## Acceptance criteria
+
+<!-- A checklist that tells anyone, human or agent, when this is done. -->
+- [ ] 
+
 <!-- otman:comments -->
 ## Comments
 -- vault/Projects/OTM/Issues/OTM-4 Body from a file.md --

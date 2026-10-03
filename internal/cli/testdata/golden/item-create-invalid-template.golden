@@ -1,0 +1,197 @@
+$ otman create --title Project marker --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_template",
+    "message": "the Template Projects/OTM/Templates/issue.md contains the reserved line <!-- otman:comments -->",
+    "details": {
+      "marker": "<!-- otman:comments -->",
+      "path": "Projects/OTM/Templates/issue.md"
+    },
+    "hint": "remove that line from the Template; otman uses it to mark where comments begin"
+  }
+}
+
+$ otman create --title Vault marker --kind prd
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[invalid_template]: the Template Templates/otman/prd.md contains the reserved line <!-- otman:comments -->
+hint: remove that line from the Template; otman uses it to mark where comments begin
+
+$ otman create --title Explicit body skips it --body Fine.
+exit: 0
+-- stdout --
+item:
+  id: OTM-1
+  title: Explicit body skips it
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-1 Explicit body skips it.md
+  rev: f1d284086a70
+changed: true
+-- stderr --
+
+$ otman create --title No template skips it --kind prd --no-template
+exit: 0
+-- stdout --
+item:
+  id: OTM-2
+  title: No template skips it
+  kind: prd
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/PRDs/OTM-2 No template skips it.md
+  rev: fa0284e12e2d
+changed: true
+-- stderr --
+
+$ otman create --title Inline marker --kind spec
+exit: 0
+-- stdout --
+item:
+  id: OTM-3
+  title: Inline marker
+  kind: spec
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Specs/OTM-3 Inline marker.md
+  rev: 1b45bce1ed78
+changed: true
+-- stderr --
+
+$ otman create --title Not UTF-8 --project WEB --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_template",
+    "message": "the Template Projects/WEB/Templates/issue.md is not valid UTF-8",
+    "details": {
+      "path": "Projects/WEB/Templates/issue.md"
+    },
+    "hint": "save the Template as UTF-8 Markdown"
+  }
+}
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Explicit body skips it.md --
+---
+id: OTM-1
+title: Explicit body skips it
+aliases:
+  - Explicit body skips it
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+Fine.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/OTM/PRDs/
+-- vault/Projects/OTM/PRDs/OTM-2 No template skips it.md --
+---
+id: OTM-2
+title: No template skips it
+aliases:
+  - No template skips it
+kind: prd
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/OTM/Specs/
+-- vault/Projects/OTM/Specs/OTM-3 Inline marker.md --
+---
+id: OTM-3
+title: Inline marker
+aliases:
+  - Inline marker
+kind: spec
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments --> inline is fine
+
+<!-- otman:comments -->
+## Comments
+vault/Projects/OTM/Templates/
+-- vault/Projects/OTM/Templates/issue.md --
+## Summary
+
+<!-- otman:comments -->
+vault/Projects/WEB/
+vault/Projects/WEB/Templates/
+-- vault/Projects/WEB/Templates/issue.md --
+## Summary ÿ
+-- vault/Projects/WEB/WEB.md --
+---
+name: web
+kind: project
+---
+vault/Templates/
+vault/Templates/otman/
+-- vault/Templates/otman/issue.md --
+## Vault issue, shadowed
+-- vault/Templates/otman/prd.md --
+## Problem
+<!-- otman:comments -->
+-- vault/Templates/otman/spec.md --
+<!-- otman:comments --> inline is fine

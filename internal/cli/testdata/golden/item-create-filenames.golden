@@ -14,7 +14,7 @@ exit: 0
       "parent": null,
       "blocked_by": [],
       "path": "Projects/OTM/Issues/OTM-1 What Quoted tags pipes ref abc star angle hidden link.md",
-      "rev": "c3d4a7dac308"
+      "rev": "ef397a821a5a"
     },
     "changed": true
   },
@@ -38,7 +38,7 @@ exit: 0
       "parent": null,
       "blocked_by": [],
       "path": "Projects/OTM/Issues/OTM-2 lots of space here.md",
-      "rev": "daf6b1595655"
+      "rev": "772ccf3bbdc8"
     },
     "changed": true
   },
@@ -62,7 +62,7 @@ exit: 0
       "parent": null,
       "blocked_by": [],
       "path": "Projects/OTM/Issues/OTM-3 Allocate item numbers under the Vault lock so that two.md",
-      "rev": "fd99bee5760e"
+      "rev": "6d03dd32c782"
     },
     "changed": true
   },
@@ -86,7 +86,7 @@ exit: 0
       "parent": null,
       "blocked_by": [],
       "path": "Projects/OTM/Issues/OTM-4 Exactly sixty characters long, which needs no cutting at all.md",
-      "rev": "10e6826a0d37"
+      "rev": "2ea3e5310fb3"
     },
     "changed": true
   },
@@ -110,7 +110,7 @@ exit: 0
       "parent": null,
       "blocked_by": [],
       "path": "Projects/OTM/Issues/OTM-5 Supercalifragilisticexpialidocious-and-then-some-more-words-.md",
-      "rev": "56894578ce71"
+      "rev": "e3c2af554c57"
     },
     "changed": true
   },
@@ -134,7 +134,7 @@ exit: 0
       "parent": null,
       "blocked_by": [],
       "path": "Projects/OTM/Issues/OTM-6 Ünïcödé títlé wïth áccénts thát rüns pást thé sïxty.md",
-      "rev": "040ef844cd7f"
+      "rev": "f0413f4616ad"
     },
     "changed": true
   },
@@ -158,7 +158,7 @@ exit: 0
       "parent": null,
       "blocked_by": [],
       "path": "Projects/OTM/Issues/OTM-7 nested.md",
-      "rev": "fab7e05427b2"
+      "rev": "e5f7b722ee98"
     },
     "changed": true
   },
@@ -182,7 +182,7 @@ exit: 0
       "parent": null,
       "blocked_by": [],
       "path": "Projects/OTM/Issues/OTM-8.md",
-      "rev": "a45146605e33"
+      "rev": "8557431f04a9"
     },
     "changed": true
   },
@@ -223,6 +223,15 @@ assignee: null
 created: 2026-01-02T03:04:05Z
 updated: 2026-01-02T03:04:05Z
 ---
+## Summary
+
+<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->
+
+## Acceptance criteria
+
+<!-- A checklist that tells anyone, human or agent, when this is done. -->
+- [ ] 
+
 <!-- otman:comments -->
 ## Comments
 -- vault/Projects/OTM/Issues/OTM-2 lots of space here.md --
@@ -241,6 +250,15 @@ assignee: null
 created: 2026-01-02T03:04:05Z
 updated: 2026-01-02T03:04:05Z
 ---
+## Summary
+
+<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->
+
+## Acceptance criteria
+
+<!-- A checklist that tells anyone, human or agent, when this is done. -->
+- [ ] 
+
 <!-- otman:comments -->
 ## Comments
 -- vault/Projects/OTM/Issues/OTM-3 Allocate item numbers under the Vault lock so that two.md --
@@ -259,6 +277,15 @@ assignee: null
 created: 2026-01-02T03:04:05Z
 updated: 2026-01-02T03:04:05Z
 ---
+## Summary
+
+<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->
+
+## Acceptance criteria
+
+<!-- A checklist that tells anyone, human or agent, when this is done. -->
+- [ ] 
+
 <!-- otman:comments -->
 ## Comments
 -- vault/Projects/OTM/Issues/OTM-4 Exactly sixty characters long, which needs no cutting at all.md --
@@ -277,6 +304,15 @@ assignee: null
 created: 2026-01-02T03:04:05Z
 updated: 2026-01-02T03:04:05Z
 ---
+## Summary
+
+<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->
+
+## Acceptance criteria
+
+<!-- A checklist that tells anyone, human or agent, when this is done. -->
+- [ ] 
+
 <!-- otman:comments -->
 ## Comments
 -- vault/Projects/OTM/Issues/OTM-5 Supercalifragilisticexpialidocious-and-then-some-more-words-.md --
@@ -295,6 +331,15 @@ assignee: null
 created: 2026-01-02T03:04:05Z
 updated: 2026-01-02T03:04:05Z
 ---
+## Summary
+
+<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->
+
+## Acceptance criteria
+
+<!-- A checklist that tells anyone, human or agent, when this is done. -->
+- [ ] 
+
 <!-- otman:comments -->
 ## Comments
 -- vault/Projects/OTM/Issues/OTM-6 Ünïcödé títlé wïth áccénts thát rüns pást thé sïxty.md --
@@ -313,6 +358,15 @@ assignee: null
 created: 2026-01-02T03:04:05Z
 updated: 2026-01-02T03:04:05Z
 ---
+## Summary
+
+<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->
+
+## Acceptance criteria
+
+<!-- A checklist that tells anyone, human or agent, when this is done. -->
+- [ ] 
+
 <!-- otman:comments -->
 ## Comments
 -- vault/Projects/OTM/Issues/OTM-7 nested.md --
@@ -331,6 +385,15 @@ assignee: null
 created: 2026-01-02T03:04:05Z
 updated: 2026-01-02T03:04:05Z
 ---
+## Summary
+
+<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->
+
+## Acceptance criteria
+
+<!-- A checklist that tells anyone, human or agent, when this is done. -->
+- [ ] 
+
 <!-- otman:comments -->
 ## Comments
 -- vault/Projects/OTM/Issues/OTM-8.md --
@@ -349,6 +412,15 @@ assignee: null
 created: 2026-01-02T03:04:05Z
 updated: 2026-01-02T03:04:05Z
 ---
+## Summary
+
+<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->
+
+## Acceptance criteria
+
+<!-- A checklist that tells anyone, human or agent, when this is done. -->
+- [ ] 
+
 <!-- otman:comments -->
 ## Comments
 -- vault/Projects/OTM/OTM.md --

@@ -12,7 +12,7 @@ item:
   parent: null
   blocked_by[0]:
   path: Projects/OTM/Issues/OTM-1 From the flag.md
-  rev: 2b59062291a6
+  rev: 212fc72d3aa2
 changed: true
 -- stderr --
 
@@ -30,7 +30,7 @@ item:
   parent: null
   blocked_by[0]:
   path: Projects/OTM/Issues/OTM-2 From the environment.md
-  rev: 7893bc3ee0e4
+  rev: 5178f79fc54a
 changed: true
 -- stderr --
 
@@ -48,7 +48,7 @@ item:
   parent: null
   blocked_by[0]:
   path: Projects/OTM/Issues/OTM-3 No actor.md
-  rev: 32f312399b94
+  rev: f63d0a4bfacb
 changed: true
 -- stderr --
 
@@ -86,7 +86,7 @@ item:
   parent: null
   blocked_by[0]:
   path: Projects/OTM/Issues/OTM-4 From config.md
-  rev: 88705f8cc95c
+  rev: 83ba22d4a50c
 changed: true
 -- stderr --
 
@@ -124,6 +124,15 @@ assignee: flag-actor
 created: 2026-01-02T03:04:05Z
 updated: 2026-01-02T03:04:05Z
 ---
+## Summary
+
+<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->
+
+## Acceptance criteria
+
+<!-- A checklist that tells anyone, human or agent, when this is done. -->
+- [ ] 
+
 <!-- otman:comments -->
 ## Comments
 -- vault/Projects/OTM/Issues/OTM-2 From the environment.md --
@@ -142,6 +151,15 @@ assignee: env-actor
 created: 2026-01-02T03:04:05Z
 updated: 2026-01-02T03:04:05Z
 ---
+## Summary
+
+<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->
+
+## Acceptance criteria
+
+<!-- A checklist that tells anyone, human or agent, when this is done. -->
+- [ ] 
+
 <!-- otman:comments -->
 ## Comments
 -- vault/Projects/OTM/Issues/OTM-3 No actor.md --
@@ -160,6 +178,15 @@ assignee: alice
 created: 2026-01-02T03:04:05Z
 updated: 2026-01-02T03:04:05Z
 ---
+## Summary
+
+<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->
+
+## Acceptance criteria
+
+<!-- A checklist that tells anyone, human or agent, when this is done. -->
+- [ ] 
+
 <!-- otman:comments -->
 ## Comments
 -- vault/Projects/OTM/Issues/OTM-4 From config.md --
@@ -178,6 +205,15 @@ assignee: config-actor
 created: 2026-01-02T03:04:05Z
 updated: 2026-01-02T03:04:05Z
 ---
+## Summary
+
+<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->
+
+## Acceptance criteria
+
+<!-- A checklist that tells anyone, human or agent, when this is done. -->
+- [ ] 
+
 <!-- otman:comments -->
 ## Comments
 -- vault/Projects/OTM/OTM.md --

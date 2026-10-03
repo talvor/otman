@@ -1,0 +1,500 @@
+$ otman create --title Project issue
+exit: 0
+-- stdout --
+item:
+  id: OTM-1
+  title: Project issue
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-1 Project issue.md
+  rev: 82fa02072d38
+changed: true
+-- stderr --
+
+$ otman create --title Project PRD --kind prd
+exit: 0
+-- stdout --
+item:
+  id: OTM-2
+  title: Project PRD
+  kind: prd
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/PRDs/OTM-2 Project PRD.md
+  rev: 11a019813bc8
+changed: true
+-- stderr --
+
+$ otman create --title Project spec --kind spec
+exit: 0
+-- stdout --
+item:
+  id: OTM-3
+  title: Project spec
+  kind: spec
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Specs/OTM-3 Project spec.md
+  rev: 77eed7afda95
+changed: true
+-- stderr --
+
+$ otman create --title WEB uses the Vault's --project WEB
+exit: 0
+-- stdout --
+item:
+  id: WEB-1
+  title: WEB uses the Vault's
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/WEB/Issues/WEB-1 WEB uses the Vault's.md
+  rev: bff43e66c9ed
+changed: true
+-- stderr --
+
+$ rm "vault/Projects/OTM/Templates/issue.md"
+
+$ rm "vault/Projects/OTM/Templates/prd.md"
+
+$ rm "vault/Projects/OTM/Templates/spec.md"
+
+$ otman create --title Vault issue
+exit: 0
+-- stdout --
+item:
+  id: OTM-4
+  title: Vault issue
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-4 Vault issue.md
+  rev: 05071d5ac47a
+changed: true
+-- stderr --
+
+$ otman create --title Vault PRD --kind prd
+exit: 0
+-- stdout --
+item:
+  id: OTM-5
+  title: Vault PRD
+  kind: prd
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/PRDs/OTM-5 Vault PRD.md
+  rev: a6ee61dfa151
+changed: true
+-- stderr --
+
+$ otman create --title Vault spec --kind spec --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-6",
+      "title": "Vault spec",
+      "kind": "spec",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Specs/OTM-6 Vault spec.md",
+      "rev": "e0f7cb89e660"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ rm "vault/Templates/otman/issue.md"
+
+$ rm "vault/Templates/otman/prd.md"
+
+$ rm "vault/Templates/otman/spec.md"
+
+$ otman create --title Built-in issue
+exit: 0
+-- stdout --
+item:
+  id: OTM-7
+  title: Built-in issue
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-7 Built-in issue.md
+  rev: d2cb8ba3f9b8
+changed: true
+-- stderr --
+
+$ otman create --title Built-in PRD --kind prd
+exit: 0
+-- stdout --
+item:
+  id: OTM-8
+  title: Built-in PRD
+  kind: prd
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/PRDs/OTM-8 Built-in PRD.md
+  rev: e65a114296ea
+changed: true
+-- stderr --
+
+$ otman create --title Built-in spec --kind spec --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-9",
+      "title": "Built-in spec",
+      "kind": "spec",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Specs/OTM-9 Built-in spec.md",
+      "rev": "e4d5d4ef32cf"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman view Projects/OTM/Templates/OTM-40 x.md
+exit: 3
+-- stdout --
+-- stderr --
+error:
+  code: item_not_found
+  message: "no Item matches \"Projects/OTM/Templates/OTM-40 x.md\""
+  details:
+    ref: Projects/OTM/Templates/OTM-40 x.md
+  hint: "name an Item by its ID (OTM-12), its number, its full filename or its Vault-relative path; titles do not match"
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Project issue.md --
+---
+id: OTM-1
+title: Project issue
+aliases:
+  - Project issue
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+## Project issue
+
+From OTM's Templates.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-4 Vault issue.md --
+---
+id: OTM-4
+title: Vault issue
+aliases:
+  - Vault issue
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+## Vault issue
+
+{{title}} and <% tp.date.now() %> are copied as they are.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-7 Built-in issue.md --
+---
+id: OTM-7
+title: Built-in issue
+aliases:
+  - Built-in issue
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+## Summary
+
+<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->
+
+## Acceptance criteria
+
+<!-- A checklist that tells anyone, human or agent, when this is done. -->
+- [ ] 
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/OTM/PRDs/
+-- vault/Projects/OTM/PRDs/OTM-2 Project PRD.md --
+---
+id: OTM-2
+title: Project PRD
+aliases:
+  - Project PRD
+kind: prd
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+## Project PRD
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/PRDs/OTM-5 Vault PRD.md --
+---
+id: OTM-5
+title: Vault PRD
+aliases:
+  - Vault PRD
+kind: prd
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+## Vault PRD
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/PRDs/OTM-8 Built-in PRD.md --
+---
+id: OTM-8
+title: Built-in PRD
+aliases:
+  - Built-in PRD
+kind: prd
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+## Problem
+
+<!-- The problem, from the user's perspective. Why it matters now. -->
+
+## Users
+
+<!-- Who has the problem, and in what situation. -->
+
+## Goals
+
+<!-- What success looks like for those users. -->
+
+## Non-goals
+
+<!-- What this deliberately won't do. -->
+
+## Success measures
+
+<!-- How we'll know it worked. -->
+
+## Open questions
+
+<!-- Decisions still to be made before a spec can be written. -->
+
+<!-- otman:comments -->
+## Comments
+vault/Projects/OTM/Specs/
+-- vault/Projects/OTM/Specs/OTM-3 Project spec.md --
+---
+id: OTM-3
+title: Project spec
+aliases:
+  - Project spec
+kind: spec
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+## Project spec
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Specs/OTM-6 Vault spec.md --
+---
+id: OTM-6
+title: Vault spec
+aliases:
+  - Vault spec
+kind: spec
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+## Vault spec
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Specs/OTM-9 Built-in spec.md --
+---
+id: OTM-9
+title: Built-in spec
+aliases:
+  - Built-in spec
+kind: spec
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+## Problem Statement
+
+<!-- The problem, from the user's perspective. Link the parent PRD if there is one. -->
+
+## Solution
+
+<!-- The solution, from the user's perspective. -->
+
+## User Stories
+
+<!-- A long, numbered list: 1. As an <actor>, I want a <feature>, so that <benefit> -->
+
+## Implementation Decisions
+
+<!-- Modules, interfaces, architecture, schema and API contracts. No file paths. -->
+
+## Testing Decisions
+
+<!-- What makes a good test here, which modules are tested, and prior art. -->
+
+## Out of Scope
+
+## Further Notes
+
+<!-- otman:comments -->
+## Comments
+vault/Projects/OTM/Templates/
+-- vault/Projects/OTM/Templates/OTM-40 x.md --
+named like an Item, but a Template
+vault/Projects/WEB/
+vault/Projects/WEB/Issues/
+-- vault/Projects/WEB/Issues/WEB-1 WEB uses the Vault's.md --
+---
+id: WEB-1
+title: WEB uses the Vault's
+aliases:
+  - WEB uses the Vault's
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+## Vault issue
+
+{{title}} and <% tp.date.now() %> are copied as they are.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/WEB/WEB.md --
+---
+name: web
+kind: project
+---
+vault/Templates/
+vault/Templates/otman/

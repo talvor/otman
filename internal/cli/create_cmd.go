@@ -17,17 +17,18 @@ import (
 )
 
 type createFlags struct {
-	title    string
-	kind     string
-	body     string
-	bodyFile string
-	assignee string
+	title      string
+	kind       string
+	body       string
+	bodyFile   string
+	noTemplate bool
+	assignee   string
 }
 
 func (a *app) newCreateCmd() *cobra.Command {
 	var f createFlags
 	cmd := &cobra.Command{
-		Use:   "create --title TEXT [--kind issue|prd|spec] [--body TEXT | --body-file PATH|-] [--assignee NAME|@me]",
+		Use:   "create --title TEXT [--kind issue|prd|spec] [--body TEXT | --body-file PATH|- | --no-template] [--assignee NAME|@me]",
 		Short: "Create an Item in the selected Project",
 		Args:  cobra.NoArgs,
 	}
@@ -36,6 +37,7 @@ func (a *app) newCreateCmd() *cobra.Command {
 	fl.StringVar(&f.kind, "kind", string(item.Issue), "issue, prd or spec")
 	fl.StringVar(&f.body, "body", "", "the Item's body, as Markdown")
 	fl.StringVar(&f.bodyFile, "body-file", "", "read the body from PATH, or from stdin with -")
+	fl.BoolVar(&f.noTemplate, "no-template", false, "start with an empty body instead of the Kind's Template")
 	fl.StringVar(&f.assignee, "assignee", "", "assign the Item to NAME, or to the actor with @me")
 	cmd.RunE = func(cmd *cobra.Command, _ []string) error { return a.create(cmd, f) }
 	return cmd
@@ -70,6 +72,18 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 		return invalid("invalid_kind", "unknown Kind "+quoteArg(f.kind),
 			map[string]any{"kind": f.kind, "allowed": item.Kinds}, "use --kind issue, prd or spec")
 	}
+	// An explicit body, even an empty one, is stored as given; only an
+	// omitted body takes the Kind's Template.
+	explicit := cmd.Flags().Changed("body") || cmd.Flags().Changed("body-file")
+	if f.noTemplate && explicit {
+		flag := "--body"
+		if !cmd.Flags().Changed("body") {
+			flag = "--body-file"
+		}
+		return invalid("conflicting_flags", "--no-template conflicts with "+flag,
+			map[string]any{"flags": []string{"--no-template", flag}},
+			"pass a body, or --no-template for an empty one, not both")
+	}
 	body, err := a.readBody(cmd, f.body, f.bodyFile)
 	if err != nil {
 		return err
@@ -102,6 +116,11 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 	return a.withVault(s, func(v *vault.Vault, warnings []output.Problem) error {
 		if err := requireProject(v, key.Value, map[string]any{"source": string(key.Source)}); err != nil {
 			return err
+		}
+		if !explicit && !f.noTemplate {
+			if body, err = templateBody(v, key.Value, kind); err != nil {
+				return err
+			}
 		}
 		file, data, err := v.CreateItem(key.Value, vault.NewItem{
 			Title: title, Kind: kind, Body: body,
@@ -162,6 +181,27 @@ func (a *app) readBody(cmd *cobra.Command, body, bodyFile string) (string, error
 			"remove that line; otman uses it to mark where comments begin")
 	}
 	return body, nil
+}
+
+// templateBody is the body a new Item of Kind kind in Project key starts
+// from: its Template, copied verbatim. A Template must be UTF-8 and must
+// not contain the comments marker.
+func templateBody(v *vault.Vault, key string, kind item.Kind) (string, error) {
+	t, err := v.Template(key, kind)
+	if err != nil {
+		return "", ioError(err)
+	}
+	if !utf8.ValidString(t.Text) {
+		return "", invalid("invalid_template", "the Template "+t.Path+" is not valid UTF-8",
+			map[string]any{"path": t.Path}, "save the Template as UTF-8 Markdown")
+	}
+	if item.ContainsMarker(t.Text) {
+		return "", invalid("invalid_template",
+			"the Template "+t.Path+" contains the reserved line "+item.CommentsMarker,
+			map[string]any{"path": t.Path, "marker": item.CommentsMarker},
+			"remove that line from the Template; otman uses it to mark where comments begin")
+	}
+	return t.Text, nil
 }
 
 // nameOrActor maps the value of a NAME|@me flag to the name to store: the
