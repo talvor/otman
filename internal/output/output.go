@@ -102,7 +102,8 @@ func writeProblem(f Format, w io.Writer, label string, p Problem) error {
 	if f == AXI {
 		return EncodeTOON(w, map[string]any{label: p})
 	}
-	if _, err := fmt.Fprintf(w, "%s: %s\n", label, p.Message); err != nil {
+	// Human output names the stable code but leaves details to AXI and JSON.
+	if _, err := fmt.Fprintf(w, "%s[%s]: %s\n", label, p.Code, p.Message); err != nil {
 		return err
 	}
 	if p.Hint != nil {

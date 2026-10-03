@@ -3,7 +3,7 @@ tty: true
 exit: 2
 -- stdout --
 -- stderr --
-error: unknown config key "colour"
+error[invalid_config_key]: unknown config key "colour"
 hint: use one of: vault, actor, project
 
 $ otman config set colour blue
@@ -44,7 +44,7 @@ tty: true
 exit: 2
 -- stdout --
 -- stderr --
-error: unknown config key "co\"lour\\"
+error[invalid_config_key]: unknown config key "co\"lour\\"
 hint: use one of: vault, actor, project
 
 == tree ==

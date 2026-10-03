@@ -68,7 +68,7 @@ tty: true
 exit: 2
 -- stdout --
 -- stderr --
-error: unknown command "bogus" for "otman"
+error[invalid_arguments]: unknown command "bogus" for "otman"
 hint: run 'otman --help' for usage
 
 == tree ==
