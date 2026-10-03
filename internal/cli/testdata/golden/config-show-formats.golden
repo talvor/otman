@@ -1,0 +1,90 @@
+$ otman config show
+env: OTM_ACTOR=env-actor
+tty: true
+exit: 0
+-- stdout --
+KEY      VALUE         SOURCE
+vault    /from/config  config
+actor    env-actor     env
+project  -             unset
+
+config file: $WORK/config/otman/config.toml
+-- stderr --
+
+$ otman config show
+env: OTM_ACTOR=env-actor
+exit: 0
+-- stdout --
+config_path: $WORK/config/otman/config.toml
+vault:
+  value: /from/config
+  source: config
+actor:
+  value: env-actor
+  source: env
+project:
+  value: null
+  source: null
+-- stderr --
+
+$ otman config show --format human
+env: OTM_ACTOR=env-actor
+exit: 0
+-- stdout --
+KEY      VALUE         SOURCE
+vault    /from/config  config
+actor    env-actor     env
+project  -             unset
+
+config file: $WORK/config/otman/config.toml
+-- stderr --
+
+$ otman config show --format axi
+env: OTM_ACTOR=env-actor
+tty: true
+exit: 0
+-- stdout --
+config_path: $WORK/config/otman/config.toml
+vault:
+  value: /from/config
+  source: config
+actor:
+  value: env-actor
+  source: env
+project:
+  value: null
+  source: null
+-- stderr --
+
+$ otman config show --format json --json
+env: OTM_ACTOR=env-actor
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "config_path": "$WORK/config/otman/config.toml",
+    "vault": {
+      "value": "/from/config",
+      "source": "config"
+    },
+    "actor": {
+      "value": "env-actor",
+      "source": "env"
+    },
+    "project": {
+      "value": null,
+      "source": null
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "/from/config"
+home/
+vault/

@@ -60,6 +60,33 @@ func TestConfigHomeFallback(t *testing.T) {
 	})
 }
 
+// config show sources in every format: human by default on a TTY, AXI by
+// default when piped, and --format overriding either.
+func TestConfigShowFormats(t *testing.T) {
+	env := map[string]string{"OTM_ACTOR": "env-actor"}
+	runGolden(t, goldenCase{
+		name:   "config-show-formats",
+		config: "vault = \"/from/config\"\n",
+		steps: []step{
+			{args: []string{"config", "show"}, env: env, tty: true},
+			{args: []string{"config", "show"}, env: env},
+			{args: []string{"config", "show", "--format", "human"}, env: env},
+			{args: []string{"config", "show", "--format", "axi"}, env: env, tty: true},
+			{args: []string{"config", "show", "--format", "json", "--json"}, env: env},
+		},
+	})
+}
+
+func TestConfigSetFormats(t *testing.T) {
+	runGolden(t, goldenCase{
+		name: "config-set-formats",
+		steps: []step{
+			{args: []string{"config", "set", "project", "OTM"}, tty: true},
+			{args: []string{"config", "set", "project", "OTM"}},
+		},
+	})
+}
+
 func TestConfigSetThenShowJSON(t *testing.T) {
 	runGolden(t, goldenCase{
 		name: "config-set-show-json",

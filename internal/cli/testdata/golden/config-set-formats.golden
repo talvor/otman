@@ -1,0 +1,23 @@
+$ otman config set project OTM
+tty: true
+exit: 0
+-- stdout --
+Set project to OTM in $WORK/config/otman/config.toml
+-- stderr --
+
+$ otman config set project OTM
+exit: 0
+-- stdout --
+key: project
+value: OTM
+path: $WORK/config/otman/config.toml
+changed: false
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+project = "OTM"
+home/
+vault/
