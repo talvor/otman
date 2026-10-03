@@ -60,7 +60,7 @@ func (a *app) view(ref string, comments, full bool) error {
 	if err != nil {
 		return err
 	}
-	return a.withOpenVault(s, func(v *vault.Vault, warnings []output.Problem) error {
+	return a.withVault(s, func(v *vault.Vault, warnings []output.Problem) error {
 		f, err := resolveRef(s, v, ref)
 		if err != nil {
 			return err
@@ -127,15 +127,15 @@ func (d viewDisplay) RenderHuman(w io.Writer) error {
 	it := d.Item
 	var b strings.Builder
 	fmt.Fprintf(&b, "%s · %s\n", it.ID, it.Title)
-	claim := "unassigned"
+	assignment := "unassigned"
 	if it.Assignee != nil {
-		claim = "assigned to " + *it.Assignee
+		assignment = "assigned to " + *it.Assignee
 	}
 	kind := "-"
 	if it.Kind != nil {
 		kind = string(*it.Kind)
 	}
-	fmt.Fprintf(&b, "%s · %s · %s\n", kind, orDash(it.Status), claim)
+	fmt.Fprintf(&b, "%s · %s · %s\n", kind, orDash(it.Status), assignment)
 	if len(it.Labels) > 0 {
 		fmt.Fprintf(&b, "Labels: %s\n", strings.Join(it.Labels, ", "))
 	}
@@ -234,10 +234,7 @@ func shellQuote(s string) string {
 	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }
 
-var (
-	qualifiedRef = regexp.MustCompile(`^([A-Z][A-Z0-9]{0,15})-([1-9][0-9]*)$`)
-	numberRef    = regexp.MustCompile(`^[1-9][0-9]*$`)
-)
+var numberRef = regexp.MustCompile(`^[1-9][0-9]*$`)
 
 // resolveRef finds the one Item ref names: a qualified ID, a bare number
 // in the selected Project, a unique full filename (with its ".md") or an
@@ -248,15 +245,11 @@ func resolveRef(s resolved, v *vault.Vault, ref string) (vault.ItemFile, error) 
 	var key string
 	var details map[string]any // for project_not_found
 	var match func([]vault.ItemFile) []vault.ItemFile
+	idKey, idNumber, isID := item.ParseID(ref)
 	switch {
-	case qualifiedRef.MatchString(ref):
-		m := qualifiedRef.FindStringSubmatch(ref)
-		n, err := strconv.Atoi(m[2])
-		if err != nil {
-			return vault.ItemFile{}, itemNotFound(ref, m[1])
-		}
-		key = m[1]
-		match = func(fs []vault.ItemFile) []vault.ItemFile { return matchNumber(fs, n) }
+	case isID:
+		key = idKey
+		match = func(fs []vault.ItemFile) []vault.ItemFile { return matchNumber(fs, idNumber) }
 	case numberRef.MatchString(ref):
 		sel, err := selectedProject(s)
 		if err != nil {

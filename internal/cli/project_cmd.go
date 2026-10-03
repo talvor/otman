@@ -107,21 +107,9 @@ func projectNotFound(key string, details map[string]any) error {
 		Hint: "run 'otman project list' to see the Projects, or 'otman project create " + key + " --name NAME'"}
 }
 
-// withVault opens the Vault, runs fn and closes the Vault, releasing the
-// lock.
-func (a *app) withVault(fn func(resolved, *vault.Vault, []output.Problem) error) error {
-	s, err := a.settings()
-	if err != nil {
-		return err
-	}
-	return a.withOpenVault(s, func(v *vault.Vault, warnings []output.Problem) error {
-		return fn(s, v, warnings)
-	})
-}
-
-// withOpenVault opens the Vault s selects, runs fn and closes the Vault,
+// withVault opens the Vault s selects, runs fn and closes the Vault,
 // releasing the lock.
-func (a *app) withOpenVault(s resolved, fn func(*vault.Vault, []output.Problem) error) error {
+func (a *app) withVault(s resolved, fn func(*vault.Vault, []output.Problem) error) error {
 	v, warnings, err := a.openVault(s)
 	if err != nil {
 		return err
@@ -156,7 +144,11 @@ func (a *app) projectCreate(key, name string) error {
 		return invalid("invalid_arguments", "--name must be a single line",
 			map[string]any{"flag": "--name"}, "")
 	}
-	return a.withVault(func(_ resolved, v *vault.Vault, warnings []output.Problem) error {
+	s, err := a.settings()
+	if err != nil {
+		return err
+	}
+	return a.withVault(s, func(v *vault.Vault, warnings []output.Problem) error {
 		p, err := v.CreateProject(key, name)
 		if errors.Is(err, vault.ErrProjectExists) {
 			path := vault.ProjectsDir + "/" + key
@@ -196,7 +188,11 @@ func (a *app) projectList(p *paging) error {
 	if err := p.validate(); err != nil {
 		return err
 	}
-	return a.withVault(func(_ resolved, v *vault.Vault, warnings []output.Problem) error {
+	s, err := a.settings()
+	if err != nil {
+		return err
+	}
+	return a.withVault(s, func(v *vault.Vault, warnings []output.Problem) error {
 		ps, ws, err := v.Projects()
 		if err != nil {
 			return ioError(err)
@@ -232,7 +228,11 @@ func (a *app) projectView(key string) error {
 			return err
 		}
 	}
-	return a.withVault(func(s resolved, v *vault.Vault, warnings []output.Problem) error {
+	s, err := a.settings()
+	if err != nil {
+		return err
+	}
+	return a.withVault(s, func(v *vault.Vault, warnings []output.Problem) error {
 		var details map[string]any
 		if key == "" {
 			sel, err := s.project()
@@ -284,7 +284,11 @@ func (a *app) projectLink(key string, force bool) error {
 	if err := checkKey(key); err != nil {
 		return err
 	}
-	return a.withVault(func(_ resolved, v *vault.Vault, warnings []output.Problem) error {
+	s, err := a.settings()
+	if err != nil {
+		return err
+	}
+	return a.withVault(s, func(v *vault.Vault, warnings []output.Problem) error {
 		if _, ok, _, err := v.Project(key); err != nil {
 			return ioError(err)
 		} else if !ok {

@@ -57,6 +57,10 @@ func KindOfFolder(name string) (Kind, bool) {
 	return "", false
 }
 
+// Open is the status of an Item whose work is not done; every new Item is
+// open.
+const Open = "open"
+
 // TitleLimit is the most characters of a title the filename carries.
 const TitleLimit = 60
 
@@ -106,10 +110,34 @@ func Filename(key string, n int, title string) string {
 	return name + ".md"
 }
 
-var filenamePattern = regexp.MustCompile(`^([A-Z][A-Z0-9]{0,15})-([1-9][0-9]*)(?: (.*))?\.md$`)
+// KeyPattern is a Project key, the prefix of every Item ID: an uppercase
+// letter followed by up to 15 uppercase letters or digits.
+const KeyPattern = `[A-Z][A-Z0-9]{0,15}`
+
+// idPattern is an Item ID, <KEY>-<n>, capturing the key and the number.
+const idPattern = `(` + KeyPattern + `)-([1-9][0-9]*)`
+
+var (
+	idRegexp        = regexp.MustCompile(`^` + idPattern + `$`)
+	filenamePattern = regexp.MustCompile(`^` + idPattern + `(?: (.*))?\.md$`)
+)
+
+// ParseID reads a qualified Item ID such as OTM-12. ok is false for
+// anything else.
+func ParseID(s string) (key string, n int, ok bool) {
+	m := idRegexp.FindStringSubmatch(s)
+	if m == nil {
+		return "", 0, false
+	}
+	n, err := strconv.Atoi(m[2])
+	if err != nil {
+		return "", 0, false
+	}
+	return m[1], n, true
+}
 
 // ParseFilename reads the identity an Item filename carries: its Project
-// key, its number and the title part. ok is false for any other file.
+// key, its number and the title part. ok is false for any other name.
 func ParseFilename(name string) (key string, n int, title string, ok bool) {
 	m := filenamePattern.FindStringSubmatch(name)
 	if m == nil {

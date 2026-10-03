@@ -80,7 +80,7 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 	}
 	var assignee *string
 	if cmd.Flags().Changed("assignee") {
-		name, err := a.resolveUser(s, "--assignee", f.assignee)
+		name, err := nameOrActor(s, "--assignee", f.assignee)
 		if err != nil {
 			return err
 		}
@@ -95,7 +95,7 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 		return err
 	}
 
-	return a.withOpenVault(s, func(v *vault.Vault, warnings []output.Problem) error {
+	return a.withVault(s, func(v *vault.Vault, warnings []output.Problem) error {
 		if err := requireProject(v, key.Value, map[string]any{"source": string(key.Source)}); err != nil {
 			return err
 		}
@@ -160,21 +160,22 @@ func (a *app) readBody(cmd *cobra.Command, body, bodyFile string) (string, error
 	return body, nil
 }
 
-// resolveUser maps a user name flag to the name to store; @me is the
-// actor, and fails when no actor is configured.
-func (a *app) resolveUser(s resolved, flag, name string) (string, error) {
-	name = strings.TrimSpace(name)
-	if name == "" || strings.ContainsAny(name, "\r\n") {
+// nameOrActor maps the value of a NAME|@me flag to the name to store: the
+// name as given, or the Actor for @me, which fails when no Actor is
+// configured.
+func nameOrActor(s resolved, flag, value string) (string, error) {
+	value = strings.TrimSpace(value)
+	if value == "" || strings.ContainsAny(value, "\r\n") {
 		return "", invalid("invalid_arguments", flag+" needs a single-line name or @me",
 			map[string]any{"flag": flag}, "")
 	}
-	user, err := s.ResolveUser(name)
+	name, err := s.ResolveUser(value)
 	if errors.Is(err, config.ErrNoActor) {
 		return "", invalid("no_actor", flag+" @me needs an actor, and none is configured",
 			map[string]any{"flag": flag},
 			"pass --actor NAME, set "+config.Actor.EnvVar+", or run 'otman config set actor NAME'")
 	}
-	return user, err
+	return name, err
 }
 
 // selectedProject is the selected Project, failing when there is none.

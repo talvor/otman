@@ -22,7 +22,7 @@ const ProjectsDir = "Projects"
 // ErrProjectExists means a Project folder already exists for the key.
 var ErrProjectExists = errors.New("project already exists")
 
-var keyPattern = regexp.MustCompile(`^[A-Z][A-Z0-9]{0,15}$`)
+var keyPattern = regexp.MustCompile(`^` + item.KeyPattern + `$`)
 
 // ValidKey reports whether key can name a Project: an uppercase letter
 // followed by up to 15 uppercase letters or digits, such as OTM.
@@ -158,7 +158,7 @@ func (v *Vault) adopt() error {
 		if err != nil {
 			return err
 		}
-		highest[k] = maxNumber(files)
+		highest[k] = highestNumber(files)
 	}
 	return inImmediateTx(v.db, func(tx *sql.Tx) error {
 		for _, k := range keys {

@@ -72,7 +72,8 @@ func (v *Vault) ItemFiles(key string) ([]ItemFile, error) {
 	return files, nil
 }
 
-func maxNumber(files []ItemFile) int {
+// highestNumber is the highest Item number among files, or 0.
+func highestNumber(files []ItemFile) int {
 	n := 0
 	for _, f := range files {
 		n = max(n, f.Number)
@@ -107,7 +108,7 @@ func (v *Vault) CreateItem(key string, n NewItem) (ItemFile, []byte, error) {
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return err
 		}
-		number = max(hw, maxNumber(files)) + 1
+		number = max(hw, highestNumber(files)) + 1
 		return raiseHighWater(tx, key, number)
 	})
 	if err != nil {
@@ -117,7 +118,7 @@ func (v *Vault) CreateItem(key string, n NewItem) (ItemFile, []byte, error) {
 	f := ItemFile{Key: key, Number: number}
 	now := n.Now.UTC()
 	data, err := item.Render(item.Fields{
-		ID: f.ID(), Title: n.Title, Kind: n.Kind, Status: "open",
+		ID: f.ID(), Title: n.Title, Kind: n.Kind, Status: item.Open,
 		Author: n.Author, Assignee: n.Assignee,
 		Created: now, Updated: now,
 	}, n.Body)
