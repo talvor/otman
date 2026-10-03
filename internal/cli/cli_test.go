@@ -164,3 +164,21 @@ func TestConfigSetThenShowJSON(t *testing.T) {
 		},
 	})
 }
+
+// An explicit empty --vault, --actor or --project is a usage error, but an
+// empty OTM_* variable just counts as unset and falls through to config.
+func TestEmptySettings(t *testing.T) {
+	runGolden(t, goldenCase{
+		name:   "empty-settings",
+		config: fullConfig,
+		steps: []step{
+			{args: []string{"config", "show", "--json", "--vault", ""}},
+			{args: []string{"config", "show", "--actor="}, tty: true},
+			{args: []string{"config", "show", "--project", ""}},
+			{
+				args: []string{"config", "show", "--json"},
+				env:  map[string]string{"OTM_VAULT": "", "OTM_ACTOR": "", "OTM_PROJECT": ""},
+			},
+		},
+	})
+}

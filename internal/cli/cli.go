@@ -93,7 +93,7 @@ func (a *app) newRoot() *cobra.Command {
 				return err
 			}
 			a.out, a.formatResolved = f, true
-			return nil
+			return a.checkKeyFlags()
 		},
 		// otman handles --version itself, rather than through cobra, so
 		// that it honours the output format.
@@ -115,6 +115,22 @@ func (a *app) newRoot() *cobra.Command {
 
 	root.AddCommand(a.newConfigCmd())
 	return root
+}
+
+// checkKeyFlags rejects an explicit empty --vault, --actor or --project.
+// Passing one is a mistake (often an unset shell variable), so it fails
+// rather than silently falling through to the environment or config.
+func (a *app) checkKeyFlags() error {
+	pf := a.root.PersistentFlags()
+	for _, k := range config.Keys {
+		if v, _ := pf.GetString(k.Name); pf.Changed(k.Name) && strings.TrimSpace(v) == "" {
+			flag := "--" + k.Name
+			return invalid("invalid_arguments", flag+" cannot be empty",
+				map[string]any{"flag": flag},
+				"pass a value, or omit "+flag+" to use "+k.EnvVar+" or config")
+		}
+	}
+	return nil
 }
 
 type versionResult struct {
