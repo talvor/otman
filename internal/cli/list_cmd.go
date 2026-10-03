@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"slices"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
@@ -18,6 +19,7 @@ type listFlags struct {
 	kind        string
 	assignee    string
 	unassigned  bool
+	search      string
 	allProjects bool
 	paging      *paging
 }
@@ -37,6 +39,7 @@ func (a *app) newListCmd() *cobra.Command {
 	fl.StringVar(&f.kind, "kind", "", "only Items of this Kind: issue, prd or spec")
 	fl.StringVar(&f.assignee, "assignee", "", "only Items assigned to NAME, or to the actor with @me")
 	fl.BoolVar(&f.unassigned, "unassigned", false, "only Items with no assignee (conflicts with --assignee)")
+	fl.StringVar(&f.search, "search", "", "only Items whose title or body contains TEXT, ignoring case")
 	fl.BoolVar(&f.allProjects, "all-projects", false, "list the Items of every Project (conflicts with --project)")
 	f.paging = addPaging(cmd)
 	cmd.RunE = func(cmd *cobra.Command, _ []string) error { return a.list(cmd, f) }
@@ -74,11 +77,14 @@ type itemQuery struct {
 	// assignee keeps only Items assigned to it; nil for any assignee.
 	assignee   *string
 	unassigned bool
+	// search is the lowercased text the title or body must contain; ""
+	// for no search.
+	search string
 }
 
-// match reports whether the Item summarised by s is kept. An Item whose
-// status is neither open nor closed is never kept.
-func (q itemQuery) match(s itemSummary) bool {
+// match reports whether the Item summarised by s, with body, is kept. An
+// Item whose status is neither open nor closed is never kept.
+func (q itemQuery) match(s itemSummary, body string) bool {
 	if s.Status == nil || (*s.Status != "open" && *s.Status != "closed") {
 		return false
 	}
@@ -94,13 +100,17 @@ func (q itemQuery) match(s itemSummary) bool {
 	if q.unassigned && s.Assignee != nil {
 		return false
 	}
+	if q.search != "" && !strings.Contains(strings.ToLower(s.Title), q.search) &&
+		!strings.Contains(strings.ToLower(body), q.search) {
+		return false
+	}
 	return true
 }
 
 // query validates the filter flags. The caller resolves --assignee, which
 // may name the actor.
 func (f listFlags) query(cmd *cobra.Command) (itemQuery, error) {
-	q := itemQuery{state: f.state, unassigned: f.unassigned}
+	q := itemQuery{state: f.state, unassigned: f.unassigned, search: strings.ToLower(f.search)}
 	if !slices.Contains(listStates, f.state) {
 		return itemQuery{}, invalid("invalid_state", "unknown state "+quoteArg(f.state),
 			map[string]any{"state": f.state, "allowed": listStates}, "use --state open, closed or all")
@@ -116,6 +126,10 @@ func (f listFlags) query(cmd *cobra.Command) (itemQuery, error) {
 		return itemQuery{}, invalid("conflicting_flags", "--assignee conflicts with --unassigned",
 			map[string]any{"flags": []string{"--assignee", "--unassigned"}},
 			"pass either --assignee or --unassigned, not both")
+	}
+	if cmd.Flags().Changed("search") && f.search == "" {
+		return itemQuery{}, invalid("invalid_arguments", "--search cannot be empty",
+			map[string]any{"flag": "--search"}, "pass the text to search for, or omit --search")
 	}
 	return q, nil
 }
@@ -204,7 +218,8 @@ func listProject(v *vault.Vault, key string, q itemQuery) ([]itemSummary, error)
 		if err != nil {
 			return nil, err
 		}
-		if s := newItemSummary(f, item.Parse(data), data, links); q.match(s) {
+		p := item.Parse(data)
+		if s := newItemSummary(f, p, data, links); q.match(s, p.Body) {
 			found = append(found, s)
 		}
 	}

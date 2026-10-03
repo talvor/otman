@@ -83,3 +83,21 @@ func TestListAssignee(t *testing.T) {
 		},
 	})
 }
+
+// --search keeps Items whose title or body contains TEXT, ignoring case.
+// Comments are not searched.
+func TestListSearch(t *testing.T) {
+	runGolden(t, goldenCase{
+		name:    "list-search",
+		fixture: "list",
+		files:   withOTM(nil),
+		steps: []step{
+			{args: []string{"list", "--search", "sync"}, tty: true},
+			{args: []string{"list", "--search", "DUPLICATE NUMBERS", "--json"}},
+			{args: []string{"list", "--search", "needle"}, tty: true},
+			{args: []string{"list", "--search", "FILE FORMAT", "--state", "all", "--kind", "spec"}, tty: true},
+			{args: []string{"list", "--search", "screen", "--all-projects", "--unassigned"}, tty: true},
+			{args: []string{"list", "--search", "nothing like this"}},
+		},
+	})
+}
