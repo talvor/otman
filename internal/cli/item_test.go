@@ -122,6 +122,60 @@ func TestCreateNumbering(t *testing.T) {
 	})
 }
 
+// view takes a qualified ID, a bare number in the selected Project, a
+// unique full filename (with or without .md) or an exact Vault-relative
+// path. A qualified ID overrides the implicit Project, but not an explicit
+// conflicting --project. Nothing matches by title.
+func TestViewRefs(t *testing.T) {
+	runGolden(t, goldenCase{
+		name:    "item-view-refs",
+		fixture: "items",
+		files: withOTM(map[string]string{
+			"vault/Projects/OTM/Issues/OTM-3 First copy.md":  "---\nid: OTM-3\ntitle: First copy\nkind: issue\nstatus: open\n---\n<!-- otman:comments -->\n## Comments\n",
+			"vault/Projects/OTM/Issues/OTM-3 Second copy.md": "---\nid: OTM-3\ntitle: Second copy\nkind: issue\nstatus: open\n---\n<!-- otman:comments -->\n## Comments\n",
+			"vault/Projects/OTM/Templates/OTM-9 Sample.md":   "not an Item\n",
+			"vault/outside.md": "not an Item\n",
+		}),
+		steps: []step{
+			{args: []string{"view", "OTM-1", "--json"}},
+			{args: []string{"view", "2", "--json"}},
+			{args: []string{"view", "OTM-2 Item file format frontmatter and body.md", "--json"}},
+			{args: []string{"view", "OTM-2 Item file format frontmatter and body"}},
+			{args: []string{"view", "Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md"}, tty: true},
+			{args: []string{"view", "WEB-1", "--json"}},
+			{args: []string{"view", "WEB-1", "--project", "WEB"}},
+			{args: []string{"view", "WEB-1", "--project", "OTM", "--json"}},
+			{args: []string{"view", "WEB-1"}, env: map[string]string{"OTM_PROJECT": "lower"}},
+			{args: []string{"view", "1", "--project", "WEB", "--json"}},
+			{args: []string{"view", "Projects/WEB/PRDs/WEB-1 Landing page.md", "--project", "OTM"}},
+			{args: []string{"view", "OTM-3", "--json"}},
+			{args: []string{"view", "Projects/OTM/Issues/OTM-3 Second copy.md", "--json"}},
+			{args: []string{"view", "99", "--json"}},
+			{args: []string{"view", "OTM-99"}, tty: true},
+			{args: []string{"view", "NOPE-1"}},
+			{args: []string{"view", "Handle sync collisions", "--json"}},
+			{args: []string{"view", "OTM-1 Handle sync"}},
+			{args: []string{"view", "Projects/OTM/Templates/OTM-9 Sample.md"}},
+			{args: []string{"view", "Projects/OTM/Issues/../Issues/OTM-1 Handle sync collisions.md"}},
+			{args: []string{"view", "outside.md"}},
+			{args: []string{"view"}},
+		},
+	})
+}
+
+// A bare number needs a selected Project.
+func TestViewWithoutProject(t *testing.T) {
+	runGolden(t, goldenCase{
+		name:    "item-view-unselected",
+		fixture: "items",
+		files:   vaultConfig,
+		steps: []step{
+			{args: []string{"view", "1", "--json"}},
+			{args: []string{"view", "OTM-1", "--format", "axi"}},
+		},
+	})
+}
+
 // Concurrent creates in one Project on one device are serialised by the
 // lock, so every Item gets its own number.
 func TestCreateConcurrent(t *testing.T) {
