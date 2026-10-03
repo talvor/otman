@@ -57,9 +57,14 @@ func KindOfFolder(name string) (Kind, bool) {
 	return "", false
 }
 
-// Open is the status of an Item whose work is not done; every new Item is
-// open.
-const Open = "open"
+// The statuses an Item can have.
+const (
+	// Open is the status of an Item whose work is not done; every new Item
+	// is open.
+	Open = "open"
+	// Closed is the status of an Item whose work is done or abandoned.
+	Closed = "closed"
+)
 
 // TitleLimit is the most characters of a title the filename carries.
 const TitleLimit = 60

@@ -25,7 +25,7 @@ type listFlags struct {
 }
 
 // listStates are the values of list --state.
-var listStates = []string{"open", "closed", "all"}
+var listStates = []string{item.Open, item.Closed, "all"}
 
 func (a *app) newListCmd() *cobra.Command {
 	var f listFlags
@@ -62,11 +62,7 @@ func (r listResult) RenderHuman(w io.Writer) error {
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(tw, "ID\tKIND\tSTATUS\tASSIGNEE\tTITLE")
 	for _, it := range r.Items {
-		kind := "-"
-		if it.Kind != nil {
-			kind = string(*it.Kind)
-		}
-		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\n", it.ID, kind, orDash(it.Status), orDash(it.Assignee), it.Title)
+		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\n", it.ID, kindOrDash(it.Kind), orDash(it.Status), orDash(it.Assignee), it.Title)
 	}
 	if err := tw.Flush(); err != nil {
 		return err
@@ -89,7 +85,7 @@ type itemQuery struct {
 // match reports whether the Item summarised by s, with body, is kept. An
 // Item whose status is neither open nor closed is never kept.
 func (q itemQuery) match(s itemSummary, body string) bool {
-	if s.Status == nil || (*s.Status != "open" && *s.Status != "closed") {
+	if s.Status == nil || (*s.Status != item.Open && *s.Status != item.Closed) {
 		return false
 	}
 	if q.state != "all" && *s.Status != q.state {
@@ -127,8 +123,7 @@ func (f listFlags) query(cmd *cobra.Command) (itemQuery, error) {
 		q.kind = &kind
 	}
 	if f.unassigned && cmd.Flags().Changed("assignee") {
-		return itemQuery{}, invalid("conflicting_flags", "--assignee conflicts with --unassigned",
-			map[string]any{"flags": []string{"--assignee", "--unassigned"}},
+		return itemQuery{}, conflictingFlags("--assignee", "--unassigned",
 			"pass either --assignee or --unassigned, not both")
 	}
 	if cmd.Flags().Changed("search") && f.search == "" {
@@ -146,14 +141,14 @@ func (a *app) list(cmd *cobra.Command, f listFlags) error {
 	if err := f.paging.validate(); err != nil {
 		return err
 	}
-	if f.allProjects && a.root.PersistentFlags().Changed(config.Project.Name) {
-		return invalid("conflicting_flags", "--all-projects conflicts with --project",
-			map[string]any{"flags": []string{"--all-projects", "--project"}},
-			"pass either --all-projects or --project, not both")
-	}
 	s, err := a.settings()
 	if err != nil {
 		return err
+	}
+	// Only an explicit --project conflicts; a default Project does not.
+	if f.allProjects && s.Project.Source == config.FromFlag {
+		return conflictingFlags("--all-projects", "--project",
+			"pass either --all-projects or --project, not both")
 	}
 	if cmd.Flags().Changed("assignee") {
 		name, err := nameOrActor(s, "--assignee", f.assignee)
@@ -164,11 +159,8 @@ func (a *app) list(cmd *cobra.Command, f listFlags) error {
 	}
 	var sel config.Value
 	if !f.allProjects {
-		if sel, err = s.project(); err != nil {
+		if sel, err = selectedProject(s, "--all-projects"); err != nil {
 			return err
-		}
-		if !sel.IsSet() {
-			return noProject("--all-projects")
 		}
 	}
 	return a.withVault(s, func(v *vault.Vault, warnings []output.Problem) error {

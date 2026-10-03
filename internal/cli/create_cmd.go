@@ -137,23 +137,12 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 	})
 }
 
-// parseKind reads the value of --kind.
-func parseKind(s string) (item.Kind, error) {
-	kind, ok := item.ParseKind(s)
-	if !ok {
-		return "", invalid("invalid_kind", "unknown Kind "+quoteArg(s),
-			map[string]any{"kind": s, "allowed": item.Kinds}, "use --kind issue, prd or spec")
-	}
-	return kind, nil
-}
-
 // readBody returns the body from --body or --body-file (- is stdin), which
 // conflict. It must be UTF-8 and must not contain the comments marker.
 func (a *app) readBody(cmd *cobra.Command, body, bodyFile string) (string, error) {
 	fl := cmd.Flags()
 	if fl.Changed("body") && fl.Changed("body-file") {
-		return "", invalid("conflicting_flags", "--body conflicts with --body-file",
-			map[string]any{"flags": []string{"--body", "--body-file"}},
+		return "", conflictingFlags("--body", "--body-file",
 			"pass the body with either --body or --body-file, not both")
 	}
 	source := "--body"
@@ -213,43 +202,24 @@ func templateBody(v *vault.Vault, key string, kind item.Kind) (string, error) {
 	return t.Text, nil
 }
 
-// nameOrActor maps the value of a NAME|@me flag to the name to store: the
-// name as given, or the Actor for @me, which fails when no Actor is
-// configured.
-func nameOrActor(s resolved, flag, value string) (string, error) {
-	value = strings.TrimSpace(value)
-	if value == "" || strings.ContainsAny(value, "\r\n") || !utf8.ValidString(value) {
-		return "", invalid("invalid_arguments", flag+" needs a single-line UTF-8 name or @me",
-			map[string]any{"flag": flag}, "")
-	}
-	name, err := s.ResolveUser(value)
-	if errors.Is(err, config.ErrNoActor) {
-		return "", invalid("no_actor", flag+" @me needs an actor, and none is configured",
-			map[string]any{"flag": flag},
-			"pass --actor NAME, set "+config.Actor.EnvVar+", or run 'otman config set actor NAME'")
-	}
-	return name, err
-}
-
 // selectedProject is the selected Project, failing when there is none.
-func selectedProject(s resolved) (config.Value, error) {
+// altFlags name other flags that would do instead of --project, such as
+// "--all-projects", for the failure's hint.
+func selectedProject(s resolved, altFlags ...string) (config.Value, error) {
 	sel, err := s.project()
 	if err != nil {
 		return config.Value{}, err
 	}
 	if !sel.IsSet() {
-		return config.Value{}, noProject("")
+		return config.Value{}, noProject(altFlags...)
 	}
 	return sel, nil
 }
 
-// noProject reports that no Project is selected. or names another flag
-// that would do instead, such as "--all-projects".
-func noProject(or string) error {
-	flags := "--project"
-	if or != "" {
-		flags += " or " + or
-	}
+// noProject reports that no Project is selected. altFlags name other flags
+// that would do instead of --project.
+func noProject(altFlags ...string) error {
+	flags := strings.Join(append([]string{"--project"}, altFlags...), " or ")
 	return invalid("no_project", "no Project selected", nil,
 		"pass "+flags+", set "+config.Project.EnvVar+", run 'otman project link KEY', or 'otman config set project KEY'")
 }

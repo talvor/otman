@@ -173,10 +173,9 @@ func (r formatRequest) resolve() (output.Format, error) {
 	}
 	if r.json {
 		if r.formatGiven && f != output.JSON {
-			return "", invalid("conflicting_flags",
-				"--json conflicts with --format "+r.format,
-				map[string]any{"flags": []string{"--json", "--format"}},
-				"pass either --json or --format, not both")
+			e := conflictingFlags("--json", "--format", "pass either --json or --format, not both")
+			e.Message += " " + r.format // name the format --json disagrees with
+			return "", e
 		}
 		return output.JSON, nil
 	}

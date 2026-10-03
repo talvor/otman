@@ -33,9 +33,7 @@ func (p *paging) validate() error {
 	if p.all {
 		for _, name := range []string{"limit", "offset"} {
 			if f.Changed(name) {
-				return invalid("conflicting_flags", "--all conflicts with --"+name,
-					map[string]any{"flags": []string{"--all", "--" + name}},
-					"pass either --all or --limit/--offset")
+				return conflictingFlags("--all", "--"+name, "pass either --all or --limit/--offset")
 			}
 		}
 	}
