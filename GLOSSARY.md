@@ -25,8 +25,12 @@ A numbered record in a Project, such as `OTM-12`. Every Item has exactly one Kin
 _Avoid_: Ticket, issue (when the Kind isn't meant), task
 
 **Kind**:
-What sort of Item it is: issue, PRD, or spec. An Item of any Kind can be the parent of other Items.
+What sort of Item it is: issue, PRD, or spec. An Item of any Kind can be the parent of other Items. A **PRD** says why and what: the problem, who it's for, goals, non-goals and success measures. A **spec** says how: the solution and the decisions needed to build and test it, often as the child of a PRD. An **issue** is a single piece of work, such as a ticket or bug.
 _Avoid_: Type, category
+
+**Template**:
+The starting body a new Item of a given Kind receives when no body is supplied.
+_Avoid_: Scaffold, boilerplate, skeleton
 
 **Renumber**:
 Giving an Item a new number because another Item in the same Project already holds its number. The Item created earlier keeps the number.
