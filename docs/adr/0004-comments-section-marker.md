@@ -1,6 +1,6 @@
 # An HTML comment marks where an Item's comments begin
 
-An Item file is frontmatter, then a free-form Markdown body, then the otman-managed comments section. The boundary between body and comments is the exact line `<!-- otman:comments -->`, placed immediately before the `## Comments` heading. otman splits the file at that marker, not at the heading, so a body (whether hand-written, from a template or passed with `--body`) may contain its own `## Comments` heading. Only the marker line is reserved: create, edit and templates that contain it are rejected with exit 2 (`reserved_marker`, or `invalid_template` for a template file).
+An Item file is frontmatter, then a free-form Markdown body, then the otman-managed comments section. The boundary between body and comments is the exact line `<!-- otman:comments -->`, placed immediately before the `## Comments` heading. otman splits the file at that marker, not at the heading, so a body (whether hand-written, from a template or passed with `--body`) may contain its own `## Comments` heading. Only the marker line is reserved: a body or comment passed to create, edit, comment or close, and a template, that contains it is rejected with exit 2 (`reserved_marker`, or `invalid_template` for a template file).
 
 ## Considered Options
 

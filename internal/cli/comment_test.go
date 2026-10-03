@@ -14,8 +14,8 @@ import (
 // body/comments boundary otman will not guess at when it writes.
 const noMarker = "---\nid: OTM-3\ntitle: No marker\nkind: issue\nstatus: open\n---\nBody.\n\n## Comments\n"
 
-// actor is the environment that configures an actor.
-var actor = map[string]string{"OTM_ACTOR": "talvor"}
+// actorEnv is the environment that configures an actor.
+var actorEnv = map[string]string{"OTM_ACTOR": "talvor"}
 
 // comment appends a "### <timestamp> · <author>" heading and the text at
 // the end of the comments section, sets updated and keeps everything else
@@ -30,14 +30,14 @@ func TestComment(t *testing.T) {
 			"comment.md": "\n\nFrom a file.\r\nWith a CRLF line.\n\n\n",
 		}),
 		steps: []step{
-			{args: []string{"comment", "OTM-1", "--body", "Checked on a second device."}, env: actor, tty: true},
-			{args: []string{"comment", "OTM-1", "--body", "Checked on a second device.", "--json"}, env: actor},
+			{args: []string{"comment", "OTM-1", "--body", "Checked on a second device."}, env: actorEnv, tty: true},
+			{args: []string{"comment", "OTM-1", "--body", "Checked on a second device.", "--json"}, env: actorEnv},
 			{args: []string{"comment", "OTM-1", "--body-file", "-", "--actor", "agent-b"}, stdin: "## Comments\n\nA comment with its own heading.\n"},
-			{args: []string{"comment", "1", "--body-file", "comment.md", "--json"}, env: actor},
+			{args: []string{"comment", "1", "--body-file", "comment.md", "--json"}, env: actorEnv},
 			{args: []string{"view", "OTM-1", "--comments"}, tty: true},
 			{args: []string{"view", "OTM-1", "--json"}},
-			{args: []string{"create", "--title", "Own heading", "--body", "Intro.\n\n## Comments\n\nNot a real comment."}, env: actor},
-			{args: []string{"comment", "OTM-3", "--body", "The first real comment."}, env: actor},
+			{args: []string{"create", "--title", "Own heading", "--body", "Intro.\n\n## Comments\n\nNot a real comment."}, env: actorEnv},
+			{args: []string{"comment", "OTM-3", "--body", "The first real comment."}, env: actorEnv},
 			{args: []string{"view", "OTM-3", "--json"}},
 		},
 	})
@@ -68,19 +68,19 @@ func TestCommentErrors(t *testing.T) {
 		fixture: "items",
 		files:   withOTM(map[string]string{"vault/Projects/OTM/Issues/OTM-3 No marker.md": noMarker}),
 		steps: []step{
-			{args: []string{"comment", "--body", "x"}, env: actor},
-			{args: []string{"comment", "OTM-1"}, env: actor, tty: true},
+			{args: []string{"comment", "--body", "x"}, env: actorEnv},
+			{args: []string{"comment", "OTM-1"}, env: actorEnv, tty: true},
 			{args: []string{"comment", "OTM-1", "--body", "No actor.", "--json"}},
 			{args: []string{"comment", "OTM-1", "--body", "No actor."}, tty: true},
-			{args: []string{"comment", "OTM-1", "--body", "", "--json"}, env: actor},
-			{args: []string{"comment", "OTM-1", "--body", " \n\t\n"}, env: actor},
-			{args: []string{"comment", "OTM-1", "--body-file", "-", "--json"}, env: actor, stdin: "\r\n\r\n"},
-			{args: []string{"comment", "OTM-1", "--body", "x", "--body-file", "-"}, env: actor},
-			{args: []string{"comment", "OTM-1", "--body", "a\n<!-- otman:comments -->\nb", "--json"}, env: actor},
-			{args: []string{"comment", "OTM-1", "--body-file", "missing.md"}, env: actor},
+			{args: []string{"comment", "OTM-1", "--body", "", "--json"}, env: actorEnv},
+			{args: []string{"comment", "OTM-1", "--body", " \n\t\n"}, env: actorEnv},
+			{args: []string{"comment", "OTM-1", "--body-file", "-", "--json"}, env: actorEnv, stdin: "\r\n\r\n"},
+			{args: []string{"comment", "OTM-1", "--body", "x", "--body-file", "-"}, env: actorEnv},
+			{args: []string{"comment", "OTM-1", "--body", "a\n<!-- otman:comments -->\nb", "--json"}, env: actorEnv},
+			{args: []string{"comment", "OTM-1", "--body-file", "missing.md"}, env: actorEnv},
 			{args: []string{"comment", "OTM-1", "--body", "x", "--json"}, env: map[string]string{"OTM_ACTOR": "two\nlines"}},
-			{args: []string{"comment", "OTM-99", "--body", "x", "--json"}, env: actor},
-			{args: []string{"comment", "OTM-3", "--body", "x", "--json"}, env: actor},
+			{args: []string{"comment", "OTM-99", "--body", "x", "--json"}, env: actorEnv},
+			{args: []string{"comment", "OTM-3", "--body", "x", "--json"}, env: actorEnv},
 		},
 	})
 }
@@ -99,19 +99,19 @@ func TestCloseComment(t *testing.T) {
 			"reason.md": "Superseded by WEB-1.\n",
 		}),
 		steps: []step{
-			{args: []string{"close", "OTM-1", "--comment", "Fixed in the scanner."}, env: actor, tty: true},
-			{args: []string{"close", "OTM-1", "--comment-file", "-", "--json"}, env: actor, stdin: "Retried: the reason is not lost.\n"},
-			{args: []string{"close", "OTM-1", "--comment", "Once more, as a human."}, env: actor, tty: true},
+			{args: []string{"close", "OTM-1", "--comment", "Fixed in the scanner."}, env: actorEnv, tty: true},
+			{args: []string{"close", "OTM-1", "--comment-file", "-", "--json"}, env: actorEnv, stdin: "Retried: the reason is not lost.\n"},
+			{args: []string{"close", "OTM-1", "--comment", "Once more, as a human."}, env: actorEnv, tty: true},
 			{args: []string{"close", "OTM-1", "--json"}},
 			{args: []string{"view", "OTM-1", "--comments"}, tty: true},
-			{args: []string{"close", "OTM-2", "--comment-file", "reason.md", "--json"}, env: actor},
+			{args: []string{"close", "OTM-2", "--comment-file", "reason.md", "--json"}, env: actorEnv},
 			{args: []string{"close", "WEB-1", "--comment", "No actor.", "--json"}},
-			{args: []string{"close", "WEB-1", "--comment", "  ", "--json"}, env: actor},
-			{args: []string{"close", "WEB-1", "--comment", "x", "--comment-file", "-"}, env: actor},
-			{args: []string{"close", "WEB-1", "--comment", "<!-- otman:comments -->"}, env: actor},
-			{args: []string{"close", "WEB-1", "--comment-file", "missing.md", "--json"}, env: actor},
-			{args: []string{"reopen", "WEB-1", "--comment", "x"}, env: actor},
-			{args: []string{"close", "OTM-3", "--comment", "x", "--json"}, env: actor},
+			{args: []string{"close", "WEB-1", "--comment", "  ", "--json"}, env: actorEnv},
+			{args: []string{"close", "WEB-1", "--comment", "x", "--comment-file", "-"}, env: actorEnv},
+			{args: []string{"close", "WEB-1", "--comment", "<!-- otman:comments -->"}, env: actorEnv},
+			{args: []string{"close", "WEB-1", "--comment-file", "missing.md", "--json"}, env: actorEnv},
+			{args: []string{"reopen", "WEB-1", "--comment", "x"}, env: actorEnv},
+			{args: []string{"close", "OTM-3", "--comment", "x", "--json"}, env: actorEnv},
 		},
 	})
 }

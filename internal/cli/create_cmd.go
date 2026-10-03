@@ -1,12 +1,9 @@
 package cli
 
 import (
-	"errors"
 	"fmt"
 	"io"
-	"os"
 	"strings"
-	"unicode"
 	"unicode/utf8"
 
 	"github.com/spf13/cobra"
@@ -65,7 +62,7 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 		return invalid("invalid_arguments", "--title is required and cannot be empty",
 			map[string]any{"flag": "--title"}, "pass the Item's title with --title")
 	}
-	if !utf8.ValidString(title) || strings.IndexFunc(title, func(r rune) bool { return unicode.IsControl(r) && r != '\t' }) >= 0 {
+	if !singleLine(title) {
 		return invalid("invalid_arguments", "--title must be a single line of UTF-8 text",
 			map[string]any{"flag": "--title"}, "")
 	}
@@ -137,52 +134,6 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 		human := fmt.Sprintf("Created %s · %s\n%s\n", summary.ID, summary.Title, summary.Path)
 		return a.emit(mutationResult{summary, true, human}, warnings)
 	})
-}
-
-// readText returns the text of --NAME or --NAME-file (- is stdin), such
-// as --body and --body-file, which conflict. It must be UTF-8 and must not
-// contain the comments marker.
-func (a *app) readText(cmd *cobra.Command, name, text, file string) (string, error) {
-	fl := cmd.Flags()
-	textFlag, fileFlag := "--"+name, "--"+name+"-file"
-	if fl.Changed(name) && fl.Changed(name+"-file") {
-		return "", conflictingFlags(textFlag, fileFlag,
-			"pass the "+name+" with either "+textFlag+" or "+fileFlag+", not both")
-	}
-	source := textFlag
-	if fl.Changed(name + "-file") {
-		var b []byte
-		var err error
-		if file == "-" {
-			source = "stdin"
-			if a.opts.Stdin != nil {
-				b, err = io.ReadAll(a.opts.Stdin)
-			}
-		} else {
-			source = file
-			b, err = os.ReadFile(a.abs(file))
-		}
-		if err != nil {
-			msg := err.Error()
-			if errors.Is(err, os.ErrNotExist) {
-				msg = "no such file " + file
-			}
-			return "", invalid("unreadable_"+name+"_file", "cannot read "+fileFlag+": "+msg,
-				map[string]any{"path": file}, "pass a readable file, or - for stdin")
-		}
-		text = string(b)
-	}
-	if !utf8.ValidString(text) {
-		return "", invalid("invalid_"+name, "the "+name+" from "+source+" is not valid UTF-8",
-			map[string]any{"source": source}, "pass the "+name+" as UTF-8 Markdown")
-	}
-	if item.ContainsMarker(text) {
-		return "", invalid("reserved_marker",
-			"the "+name+" from "+source+" contains the reserved line "+item.CommentsMarker,
-			map[string]any{"source": source, "marker": item.CommentsMarker},
-			"remove that line; otman uses it to mark where comments begin")
-	}
-	return text, nil
 }
 
 // templateBody is the body a new Item of Kind kind in Project key starts

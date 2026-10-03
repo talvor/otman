@@ -4,11 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
-	"unicode"
-	"unicode/utf8"
 
 	"github.com/spf13/cobra"
-	"github.com/talvor/otman/internal/config"
 	"github.com/talvor/otman/internal/item"
 	"github.com/talvor/otman/internal/output"
 	"github.com/talvor/otman/internal/vault"
@@ -92,11 +89,10 @@ func (a *app) readComment(cmd *cobra.Command, name, text, file string) (string, 
 // names what needs the actor, for the failure when none is configured.
 func (a *app) newComment(s resolved, command, text string) (item.Comment, error) {
 	if !s.Actor.IsSet() {
-		return item.Comment{}, invalid("no_actor", command+" needs an actor, and none is configured", nil,
-			"pass --actor NAME, set "+config.Actor.EnvVar+", or run 'otman config set actor NAME'")
+		return item.Comment{}, noActor(command, nil)
 	}
 	actor := s.Actor.Value
-	if !utf8.ValidString(actor) || strings.IndexFunc(actor, func(r rune) bool { return unicode.IsControl(r) && r != '\t' }) >= 0 {
+	if !singleLine(actor) {
 		return item.Comment{}, invalid("invalid_arguments", "the actor must be a single line of UTF-8 text",
 			map[string]any{"source": string(s.Actor.Source)}, "")
 	}

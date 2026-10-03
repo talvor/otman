@@ -495,7 +495,7 @@ func replaceBody(file []byte, body string) ([]byte, error) {
 
 // appendComment appends c to file, which has frontmatter, as its last
 // entry: one blank line, the "### <created> · <author>" heading and the
-// comment's text, in the line endings of the frontmatter's opening line.
+// comment's text, in the line endings of the file's first line.
 // Leading and trailing line breaks of the text are not kept.
 func appendComment(file []byte, c Comment) ([]byte, error) {
 	_, rest, _ := frontmatter.Split(file)

@@ -49,7 +49,8 @@ func (a *app) newStatusCmd(c statusCommand) *cobra.Command {
 // invalid status is repaired.
 func (a *app) setStatus(cmd *cobra.Command, c statusCommand, ref, commentText, commentFile string) error {
 	fl := cmd.Flags()
-	withComment := c.comment && (fl.Changed("comment") || fl.Changed("comment-file"))
+	// Only close registers the comment flags, so reopen never has one.
+	withComment := fl.Changed("comment") || fl.Changed("comment-file")
 	if withComment {
 		var err error
 		if commentText, err = a.readComment(cmd, "comment", commentText, commentFile); err != nil {
