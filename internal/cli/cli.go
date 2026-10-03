@@ -5,6 +5,7 @@ package cli
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"path/filepath"
 	"strconv"
@@ -41,6 +42,7 @@ type app struct {
 	vault, project, actor string
 	format                string
 	json                  bool
+	version               bool
 
 	root   *cobra.Command
 	parsed bool // flags were parsed and validated
@@ -79,7 +81,6 @@ func (a *app) newRoot() *cobra.Command {
 	root := &cobra.Command{
 		Use:           "otman",
 		Short:         "Run an Obsidian Vault as an issue tracker",
-		Version:       Version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
@@ -90,6 +91,14 @@ func (a *app) newRoot() *cobra.Command {
 			a.out, a.parsed = f, true
 			return nil
 		},
+		// otman handles --version itself, rather than through cobra, so
+		// that it honours the output format.
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if a.version {
+				return a.emit(versionResult{Version}, nil)
+			}
+			return cmd.Help()
+		},
 	}
 	root.CompletionOptions.DisableDefaultCmd = true
 	pf := root.PersistentFlags()
@@ -98,9 +107,19 @@ func (a *app) newRoot() *cobra.Command {
 	pf.StringVar(&a.actor, "actor", "", "actor name (overrides OTM_ACTOR and config)")
 	pf.StringVar(&a.format, "format", "", "output format: human|axi|json (default human on a terminal, axi otherwise)")
 	pf.BoolVar(&a.json, "json", false, "shorthand for --format json")
+	root.Flags().BoolVarP(&a.version, "version", "v", false, "version for otman")
 
 	root.AddCommand(a.newConfigCmd())
 	return root
+}
+
+type versionResult struct {
+	Version string `json:"version"`
+}
+
+func (r versionResult) RenderHuman(w io.Writer) error {
+	_, err := fmt.Fprintf(w, "otman version %s\n", r.Version)
+	return err
 }
 
 // resolveFormat applies --format/--json over the TTY default.

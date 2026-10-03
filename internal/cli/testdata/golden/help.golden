@@ -4,6 +4,7 @@ exit: 0
 Run an Obsidian Vault as an issue tracker
 
 Usage:
+  otman [flags]
   otman [command]
 
 Available Commands:

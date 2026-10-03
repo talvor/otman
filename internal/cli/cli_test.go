@@ -2,10 +2,17 @@ package cli_test
 
 import "testing"
 
+// --version needs no config and honours the output format: plain text for
+// humans, the normal envelope for AXI and JSON.
 func TestVersionWithoutConfig(t *testing.T) {
 	runGolden(t, goldenCase{
-		name:  "version",
-		steps: []step{{args: []string{"--version"}}},
+		name: "version",
+		steps: []step{
+			{args: []string{"--version"}, tty: true},
+			{args: []string{"--version"}},
+			{args: []string{"--version", "--json"}, tty: true},
+			{args: []string{"-v", "--format", "human"}},
+		},
 	})
 }
 
