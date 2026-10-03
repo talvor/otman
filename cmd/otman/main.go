@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/talvor/otman/internal/cli"
+	"golang.org/x/term"
 )
 
 func main() {
@@ -25,9 +26,6 @@ func main() {
 	}))
 }
 
-// isTerminal reports whether f is a character device, which is how otman
-// decides between human and AXI output.
-func isTerminal(f *os.File) bool {
-	fi, err := f.Stat()
-	return err == nil && fi.Mode()&os.ModeCharDevice != 0
-}
+// isTerminal reports whether f is a terminal, which is how otman decides
+// between human and AXI output. A character device such as /dev/null is not.
+func isTerminal(f *os.File) bool { return term.IsTerminal(int(f.Fd())) }
