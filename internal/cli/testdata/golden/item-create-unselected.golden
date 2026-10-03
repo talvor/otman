@@ -1,0 +1,28 @@
+$ otman create --title Orphan --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "no_project",
+    "message": "no Project selected",
+    "details": null,
+    "hint": "pass --project, set OTM_PROJECT, run 'otman project link KEY', or 'otman config set project KEY'"
+  }
+}
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+home/
+vault/
+vault/Projects/
+vault/Projects/OTM/
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---

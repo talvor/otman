@@ -55,8 +55,9 @@ func (r createResult) RenderHuman(w io.Writer) error {
 
 func (a *app) create(cmd *cobra.Command, f createFlags) error {
 	// The whole request is validated before the Vault is touched.
-	title := strings.TrimSpace(f.title)
-	if title == "" {
+	// title keeps the exact text; only the filename is a projection.
+	title := f.title
+	if strings.TrimSpace(title) == "" {
 		return invalid("invalid_arguments", "--title is required and cannot be empty",
 			map[string]any{"flag": "--title"}, "pass the Item's title with --title")
 	}

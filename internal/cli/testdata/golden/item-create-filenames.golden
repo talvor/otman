@@ -1,0 +1,358 @@
+$ otman create --title What? "Quoted" #tags | pipes ^ref: a/b\c *star* <angle> %%hidden%% [[link]] --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-1",
+      "title": "What? \"Quoted\" #tags | pipes ^ref: a/b\\c *star* <angle> %%hidden%% [[link]]",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-1 What Quoted tags pipes ref abc star angle hidden link.md",
+      "rev": "c3d4a7dac308"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman create --title   lots   of	space  here   --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-2",
+      "title": "  lots   of\tspace  here  ",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-2 lots of space here.md",
+      "rev": "daf6b1595655"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman create --title Allocate item numbers under the Vault lock so that two agents never collide --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-3",
+      "title": "Allocate item numbers under the Vault lock so that two agents never collide",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-3 Allocate item numbers under the Vault lock so that two.md",
+      "rev": "fd99bee5760e"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman create --title Exactly sixty characters long, which needs no cutting at all --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-4",
+      "title": "Exactly sixty characters long, which needs no cutting at all",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-4 Exactly sixty characters long, which needs no cutting at all.md",
+      "rev": "10e6826a0d37"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman create --title Supercalifragilisticexpialidocious-and-then-some-more-words-joined --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-5",
+      "title": "Supercalifragilisticexpialidocious-and-then-some-more-words-joined",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-5 Supercalifragilisticexpialidocious-and-then-some-more-words-.md",
+      "rev": "56894578ce71"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman create --title Ünïcödé títlé wïth áccénts thát rüns pást thé sïxty chäräctér lïmït --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-6",
+      "title": "Ünïcödé títlé wïth áccénts thát rüns pást thé sïxty chäräctér lïmït",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-6 Ünïcödé títlé wïth áccénts thát rüns pást thé sïxty.md",
+      "rev": "040ef844cd7f"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman create --title [#[nested]#] --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-7",
+      "title": "[#[nested]#]",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-7 nested.md",
+      "rev": "fab7e05427b2"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman create --title ??? ::: *** --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-8",
+      "title": "??? ::: ***",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-8.md",
+      "rev": "a45146605e33"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 What Quoted tags pipes ref abc star angle hidden link.md --
+---
+id: OTM-1
+title: 'What? "Quoted" #tags | pipes ^ref: a/b\c *star* <angle> %%hidden%% [[link]]'
+aliases:
+  - 'What? "Quoted" #tags | pipes ^ref: a/b\c *star* <angle> %%hidden%% [[link]]'
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-2 lots of space here.md --
+---
+id: OTM-2
+title: "  lots   of\tspace  here  "
+aliases:
+  - "  lots   of\tspace  here  "
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-3 Allocate item numbers under the Vault lock so that two.md --
+---
+id: OTM-3
+title: Allocate item numbers under the Vault lock so that two agents never collide
+aliases:
+  - Allocate item numbers under the Vault lock so that two agents never collide
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-4 Exactly sixty characters long, which needs no cutting at all.md --
+---
+id: OTM-4
+title: Exactly sixty characters long, which needs no cutting at all
+aliases:
+  - Exactly sixty characters long, which needs no cutting at all
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-5 Supercalifragilisticexpialidocious-and-then-some-more-words-.md --
+---
+id: OTM-5
+title: Supercalifragilisticexpialidocious-and-then-some-more-words-joined
+aliases:
+  - Supercalifragilisticexpialidocious-and-then-some-more-words-joined
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-6 Ünïcödé títlé wïth áccénts thát rüns pást thé sïxty.md --
+---
+id: OTM-6
+title: Ünïcödé títlé wïth áccénts thát rüns pást thé sïxty chäräctér lïmït
+aliases:
+  - Ünïcödé títlé wïth áccénts thát rüns pást thé sïxty chäräctér lïmït
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-7 nested.md --
+---
+id: OTM-7
+title: '[#[nested]#]'
+aliases:
+  - '[#[nested]#]'
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-8.md --
+---
+id: OTM-8
+title: '??? ::: ***'
+aliases:
+  - '??? ::: ***'
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---

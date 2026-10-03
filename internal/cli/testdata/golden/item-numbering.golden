@@ -1,0 +1,132 @@
+$ otman create --title Eight
+exit: 0
+-- stdout --
+item:
+  id: OTM-8
+  title: Eight
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-8 Eight.md
+  rev: 36cfa444d046
+changed: true
+-- stderr --
+
+$ otman create --title Nine
+exit: 0
+-- stdout --
+item:
+  id: OTM-9
+  title: Nine
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-9 Nine.md
+  rev: 0ed81d988984
+changed: true
+-- stderr --
+
+$ rm "vault/Projects/OTM/Issues/OTM-9 Nine.md"
+
+$ otman create --title Ten, not nine again
+exit: 0
+-- stdout --
+item:
+  id: OTM-10
+  title: "Ten, not nine again"
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: "Projects/OTM/Issues/OTM-10 Ten, not nine again.md"
+  rev: f98bb6e18d1d
+changed: true
+-- stderr --
+
+$ rm "vault/Projects/OTM/Issues/OTM-10 Ten, not nine again.md"
+
+$ rm "vault/Projects/OTM/Issues/OTM-8 Eight.md"
+
+$ otman create --title Eleven
+exit: 0
+-- stdout --
+item:
+  id: OTM-11
+  title: Eleven
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-11 Eleven.md
+  rev: e42d17291881
+changed: true
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+vault/Projects/OTM/Elsewhere/
+-- vault/Projects/OTM/Elsewhere/OTM-3 Three.md --
+---
+id: OTM-3
+---
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-0 Zero.md --
+not an Item
+-- vault/Projects/OTM/Issues/OTM-11 Eleven.md --
+---
+id: OTM-11
+title: Eleven
+aliases:
+  - Eleven
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-12x.md --
+not an Item
+-- vault/Projects/OTM/Issues/OTM-7 Seven.md --
+---
+id: OTM-7
+---
+-- vault/Projects/OTM/Issues/WEB-90 Other.md --
+another Project's prefix
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/OTM/Templates/
+-- vault/Projects/OTM/Templates/OTM-50 Sample.md --
+not an Item
