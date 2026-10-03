@@ -229,14 +229,20 @@ func selectedProject(s resolved) (config.Value, error) {
 		return config.Value{}, err
 	}
 	if !sel.IsSet() {
-		return config.Value{}, noProject()
+		return config.Value{}, noProject("")
 	}
 	return sel, nil
 }
 
-func noProject() error {
+// noProject reports that no Project is selected. or names another flag
+// that would do instead, such as "--all-projects".
+func noProject(or string) error {
+	flags := "--project"
+	if or != "" {
+		flags += " or " + or
+	}
 	return invalid("no_project", "no Project selected", nil,
-		"pass --project, set "+config.Project.EnvVar+", run 'otman project link KEY', or 'otman config set project KEY'")
+		"pass "+flags+", set "+config.Project.EnvVar+", run 'otman project link KEY', or 'otman config set project KEY'")
 }
 
 // requireProject fails with project_not_found unless Project key exists.

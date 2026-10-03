@@ -6,19 +6,27 @@ import (
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
+	"github.com/talvor/otman/internal/config"
 	"github.com/talvor/otman/internal/item"
 	"github.com/talvor/otman/internal/output"
 	"github.com/talvor/otman/internal/vault"
 )
 
+type listFlags struct {
+	allProjects bool
+	paging      *paging
+}
+
 func (a *app) newListCmd() *cobra.Command {
+	var f listFlags
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List the Items of the selected Project (default: open ones)",
 		Args:  cobra.NoArgs,
 	}
-	p := addPaging(cmd)
-	cmd.RunE = func(*cobra.Command, []string) error { return a.list(p) }
+	cmd.Flags().BoolVar(&f.allProjects, "all-projects", false, "list the Items of every Project (conflicts with --project)")
+	f.paging = addPaging(cmd)
+	cmd.RunE = func(*cobra.Command, []string) error { return a.list(f) }
 	return cmd
 }
 
@@ -46,39 +54,84 @@ func (r listResult) RenderHuman(w io.Writer) error {
 	return r.renderMore(w)
 }
 
-func (a *app) list(p *paging) error {
-	if err := p.validate(); err != nil {
+func (a *app) list(f listFlags) error {
+	if err := f.paging.validate(); err != nil {
 		return err
+	}
+	if f.allProjects && a.root.PersistentFlags().Changed(config.Project.Name) {
+		return invalid("conflicting_flags", "--all-projects conflicts with --project",
+			map[string]any{"flags": []string{"--all-projects", "--project"}},
+			"pass either --all-projects or --project, not both")
 	}
 	s, err := a.settings()
 	if err != nil {
 		return err
 	}
-	sel, err := selectedProject(s)
-	if err != nil {
-		return err
-	}
-	return a.withVault(s, func(v *vault.Vault, warnings []output.Problem) error {
-		if err := requireProject(v, sel.Value, map[string]any{"source": string(sel.Source)}); err != nil {
+	var sel config.Value
+	if !f.allProjects {
+		if sel, err = s.project(); err != nil {
 			return err
 		}
-		files, err := v.ItemFiles(sel.Value)
-		if err != nil {
-			return ioError(err)
+		if !sel.IsSet() {
+			return noProject("--all-projects")
 		}
-		links := newItemLinks(files)
+	}
+	return a.withVault(s, func(v *vault.Vault, warnings []output.Problem) error {
+		keys, ws, err := listScope(v, sel)
+		if err != nil {
+			return err
+		}
 		all := []itemSummary{}
-		for _, f := range files {
-			data, err := v.ReadItemFile(f)
+		for _, key := range keys {
+			found, err := listProject(v, key)
 			if err != nil {
 				return ioError(err)
 			}
-			parsed := item.Parse(data)
-			if parsed.Status == nil || *parsed.Status != "open" {
-				continue
-			}
-			all = append(all, newItemSummary(f, parsed, data, links))
+			all = append(all, found...)
 		}
-		return a.emit(listResult{page(p, all)}, warnings)
+		return a.emit(listResult{page(f.paging, all)}, append(warnings, ws...))
 	})
+}
+
+// listScope is the keys of the Projects a list spans, in key order: the
+// selected Project, which must exist, or every Project when sel is unset.
+func listScope(v *vault.Vault, sel config.Value) ([]string, []output.Problem, error) {
+	if sel.IsSet() {
+		if err := requireProject(v, sel.Value, map[string]any{"source": string(sel.Source)}); err != nil {
+			return nil, nil, err
+		}
+		return []string{sel.Value}, nil, nil
+	}
+	ps, ws, err := v.Projects()
+	if err != nil {
+		return nil, nil, ioError(err)
+	}
+	keys := make([]string, len(ps))
+	for i, p := range ps {
+		keys[i] = p.Key
+	}
+	return keys, ws, nil
+}
+
+// listProject is the summaries of Project key's open Items, sorted by
+// number, then path.
+func listProject(v *vault.Vault, key string) ([]itemSummary, error) {
+	files, err := v.ItemFiles(key)
+	if err != nil {
+		return nil, err
+	}
+	links := newItemLinks(files)
+	var found []itemSummary
+	for _, f := range files {
+		data, err := v.ReadItemFile(f)
+		if err != nil {
+			return nil, err
+		}
+		parsed := item.Parse(data)
+		if parsed.Status == nil || *parsed.Status != "open" {
+			continue
+		}
+		found = append(found, newItemSummary(f, parsed, data, links))
+	}
+	return found, nil
 }
