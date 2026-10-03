@@ -2,6 +2,7 @@ package cli
 
 import (
 	"errors"
+	"path/filepath"
 
 	"github.com/talvor/otman/internal/config"
 	"github.com/talvor/otman/internal/output"
@@ -19,8 +20,18 @@ func (a *app) openVault(s resolved) (*vault.Vault, []output.Problem, error) {
 	}
 	path := s.Vault.Value
 	details := map[string]any{"path": path, "source": string(s.Vault.Source)}
-	v, warnings, err := vault.Open(path)
+	v, warnings, err := vault.Open(path, a.opts.LockTimeout)
 	switch {
+	case errors.Is(err, vault.ErrLockTimeout):
+		timeout := a.opts.LockTimeout
+		if timeout <= 0 {
+			timeout = vault.DefaultLockTimeout
+		}
+		lock := filepath.Join(path, vault.StateDir, "lock")
+		return nil, nil, &Error{Exit: ExitConflict, Code: "lock_timeout",
+			Message: "another otman command held the Vault lock " + lock + " for more than " + timeout.String(),
+			Details: map[string]any{"path": lock, "timeout": timeout.String()},
+			Hint:    "retry once the other otman command finishes; if none is running, find the process holding " + lock}
 	case errors.Is(err, vault.ErrNotFound):
 		return nil, nil, invalid("vault_not_found", "Vault directory "+path+" does not exist", details,
 			"create the directory, or point otman at your Vault with 'otman config set vault PATH'")

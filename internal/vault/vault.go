@@ -9,6 +9,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/talvor/otman/internal/fsutil"
 	"github.com/talvor/otman/internal/output"
@@ -20,7 +21,19 @@ var (
 	ErrNotFound = errors.New("vault directory does not exist")
 	// ErrNotDir means the Vault path is not a directory.
 	ErrNotDir = errors.New("vault path is not a directory")
+	// ErrLockTimeout means another otman command held .otman/lock for
+	// longer than the lock timeout.
+	ErrLockTimeout = errors.New("timed out waiting for the vault lock")
 )
+
+// DefaultLockTimeout is how long a command waits for another otman command
+// on this device to release .otman/lock before giving up. otman commands
+// hold the lock for well under a second, so a longer wait means a stuck
+// or runaway process.
+const DefaultLockTimeout = 30 * time.Second
+
+// lockPoll is how often a waiting command retries the lock.
+const lockPoll = 25 * time.Millisecond
 
 // StateDir is the per-device folder at the Vault root. It never reaches
 // git: otman writes it a .gitignore of "*".
@@ -41,8 +54,9 @@ type Vault struct {
 //
 // Every Vault command holds the lock for its whole run, so a writer's
 // scan, allocation and write are serialised against every other otman
-// command on this device.
-func Open(root string) (*Vault, []output.Problem, error) {
+// command on this device. A command that cannot take the lock within
+// lockTimeout (DefaultLockTimeout when zero) fails with ErrLockTimeout.
+func Open(root string, lockTimeout time.Duration) (*Vault, []output.Problem, error) {
 	fi, err := os.Stat(root)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, nil, ErrNotFound
@@ -57,7 +71,10 @@ func Open(root string) (*Vault, []output.Problem, error) {
 	if err := os.Mkdir(state, 0o755); err != nil && !errors.Is(err, os.ErrExist) {
 		return nil, nil, err
 	}
-	lock, err := acquireLock(filepath.Join(state, "lock"))
+	if lockTimeout <= 0 {
+		lockTimeout = DefaultLockTimeout
+	}
+	lock, err := acquireLock(filepath.Join(state, "lock"), lockTimeout)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -107,21 +124,26 @@ func (v *Vault) Close() error {
 }
 
 // acquireLock opens (creating if needed) the lock file and takes an
-// exclusive flock on it, waiting for any other holder.
-func acquireLock(path string) (*os.File, error) {
+// exclusive flock on it, waiting up to timeout for any other holder.
+func acquireLock(path string, timeout time.Duration) (*os.File, error) {
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0o644)
 	if err != nil {
 		return nil, err
 	}
+	deadline := time.Now().Add(timeout)
 	for {
-		err = unix.Flock(int(f.Fd()), unix.LOCK_EX)
-		if !errors.Is(err, unix.EINTR) {
-			break
+		err = unix.Flock(int(f.Fd()), unix.LOCK_EX|unix.LOCK_NB)
+		if err == nil {
+			return f, nil
 		}
+		if !errors.Is(err, unix.EWOULDBLOCK) && !errors.Is(err, unix.EINTR) {
+			f.Close()
+			return nil, err
+		}
+		if !time.Now().Before(deadline) {
+			f.Close()
+			return nil, ErrLockTimeout
+		}
+		time.Sleep(min(lockPoll, time.Until(deadline)))
 	}
-	if err != nil {
-		f.Close()
-		return nil, err
-	}
-	return f, nil
 }

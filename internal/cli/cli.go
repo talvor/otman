@@ -31,6 +31,10 @@ type Options struct {
 	Stderr io.Writer
 	Now    func() time.Time
 	IsTTY  bool // whether Stdout is a terminal
+
+	// LockTimeout bounds the wait for .otman/lock; zero means
+	// vault.DefaultLockTimeout. Tests shorten it.
+	LockTimeout time.Duration
 }
 
 // app is the state of one run, shared by every command.

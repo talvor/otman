@@ -2,6 +2,7 @@ package cli_test
 
 import (
 	"bytes"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/talvor/otman/internal/cli"
+	"golang.org/x/sys/unix"
 )
 
 // vaultConfig points the user config at the test's Vault.
@@ -274,5 +276,79 @@ func TestProjectCreateConcurrent(t *testing.T) {
 	}
 	if created != 1 {
 		t.Errorf("%d runs created the Project, want exactly 1", created)
+	}
+}
+
+// holdLock takes .otman/lock in vault the way another otman command would,
+// and returns its release.
+func holdLock(t *testing.T, vault string) func() {
+	t.Helper()
+	writeFile(t, filepath.Join(vault, ".otman", "lock"), "")
+	f, err := os.OpenFile(filepath.Join(vault, ".otman", "lock"), os.O_RDWR, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := unix.Flock(int(f.Fd()), unix.LOCK_EX); err != nil {
+		t.Fatal(err)
+	}
+	return func() { f.Close() }
+}
+
+func runVault(vault string, timeout time.Duration, args ...string) (int, string, string) {
+	var stdout, stderr bytes.Buffer
+	code := cli.Run(cli.Options{
+		Args:        append(args, "--vault", vault),
+		Env:         []string{"XDG_CONFIG_HOME=" + filepath.Join(filepath.Dir(vault), "config")},
+		Dir:         filepath.Dir(vault),
+		Stdin:       strings.NewReader(""),
+		Stdout:      &stdout,
+		Stderr:      &stderr,
+		Now:         func() time.Time { return fixedNow },
+		LockTimeout: timeout,
+	})
+	return code, stdout.String(), stderr.String()
+}
+
+// A command that cannot take the Vault lock gives up after the lock
+// timeout with lock_timeout (exit 4), writing nothing; once the holder
+// lets go, the same command succeeds.
+func TestLockTimeout(t *testing.T) {
+	vault := filepath.Join(t.TempDir(), "vault")
+	release := holdLock(t, vault)
+
+	const timeout = 200 * time.Millisecond
+	start := time.Now()
+	code, stdout, stderr := runVault(vault, timeout, "project", "create", "OTM", "--name", "otman", "--json")
+	waited := time.Since(start)
+	if code != cli.ExitConflict {
+		t.Fatalf("exit %d, want %d; stderr: %s", code, cli.ExitConflict, stderr)
+	}
+	if stdout != "" {
+		t.Errorf("stdout not empty on failure: %s", stdout)
+	}
+	if !strings.Contains(stderr, `"code": "lock_timeout"`) || !strings.Contains(stderr, `"timeout": "200ms"`) {
+		t.Errorf("stderr lacks lock_timeout with the timeout: %s", stderr)
+	}
+	if waited < timeout {
+		t.Errorf("gave up after %v, before the %v timeout", waited, timeout)
+	}
+	if _, err := os.Stat(filepath.Join(vault, "Projects", "OTM")); !os.IsNotExist(err) {
+		t.Errorf("Project folder written despite the lock timeout (stat err %v)", err)
+	}
+
+	release()
+	if code, _, stderr := runVault(vault, timeout, "project", "create", "OTM", "--name", "otman", "--json"); code != cli.ExitOK {
+		t.Fatalf("after release: exit %d; stderr: %s", code, stderr)
+	}
+}
+
+// A command waits for a lock released within the timeout rather than
+// failing at once.
+func TestLockWaitsForRelease(t *testing.T) {
+	vault := filepath.Join(t.TempDir(), "vault")
+	release := holdLock(t, vault)
+	time.AfterFunc(100*time.Millisecond, release)
+	if code, _, stderr := runVault(vault, 10*time.Second, "project", "list", "--json"); code != cli.ExitOK {
+		t.Fatalf("exit %d; stderr: %s", code, stderr)
 	}
 }
