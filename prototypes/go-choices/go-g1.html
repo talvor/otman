@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en" data-theme="luxury">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>G1 revisited</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :where(.grid, .flex) > * { min-width: 0; }
+  :where(p, h1, h2, h3, li, .badge, label) { overflow-wrap: anywhere; }
+  .opt:has(input:checked) { border-color: var(--color-primary); background: color-mix(in oklab, var(--color-primary) 10%, transparent); }
+</style>
+</head>
+<body class="bg-base-100 text-base-content min-h-screen">
+<main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
+
+<header class="space-y-2">
+  <p class="text-sm uppercase tracking-widest opacity-60">wayfinder · Go implementation choices · G1 revisited</p>
+  <h1 class="text-3xl font-bold">How should otman rewrite frontmatter?</h1>
+  <p class="opacity-80">The same hand-written note is shown with each option, after <code>otman edit OTM-4 --add-label needs-info</code>. The decision comes down to one thing: does <b>byte-identical frontmatter</b> matter, or is <b>“stable after the first write”</b> enough?</p>
+</header>
+
+<section class="space-y-2">
+  <h2 class="text-xl font-semibold">The note before the edit</h2>
+  <div id="orig" class="rounded-box overflow-hidden"></div>
+</section>
+
+<section class="grid gap-4">
+  <div class="card card-border bg-base-200"><div class="card-body gap-3">
+    <div class="flex items-baseline gap-3 flex-wrap"><span class="badge badge-primary">A</span><h2 class="card-title">Splice</h2><span class="badge badge-soft badge-success">recommended</span></div>
+    <p class="opacity-85">Parse with <code>go.yaml.in/yaml/v3</code> Nodes <i>only to read values and locate keys</i>. On write, re-serialise just the changed key and splice it into the original bytes. Frontmatter is flat, so a key's span runs from its line to the line before the next key, with trailing blank and comment lines trimmed off. New keys go just before the closing <code>---</code>; a removed key's span is deleted.</p>
+    <div id="diffA" class="rounded-box overflow-hidden"></div>
+    <div class="grid md:grid-cols-2 gap-3">
+      <div class="rounded-box bg-success/10 p-3"><h3 class="font-semibold mb-1">Pros</h3><ul class="list-disc ml-5 space-y-1 text-sm">
+        <li>Every unintended byte is untouched: blank lines, comments, quoting, indentation, user keys. This is exactly ADR 0005's promise.</li>
+        <li>Git diffs and sync conflicts touch only the changed key.</li>
+        <li>G7's round-trip test can require <b>byte-identical</b> output.</li></ul></div>
+      <div class="rounded-box bg-error/10 p-3"><h3 class="font-semibold mb-1">Cons</h3><ul class="list-disc ml-5 space-y-1 text-sm">
+        <li>otman owns about 200–300 lines of span code, plus a fuzz test.</li>
+        <li>A rewritten key loses <i>its own</i> trailing comment (<code># triage queue</code> above). Nothing else does.</li>
+        <li>Flow-style frontmatter (<code>{id: OTM-4, …}</code> on one line) can't be spliced.</li></ul></div>
+    </div>
+    <div class="alert alert-soft alert-info text-sm"><span><b>Safeguards:</b> after splicing, re-parse and check that every other key is semantically unchanged, otherwise refuse with <code>unsafe_write</code>. Flow-style frontmatter also gets <code>unsafe_write</code> and is reported by <code>doctor</code>.</span></div>
+  </div></div>
+
+  <div class="card card-border bg-base-200"><div class="card-body gap-3">
+    <div class="flex items-baseline gap-3 flex-wrap"><span class="badge badge-secondary">B</span><h2 class="card-title">Round-trip through yaml.v3 Nodes</h2></div>
+    <p class="opacity-85">Parse the whole block into a Node tree, change the <code>labels</code> node, and re-encode the whole block.</p>
+    <div id="diffB" class="rounded-box overflow-hidden"></div>
+    <div class="grid md:grid-cols-2 gap-3">
+      <div class="rounded-box bg-success/10 p-3"><h3 class="font-semibold mb-1">Pros</h3><ul class="list-disc ml-5 space-y-1 text-sm">
+        <li>Simplest: one well-known library, no byte-position code.</li>
+        <li>Always valid YAML, and flow style works.</li>
+        <li>Comments, key order and node style (quoting, flow vs block) are kept by the parser.</li></ul></div>
+      <div class="rounded-box bg-error/10 p-3"><h3 class="font-semibold mb-1">Cons</h3><ul class="list-disc ml-5 space-y-1 text-sm">
+        <li>Normalises the <b>whole</b> block: blank lines between keys disappear, the encoder sets indentation, and comments can drift (yaml.v3 is known to move foot comments).</li>
+        <li>The first write to a hand-edited file gives a noisy diff. It's <b>stable afterwards</b>, so the noise happens once per file.</li>
+        <li>ADR 0005's wording needs softening, and G7 becomes “stable after first write”, not “byte-identical”.</li></ul></div>
+    </div>
+  </div></div>
+
+  <div class="card card-border bg-base-200"><div class="card-body gap-3">
+    <div class="flex items-baseline gap-3 flex-wrap"><span class="badge badge-accent">C</span><h2 class="card-title">goccy/go-yaml AST</h2><span class="badge badge-soft badge-warning">unverified</span></div>
+    <p class="opacity-85">goccy keeps a token-level AST that remembers the original formatting. Edit the AST and print it back from its tokens.</p>
+    <div class="grid md:grid-cols-2 gap-3">
+      <div class="rounded-box bg-success/10 p-3"><h3 class="font-semibold mb-1">Pros</h3><ul class="list-disc ml-5 space-y-1 text-sm">
+        <li>Closer to byte-preserving than B, with no splicing code of our own.</li></ul></div>
+      <div class="rounded-box bg-error/10 p-3"><h3 class="font-semibold mb-1">Cons</h3><ul class="list-disc ml-5 space-y-1 text-sm">
+        <li>Fidelity depends on how goccy prints its tokens, which is less proven in edge cases than yaml.v3, and its bugs become otman's.</li>
+        <li>More complex API for attaching comments.</li>
+        <li>I haven't verified its byte fidelity; a quick prototype would settle that.</li></ul></div>
+    </div>
+  </div></div>
+</section>
+
+<div class="overflow-x-auto"><table class="table table-sm bg-base-200 rounded-box">
+<thead><tr><th></th><th>A Splice</th><th>B Node round-trip</th><th>C goccy</th></tr></thead><tbody>
+<tr><td>Untouched bytes preserved</td><td>✅ always</td><td>❌ normalised once</td><td>🟡 mostly (unverified)</td></tr>
+<tr><td>Custom code</td><td>🟡 ~200–300 lines</td><td>✅ none</td><td>✅ little</td></tr>
+<tr><td>Flow-style frontmatter</td><td>❌ refused</td><td>✅</td><td>✅</td></tr>
+<tr><td>Fits ADR 0005 as written</td><td>✅</td><td>❌ needs amendment</td><td>🟡</td></tr>
+<tr><td>Round-trip test</td><td>byte-identical</td><td>stable after first write</td><td>byte-identical if it holds up</td></tr>
+</tbody></table></div>
+
+<div class="alert alert-soft text-sm"><span><b>Caveat for both A and B:</b> when you edit a property through Obsidian's Properties UI, Obsidian rewrites the frontmatter in its own style anyway. Byte preservation mainly protects YAML typed by hand or written by other tools, and keeps git history clean.</span></div>
+
+<form id="round" class="space-y-5" onsubmit="event.preventDefault(); submitAll(event.currentTarget);">
+</form>
+
+<div class="card card-border bg-base-200">
+  <div class="card-body gap-3">
+    <h2 class="card-title text-lg">Anything the round missed?</h2>
+    <div data-lavish-question="extra">
+      <textarea name="extra" class="textarea w-full" rows="3" placeholder="Optional"></textarea>
+    </div>
+    <div class="card-actions items-center justify-between">
+      <span id="status" class="text-sm opacity-70" role="status" aria-live="polite">Nothing queued yet.</span>
+      <button form="round" type="submit" class="btn btn-primary">Submit all answers</button>
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+const Q = [
+  { id: "G1", title: "Which frontmatter write strategy?",
+    body: "Pick one, or ask for a quick prototype first.",
+    opts: [["splice", "A: splice, with the re-parse safeguard and <code>unsafe_write</code> for flow style", true],
+           ["node", "B: yaml.v3 Node round-trip; amend ADR 0005's wording, and G7 becomes “stable after first write”"],
+           ["proto", "Prototype A vs C on a few real hand-edited notes before deciding"]],
+    why: "This is the only option that keeps ADR 0005's promise without depending on another library's printer." },
+];
+
+const form = document.getElementById("round");
+form.innerHTML = Q.map(q => `
+  <fieldset class="card card-border bg-base-200" data-lavish-question="${q.id}">
+    <div class="card-body gap-3">
+      <legend class="sr-only">${q.id} ${q.title}</legend>
+      <div class="flex items-baseline gap-3">
+        <span class="badge badge-primary badge-outline font-mono">${q.id}</span>
+        <h2 class="card-title text-lg">${q.title}</h2>
+      </div>
+      <p class="opacity-85">${q.body}</p>
+      <div class="grid gap-2">
+        ${q.opts.map(([v, label, rec]) => `
+          <label class="opt flex items-start gap-3 rounded-box border border-base-content/10 p-3 cursor-pointer">
+            <input type="radio" class="radio radio-primary radio-sm mt-0.5" name="${q.id}" value="${v}" data-label="${label.replace(/<[^>]+>/g,'').replace(/"/g,'&quot;')}" ${rec ? "checked" : ""}>
+            <span class="flex-1">${label} ${rec ? '<span class="badge badge-sm badge-soft badge-success ml-1">recommended</span>' : ""}</span>
+          </label>`).join("")}
+      </div>
+      <p class="text-sm opacity-60">➡️ ${q.why}</p>
+      <input type="text" name="${q.id}-note" class="input input-sm w-full" placeholder="Optional note">
+    </div>
+  </fieldset>`).join("");
+
+function submitAll(f) {
+  const fd = new FormData(f);
+  const items = Q.map(q => {
+    const v = fd.get(q.id);
+    const input = f.querySelector(`input[name="${q.id}"][value="${v}"]`);
+    const rec = q.opts.find(o => o[2])[0] === v;
+    return { id: q.id, question: q.title, answer: input ? input.dataset.label : null, accepted_recommendation: rec, note: (fd.get(q.id + "-note") || "").trim() };
+  });
+  const extra = document.querySelector('textarea[name=extra]').value.trim();
+  const lines = items.map(i => `${i.id} ${i.question}: ${i.answer}${i.accepted_recommendation ? " (rec)" : " (CHANGED)"}${i.note ? " | note: " + i.note : ""}`);
+  if (extra) lines.push("Extra: " + extra);
+  const text = "G1 revisited answer:\n" + lines.join("\n");
+  const status = document.getElementById("status");
+  if (window.lavish?.queuePrompt) {
+    window.lavish.queuePrompt(text + "\n\nAccount for every question ID G1 when updating the design tree.", { tag: "choice", text: "G1 revisited", queueKey: "go-g1", element: f, data: { items, extra } });
+    status.textContent = "Queued. Press Send to Agent to deliver it.";
+  } else {
+    navigator.clipboard?.writeText(text);
+    status.textContent = "Lavish isn't running, so the answers were copied to your clipboard. Paste them into the chat.";
+  }
+}
+</script>
+<script>const FM = {"orig": "---\nid: OTM-4\ntitle: \"Allocate item numbers\"\nkind: issue\nstatus: open\nlabels: [needs-triage]   # triage queue\n\n# my own stuff\npriority: high\ndue: 2026-10-10\n---\n", "A": "---\nid: OTM-4\ntitle: \"Allocate item numbers\"\nkind: issue\nstatus: open\nlabels:\n  - needs-triage\n  - needs-info\n\n# my own stuff\npriority: high\ndue: 2026-10-10\n---\n", "B": "---\nid: OTM-4\ntitle: \"Allocate item numbers\"\nkind: issue\nstatus: open\nlabels: [needs-triage, needs-info] # triage queue\n# my own stuff\npriority: high\ndue: 2026-10-10\n---\n"};</script>
+<script type="module">
+  import { File, FileDiff } from "https://esm.sh/@pierre/diffs@1.2.10?bundle";
+  const opts = { theme: { light: "github-light", dark: "github-dark" }, themeType: "dark", overflow: "wrap" };
+  new File(opts).render({ containerWrapper: document.querySelector("#orig"), file: { name: "OTM-4 Allocate item numbers.md", contents: FM.orig } });
+  for (const k of ["A","B"]) new FileDiff({ ...opts, diffStyle: "unified" }).render({ containerWrapper: document.querySelector("#diff"+k),
+    oldFile: { name: "OTM-4 Allocate item numbers.md", contents: FM.orig }, newFile: { name: "OTM-4 Allocate item numbers.md", contents: FM[k] } });
+</script>
+</body>
+</html>

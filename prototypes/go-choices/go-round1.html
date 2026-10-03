@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en" data-theme="luxury">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Go choices: Round 1</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :where(.grid, .flex) > * { min-width: 0; }
+  :where(p, h1, h2, h3, li, .badge, label) { overflow-wrap: anywhere; }
+  .opt:has(input:checked) { border-color: var(--color-primary); background: color-mix(in oklab, var(--color-primary) 10%, transparent); }
+</style>
+</head>
+<body class="bg-base-100 text-base-content min-h-screen">
+<main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
+
+<header class="space-y-2">
+  <p class="text-sm uppercase tracking-widest opacity-60">wayfinder · work the map · Go implementation choices</p>
+  <h1 class="text-3xl font-bold">Go choices, Round 1</h1>
+  <p class="opacity-80">This is the last ticket on the map. Pin only what the spec needs so it isn't ambiguous, and leave the rest to the implementer. Facts checked today: <code>gopkg.in/yaml.v3</code> has been frozen since 2022, and its maintained successor is <code>go.yaml.in/yaml/v3</code> (v3.0.5, July 2026); <code>toon-format/toon-go</code> is v0.1.0, released yesterday; the current Go is 1.27.1; cobra is v1.10.2 and kong v1.16.1. Already settled: <code>modernc.org/sqlite</code>, <code>CGO_ENABLED=0</code>, atomic temp + rename. Recommendations are pre-selected.</p>
+</header>
+
+<form id="round" class="space-y-5" onsubmit="event.preventDefault(); submitAll(event.currentTarget);">
+</form>
+
+<div class="card card-border bg-base-200">
+  <div class="card-body gap-3">
+    <h2 class="card-title text-lg">Anything the round missed?</h2>
+    <div data-lavish-question="extra">
+      <textarea name="extra" class="textarea w-full" rows="3" placeholder="Optional"></textarea>
+    </div>
+    <div class="card-actions items-center justify-between">
+      <span id="status" class="text-sm opacity-70" role="status" aria-live="polite">Nothing queued yet.</span>
+      <button form="round" type="submit" class="btn btn-primary">Submit all answers</button>
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+const Q = [
+  { id: "G1", title: "How is frontmatter read and rewritten?",
+    body: "ADR 0005 says to preserve unknown keys, key order and comments, rewriting only changed keys. Even yaml's Node API re-encodes untouched keys with normalised indentation and quoting, which would produce noisy diffs.",
+    opts: [["splice", "Parse with <code>go.yaml.in/yaml/v3</code> Nodes (for reading and locating keys), but write by <b>splicing</b>: replace only the changed keys' byte ranges in the original text, so every untouched byte is kept. The frontmatter is split from the body at the first <code>---</code> line pair, and the body is never re-encoded", true],
+           ["node", "Round-trip through yaml.v3 Nodes (keeps comments and order, but normalises formatting)"],
+           ["goccy", "<code>goccy/go-yaml</code>'s comment-preserving AST round-trip"]],
+    why: "This is the only option that guarantees “rewrite only the keys it changes” at the byte level. Hand-edited YAML stays exactly as the person typed it." },
+  { id: "G2", title: "CLI framework",
+    body: "Command groups (<code>project create</code>, <code>parent set</code>), global overrides, generated help, and full control over exit codes and the stderr error format.",
+    opts: [["cobra", "<code>spf13/cobra</code> + pflag, with <code>SilenceUsage</code>/<code>SilenceErrors</code> so otman owns errors and exit codes", true],
+           ["kong", "<code>alecthomas/kong</code> (struct-tag based)"],
+           ["stdlib", "Standard library <code>flag</code> with a hand-rolled dispatcher"]],
+    why: "It is the most common choice, handles nested groups and help well, and agents and contributors already know it." },
+  { id: "G3", title: "Output encoders",
+    body: "Three formats from one contract: human (TTY), AXI/TOON (piped), and versioned JSON.",
+    opts: [["own", "Typed result structs → <code>encoding/json</code> for JSON; a small in-repo TOON/AXI encoder covering only otman's fixed shapes; <code>text/tabwriter</code> for human output. Golden tests pin all three", true],
+           ["toon-go", "Use <code>toon-format/toon-go</code> for the AXI output"]],
+    why: "<code>toon-go</code> is one day old. otman's shapes are few and fixed, and AXI isn't a stable contract (JSON is), so owning it costs little." },
+  { id: "G4", title: "File-system primitives",
+    body: "These are the lock, the atomic write, <code>rev</code> and the journal.",
+    opts: [["spec", "Lock: <code>flock</code> (via <code>golang.org/x/sys</code>) on <code>.otman/lock</code>. Atomic write: temp file in the same folder → fsync → rename → fsync the folder. <code>rev</code>: the first 12 hex characters of SHA-256 over the file's bytes. Journal: one JSON file per operation in <code>.otman/journal/</code>, written atomically, listing steps with each file's expected pre-<code>rev</code> so a resume is idempotent (skip steps already applied, stop with <code>unsafe_write</code> on unexpected content)", true],
+           ["impl", "Pin only the behaviour; leave these details to the implementer"]],
+    why: "These details decide correctness (crash safety, idempotent resume), so the spec should fix them rather than leave them to chance." },
+  { id: "G5", title: "Wikilink parsing and rewriting",
+    body: "Relations live in frontmatter strings; bodies contain <code>[[t]]</code>, <code>[[t|alias]]</code>, <code>[[t#heading]]</code> and <code>![[embed]]</code>, plus code that must not be touched.",
+    opts: [["scanner", "A small in-repo scanner: it recognises all four forms (and path-qualified targets), skips fenced and inline code, and resolves by basename the way Obsidian does. A rewrite replaces only the target and keeps any alias, heading or embed marker. Fixtures cover each form", true],
+           ["goldmark", "Parse bodies with goldmark plus a wikilink extension"]],
+    why: "A full Markdown AST is overkill when all otman needs is to find and splice link targets, and re-rendering would break byte preservation." },
+  { id: "G6", title: "Go version and platforms",
+    body: "Releases are a static <code>CGO_ENABLED=0</code> binary. <code>flock</code> doesn't exist on Windows (it needs <code>LockFileEx</code>), and Windows paths and case-insensitive filesystems add edge cases.",
+    opts: [["unix", "<code>go 1.26</code> in go.mod (built with 1.27). v1 targets linux and darwin on amd64 and arm64. Windows goes to Deferred to v2", true],
+           ["all", "Include windows/amd64 in v1 (LockFileEx, path handling)"]],
+    why: "This covers the likely users (developers on macOS and Linux running agents) without doubling the file-system edge cases in v1." },
+  { id: "G7", title: "Test approach",
+    body: "For a CLI built on files.",
+    opts: [["golden", "Golden Vault fixtures under <code>testdata/</code>; tests run the CLI in-process against a temporary copy and compare stdout, stderr, exit code and the resulting tree. A round-trip test proves parse → write with no change gives identical bytes for every fixture, including hand-edited YAML. Crash-resume tests interrupt the journal at each step", true],
+           ["impl", "Leave the test strategy to <code>/to-spec</code>'s Testing Decisions"]],
+    why: "Byte preservation and journal recovery are the promises most likely to regress quietly, so the spec should name tests for them." },
+  { id: "G8", title: "What does the spec leave to the implementer?",
+    body: "For example the package layout, the error-type design and which logging library to use.",
+    opts: [["leave", "The spec names no package layout and no internal APIs. It pins only G1–G7 and the behaviour contracts from earlier tickets", true],
+           ["layout", "Also pin a package layout (<code>cmd/otman</code>, <code>internal/{vault,item,frontmatter,links,store,journal,cli,output}</code>)"]],
+    why: "Layout is easy to change and is the implementer's craft. The spec stays about behaviour plus the few choices that affect correctness." },
+];
+
+const form = document.getElementById("round");
+form.innerHTML = Q.map(q => `
+  <fieldset class="card card-border bg-base-200" data-lavish-question="${q.id}">
+    <div class="card-body gap-3">
+      <legend class="sr-only">${q.id} ${q.title}</legend>
+      <div class="flex items-baseline gap-3">
+        <span class="badge badge-primary badge-outline font-mono">${q.id}</span>
+        <h2 class="card-title text-lg">${q.title}</h2>
+      </div>
+      <p class="opacity-85">${q.body}</p>
+      <div class="grid gap-2">
+        ${q.opts.map(([v, label, rec]) => `
+          <label class="opt flex items-start gap-3 rounded-box border border-base-content/10 p-3 cursor-pointer">
+            <input type="radio" class="radio radio-primary radio-sm mt-0.5" name="${q.id}" value="${v}" data-label="${label.replace(/<[^>]+>/g,'').replace(/"/g,'&quot;')}" ${rec ? "checked" : ""}>
+            <span class="flex-1">${label} ${rec ? '<span class="badge badge-sm badge-soft badge-success ml-1">recommended</span>' : ""}</span>
+          </label>`).join("")}
+      </div>
+      <p class="text-sm opacity-60">➡️ ${q.why}</p>
+      <input type="text" name="${q.id}-note" class="input input-sm w-full" placeholder="Optional note">
+    </div>
+  </fieldset>`).join("");
+
+function submitAll(f) {
+  const fd = new FormData(f);
+  const items = Q.map(q => {
+    const v = fd.get(q.id);
+    const input = f.querySelector(`input[name="${q.id}"][value="${v}"]`);
+    const rec = q.opts.find(o => o[2])[0] === v;
+    return { id: q.id, question: q.title, answer: input ? input.dataset.label : null, accepted_recommendation: rec, note: (fd.get(q.id + "-note") || "").trim() };
+  });
+  const extra = document.querySelector('textarea[name=extra]').value.trim();
+  const lines = items.map(i => `${i.id} ${i.question}: ${i.answer}${i.accepted_recommendation ? " (rec)" : " (CHANGED)"}${i.note ? " | note: " + i.note : ""}`);
+  if (extra) lines.push("Extra: " + extra);
+  const text = "Go choices round 1 answers:\n" + lines.join("\n");
+  const status = document.getElementById("status");
+  if (window.lavish?.queuePrompt) {
+    window.lavish.queuePrompt(text + "\n\nAccount for every question ID G1–G8 when updating the design tree.", { tag: "choice", text: "Go choices round 1 (G1–G8)", queueKey: "go-round1", element: f, data: { items, extra } });
+    status.textContent = "Queued. Press Send to Agent to deliver it.";
+  } else {
+    navigator.clipboard?.writeText(text);
+    status.textContent = "Lavish isn't running, so the answers were copied to your clipboard. Paste them into the chat.";
+  }
+}
+</script>
+</body>
+</html>
