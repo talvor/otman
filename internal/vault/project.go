@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"sort"
 
+	"github.com/talvor/otman/internal/frontmatter"
 	"github.com/talvor/otman/internal/fsutil"
 	"github.com/talvor/otman/internal/item"
 	"github.com/talvor/otman/internal/output"
@@ -126,7 +127,7 @@ func (v *Vault) loadProject(key string) (Project, []output.Problem, error) {
 		return p, nil, err
 	}
 	p.Note = &note
-	fm, _, ok := item.SplitFrontmatter(b)
+	fm, _, ok := frontmatter.Split(b)
 	if !ok {
 		return p, nil, nil
 	}

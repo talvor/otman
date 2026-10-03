@@ -14,6 +14,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/talvor/otman/internal/frontmatter"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -303,7 +304,7 @@ type Parsed struct {
 // at the last "## Comments" heading, if any.
 func Parse(b []byte) Parsed {
 	var p Parsed
-	fm, rest, ok := SplitFrontmatter(b)
+	fm, rest, ok := frontmatter.Split(b)
 	if !ok {
 		rest = b
 	} else {
@@ -388,25 +389,21 @@ func scalars(n *yaml.Node) []string {
 	return out
 }
 
-// SplitFrontmatter returns the YAML between a leading --- line and the next
-// --- line, and what follows it, and false when the file has none.
-func SplitFrontmatter(b []byte) (fm, rest []byte, ok bool) {
-	lines := bytes.SplitAfter(b, []byte("\n"))
-	if len(lines) == 0 || !isFence(lines[0]) {
-		return nil, b, false
+// SetStatus sets an Item file's status and, when that changes it, its
+// updated time to now, splicing only those keys (ADR 0006). An Item that
+// already has status is returned unchanged, but only once the splicer has
+// accepted it: a file otman could not rewrite fails with a
+// *frontmatter.UnsafeError either way.
+func SetStatus(file []byte, status string, now time.Time) (out []byte, changed bool, err error) {
+	out, err = frontmatter.Splice(file, []frontmatter.Edit{{Key: "status", Value: str(status)}})
+	if err != nil || bytes.Equal(out, file) {
+		return out, false, err
 	}
-	n := len(lines[0])
-	for _, l := range lines[1:] {
-		if isFence(l) {
-			return b[len(lines[0]):n], b[n+len(l):], true
-		}
-		n += len(l)
-	}
-	return nil, b, false
-}
-
-func isFence(line []byte) bool {
-	return string(bytes.TrimRight(line, "\r\n")) == "---"
+	out, err = frontmatter.Splice(file, []frontmatter.Edit{
+		{Key: "status", Value: str(status)},
+		{Key: "updated", Value: timestamp(now)},
+	})
+	return out, err == nil, err
 }
 
 // splitComments splits text after the frontmatter at the comments marker

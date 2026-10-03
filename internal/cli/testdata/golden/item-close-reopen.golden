@@ -1,0 +1,229 @@
+$ otman close OTM-1
+tty: true
+exit: 0
+-- stdout --
+Closed OTM-1 · Handle sync collisions
+-- stderr --
+
+$ otman close OTM-1 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-1",
+      "title": "Handle sync collisions",
+      "kind": "issue",
+      "status": "closed",
+      "labels": [],
+      "assignee": "agent-b",
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-1 Handle sync collisions.md",
+      "rev": "ae3607bbe5ed"
+    },
+    "changed": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman close 1
+tty: true
+exit: 0
+-- stdout --
+OTM-1 · Handle sync collisions is already closed
+-- stderr --
+
+$ otman reopen OTM-1
+exit: 0
+-- stdout --
+item:
+  id: OTM-1
+  title: Handle sync collisions
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: agent-b
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-1 Handle sync collisions.md
+  rev: cf9ff0a5e0c4
+changed: true
+-- stderr --
+
+$ otman reopen OTM-1 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-1",
+      "title": "Handle sync collisions",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": "agent-b",
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-1 Handle sync collisions.md",
+      "rev": "cf9ff0a5e0c4"
+    },
+    "changed": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman reopen OTM-2 Item file format frontmatter and body.md --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-2",
+      "title": "Item file format: frontmatter and body",
+      "kind": "spec",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md",
+      "rev": "d421756ad96a"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman close Projects/WEB/PRDs/WEB-1 Landing page.md
+tty: true
+exit: 0
+-- stdout --
+Closed WEB-1 · Landing page
+-- stderr --
+
+$ otman reopen WEB-1
+tty: true
+exit: 0
+-- stdout --
+Reopened WEB-1 · Landing page
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Handle sync collisions.md --
+---
+id: OTM-1
+title: Handle sync collisions
+aliases:
+  - Handle sync collisions
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: agent-b
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+Detect duplicate numbers and report both paths.
+
+## Comments
+
+This body has its own Comments heading; the marker is the boundary.
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+Reproduced with a copied note.
+
+### 2026-01-01T11:00:00Z · agent-b
+Fixed in the scanner.
+
+### A heading inside the comment
+stays part of it.
+-- vault/Projects/OTM/Issues/OTM-3 Child of the first.md --
+---
+id: OTM-3
+title: Child of the first
+kind: issue
+status: open
+parent: "[[OTM-1 Handle sync collisions]]"
+blocked_by: []
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/OTM/Specs/
+-- vault/Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md --
+---
+id: OTM-2
+title: 'Item file format: frontmatter and body'
+aliases:
+  - 'Item file format: frontmatter and body'
+kind: spec
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T09:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/WEB/
+vault/Projects/WEB/PRDs/
+-- vault/Projects/WEB/PRDs/WEB-1 Landing page.md --
+---
+id: WEB-1
+title: Landing page
+aliases:
+  - Landing page
+kind: prd
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T08:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+Explain otman in one screen.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/WEB/WEB.md --
+---
+name: otman website
+kind: project
+---

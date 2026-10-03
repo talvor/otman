@@ -120,6 +120,9 @@ func (a *app) newRoot() *cobra.Command {
 	root.AddCommand(a.newCreateCmd())
 	root.AddCommand(a.newViewCmd())
 	root.AddCommand(a.newListCmd())
+	for _, c := range statusCommands {
+		root.AddCommand(a.newStatusCmd(c))
+	}
 	root.AddCommand(a.newConfigCmd())
 	root.AddCommand(a.newProjectCmd())
 	return root

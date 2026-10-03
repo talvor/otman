@@ -8,11 +8,13 @@ Usage:
   otman [command]
 
 Available Commands:
+  close       Close an Item
   config      Show or change user config
   create      Create an Item in the selected Project
   help        Help about any command
   list        List the Items of the selected Project (default: open ones)
   project     Create, list, view and link Projects
+  reopen      Reopen a closed Item
   view        Show an Item by ID, number, full filename or Vault-relative path
 
 Flags:

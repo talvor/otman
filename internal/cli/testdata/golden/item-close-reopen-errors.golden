@@ -1,0 +1,169 @@
+$ otman close
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[invalid_arguments]: accepts 1 arg(s), received 0
+hint: run 'otman --help' for usage
+
+$ otman reopen OTM-1 OTM-2 --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "accepts 1 arg(s), received 2",
+    "details": null,
+    "hint": "run 'otman --help' for usage"
+  }
+}
+
+$ otman close OTM-99 --json
+exit: 3
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "item_not_found",
+    "message": "no Item matches \"OTM-99\" in Project OTM",
+    "details": {
+      "project": "OTM",
+      "ref": "OTM-99"
+    },
+    "hint": "name an Item by its ID (OTM-12), its number, its full filename or its Vault-relative path; titles do not match"
+  }
+}
+
+$ otman reopen Handle sync collisions
+exit: 3
+-- stdout --
+-- stderr --
+error:
+  code: item_not_found
+  message: "no Item matches \"Handle sync collisions\""
+  details:
+    ref: Handle sync collisions
+  hint: "name an Item by its ID (OTM-12), its number, its full filename or its Vault-relative path; titles do not match"
+
+$ otman close WEB-1 --project OTM --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "project_mismatch",
+    "message": "WEB-1 is in Project WEB, but --project is OTM",
+    "details": {
+      "flag": "OTM",
+      "project": "WEB",
+      "ref": "WEB-1"
+    },
+    "hint": "drop --project, or pass --project WEB"
+  }
+}
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Handle sync collisions.md --
+---
+id: OTM-1
+title: Handle sync collisions
+aliases:
+  - Handle sync collisions
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: agent-b
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+Detect duplicate numbers and report both paths.
+
+## Comments
+
+This body has its own Comments heading; the marker is the boundary.
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+Reproduced with a copied note.
+
+### 2026-01-01T11:00:00Z · agent-b
+Fixed in the scanner.
+
+### A heading inside the comment
+stays part of it.
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/OTM/Specs/
+-- vault/Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md --
+---
+id: OTM-2
+title: 'Item file format: frontmatter and body'
+aliases:
+  - 'Item file format: frontmatter and body'
+kind: spec
+status: closed
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T09:00:00Z
+updated: 2026-01-01T09:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/WEB/
+vault/Projects/WEB/PRDs/
+-- vault/Projects/WEB/PRDs/WEB-1 Landing page.md --
+---
+id: WEB-1
+title: Landing page
+aliases:
+  - Landing page
+kind: prd
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T08:00:00Z
+updated: 2026-01-01T08:00:00Z
+---
+Explain otman in one screen.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/WEB/WEB.md --
+---
+name: otman website
+kind: project
+---
