@@ -395,15 +395,88 @@ func scalars(n *yaml.Node) []string {
 // accepted it: a file otman could not rewrite fails with a
 // *frontmatter.UnsafeError either way.
 func SetStatus(file []byte, status string, now time.Time) (out []byte, changed bool, err error) {
-	out, err = frontmatter.Splice(file, []frontmatter.Edit{{Key: "status", Value: str(status)}})
+	return rewrite(file, []frontmatter.Edit{{Key: "status", Value: str(status)}}, nil, now)
+}
+
+// Update is an edit to an Item file. A nil field is left alone.
+type Update struct {
+	Kind *Kind
+	// Body replaces the main body; "" clears it.
+	Body *string
+	// Assignee sets the assignee, or clears it when *Assignee is nil.
+	Assignee **string
+}
+
+// ErrNoMarker refuses a body rewrite of an Item file that has no comments
+// marker line, whose body/comments boundary otman will not guess at.
+var ErrNoMarker = errors.New("the Item has no " + CommentsMarker + " line")
+
+// Apply makes update to an Item file and, when that changes it, sets its
+// updated time to now. Frontmatter keys are spliced (ADR 0006); a body
+// rewrite replaces only the text between the frontmatter and the comments
+// marker, keeping the comments section byte for byte, and uses the file's
+// line endings. As with SetStatus, a file otman could not rewrite fails
+// with a *frontmatter.UnsafeError, or ErrNoMarker for a body rewrite,
+// even when update would change nothing.
+func Apply(file []byte, update Update, now time.Time) (out []byte, changed bool, err error) {
+	var edits []frontmatter.Edit
+	if update.Kind != nil {
+		edits = append(edits, frontmatter.Edit{Key: "kind", Value: str(string(*update.Kind))})
+	}
+	if update.Assignee != nil {
+		edits = append(edits, frontmatter.Edit{Key: "assignee", Value: optional(*update.Assignee)})
+	}
+	return rewrite(file, edits, update.Body, now)
+}
+
+// rewrite splices edits into file and replaces its body when body is not
+// nil. When that changes the file, it does so again with updated set to
+// now.
+func rewrite(file []byte, edits []frontmatter.Edit, body *string, now time.Time) ([]byte, bool, error) {
+	apply := func(edits []frontmatter.Edit) ([]byte, error) {
+		out, err := frontmatter.Splice(file, edits)
+		if err != nil || body == nil {
+			return out, err
+		}
+		return replaceBody(out, *body)
+	}
+	out, err := apply(edits)
 	if err != nil || bytes.Equal(out, file) {
 		return out, false, err
 	}
-	out, err = frontmatter.Splice(file, []frontmatter.Edit{
-		{Key: "status", Value: str(status)},
-		{Key: "updated", Value: timestamp(now)},
-	})
+	out, err = apply(append(edits[:len(edits):len(edits)], frontmatter.Edit{Key: "updated", Value: timestamp(now)}))
 	return out, err == nil, err
+}
+
+// replaceBody replaces the body of file, which has frontmatter, with body
+// laid out as Render lays it out, in the line endings of the frontmatter's
+// opening line.
+func replaceBody(file []byte, body string) ([]byte, error) {
+	_, rest, _ := frontmatter.Split(file)
+	marker := -1
+	offset := 0
+	for line := range strings.Lines(string(rest)) {
+		if isLine(line, CommentsMarker) {
+			marker = offset
+			break
+		}
+		offset += len(line)
+	}
+	if marker < 0 {
+		return nil, ErrNoMarker
+	}
+	eol := "\n"
+	if bytes.HasPrefix(file, []byte("---\r\n")) {
+		eol = "\r\n"
+	}
+	var b bytes.Buffer
+	b.Write(file[:len(file)-len(rest)])
+	if body = strings.TrimRight(normalizeLineEndings(body), "\n"); body != "" {
+		b.WriteString(strings.ReplaceAll(body, "\n", eol))
+		b.WriteString(eol + eol)
+	}
+	b.Write(rest[marker:])
+	return b.Bytes(), nil
 }
 
 // splitComments splits text after the frontmatter at the comments marker

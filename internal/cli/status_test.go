@@ -185,9 +185,20 @@ func roundTrip(t *testing.T, fixture, rel string) {
 	set(status)
 }
 
-// withoutKeys drops the status and updated keys from a file's frontmatter:
-// each key's line and the indented lines continuing its value.
-func withoutKeys(b []byte) []byte {
+// withoutKeys drops keys, by default status and updated, from a file's
+// frontmatter: each key's line and the indented lines continuing its value.
+func withoutKeys(b []byte, keys ...string) []byte {
+	if len(keys) == 0 {
+		keys = []string{"status", "updated"}
+	}
+	isKey := func(line string) bool {
+		for _, k := range keys {
+			if strings.HasPrefix(line, k+":") {
+				return true
+			}
+		}
+		return false
+	}
 	var out []byte
 	inFrontmatter, dropping := false, false
 	for i, line := range bytes.SplitAfter(b, []byte("\n")) {
@@ -197,7 +208,7 @@ func withoutKeys(b []byte) []byte {
 			inFrontmatter = i == 0
 			dropping = false
 		case !inFrontmatter:
-		case strings.HasPrefix(trimmed, "status:") || strings.HasPrefix(trimmed, "updated:"):
+		case isKey(trimmed):
 			dropping = true
 			continue
 		case dropping && (strings.HasPrefix(trimmed, " ") || strings.HasPrefix(trimmed, "\t")) &&

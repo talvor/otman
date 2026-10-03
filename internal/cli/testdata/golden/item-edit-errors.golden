@@ -1,0 +1,387 @@
+$ otman edit OTM-1
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[empty_edit]: edit needs something to change
+hint: pass --kind, --body, --body-file, --clear-body, --assignee, --clear-assignee
+
+$ otman edit OTM-1 --if-rev 0123456789ab --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "empty_edit",
+    "message": "edit needs something to change",
+    "details": null,
+    "hint": "pass --kind, --body, --body-file, --clear-body, --assignee, --clear-assignee"
+  }
+}
+
+$ otman edit --kind spec
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_arguments
+  message: "accepts 1 arg(s), received 0"
+  details: null
+  hint: run 'otman --help' for usage
+
+$ otman edit OTM-1 --body x --clear-body --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "conflicting_flags",
+    "message": "--body conflicts with --clear-body",
+    "details": {
+      "flags": [
+        "--body",
+        "--clear-body"
+      ]
+    },
+    "hint": "pass only one of --body, --body-file, --clear-body"
+  }
+}
+
+$ otman edit OTM-1 --body x --body-file -
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: conflicting_flags
+  message: "--body conflicts with --body-file"
+  details:
+    flags[2]: "--body","--body-file"
+  hint: "pass only one of --body, --body-file, --clear-body"
+
+$ otman edit OTM-1 --body-file - --clear-body --kind spec
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: conflicting_flags
+  message: "--body-file conflicts with --clear-body"
+  details:
+    flags[2]: "--body-file","--clear-body"
+  hint: "pass only one of --body, --body-file, --clear-body"
+
+$ otman edit OTM-1 --assignee x --clear-assignee --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "conflicting_flags",
+    "message": "--assignee conflicts with --clear-assignee",
+    "details": {
+      "flags": [
+        "--assignee",
+        "--clear-assignee"
+      ]
+    },
+    "hint": "pass only one of --assignee, --clear-assignee"
+  }
+}
+
+$ otman edit OTM-1 --kind task
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_kind
+  message: "unknown Kind \"task\""
+  details:
+    allowed[3]: issue,prd,spec
+    kind: task
+  hint: "use --kind issue, prd or spec"
+
+$ otman edit OTM-1 --kind spec --body a
+<!-- otman:comments -->
+b --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "reserved_marker",
+    "message": "the body from --body contains the reserved line <!-- otman:comments -->",
+    "details": {
+      "marker": "<!-- otman:comments -->",
+      "source": "--body"
+    },
+    "hint": "remove that line; otman uses it to mark where comments begin"
+  }
+}
+
+$ otman edit OTM-1 --kind spec --body-file missing.md
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: unreadable_body_file
+  message: "cannot read --body-file: no such file missing.md"
+  details:
+    path: missing.md
+  hint: "pass a readable file, or - for stdin"
+
+$ otman edit OTM-1 --kind spec --assignee @me --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "no_actor",
+    "message": "--assignee @me needs an actor, and none is configured",
+    "details": {
+      "flag": "--assignee"
+    },
+    "hint": "pass --actor NAME, set OTM_ACTOR, or run 'otman config set actor NAME'"
+  }
+}
+
+$ otman edit OTM-1 --kind spec --assignee ""
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_arguments
+  message: "--assignee needs a single-line UTF-8 name or @me"
+  details:
+    flag: "--assignee"
+  hint: null
+
+$ otman edit OTM-1 --kind spec --if-rev ""
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_arguments
+  message: "--if-rev cannot be empty"
+  details:
+    flag: "--if-rev"
+  hint: pass the rev a view or earlier edit reported
+
+$ otman edit OTM-1 --kind spec --if-rev 0123456789ab --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "stale_item",
+    "message": "OTM-1 has changed: its rev is 8c015b8d4fe9, not 0123456789ab",
+    "details": {
+      "expected_rev": "0123456789ab",
+      "path": "Projects/OTM/Issues/OTM-1 Handle sync collisions.md",
+      "rev": "8c015b8d4fe9"
+    },
+    "hint": "view the Item again, then retry with its current rev"
+  }
+}
+
+$ otman edit OTM-1 --assignee agent-b --if-rev 0123456789ab
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: stale_item
+  message: "OTM-1 has changed: its rev is 8c015b8d4fe9, not 0123456789ab"
+  details:
+    expected_rev: 0123456789ab
+    path: Projects/OTM/Issues/OTM-1 Handle sync collisions.md
+    rev: 8c015b8d4fe9
+  hint: "view the Item again, then retry with its current rev"
+
+$ otman edit OTM-99 --kind spec --json
+exit: 3
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "item_not_found",
+    "message": "no Item matches \"OTM-99\" in Project OTM",
+    "details": {
+      "project": "OTM",
+      "ref": "OTM-99"
+    },
+    "hint": "name an Item by its ID (OTM-12), its number, its full filename or its Vault-relative path; titles do not match"
+  }
+}
+
+$ otman edit OTM-3 --body New. --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "unsafe_write",
+    "message": "refusing to rewrite Projects/OTM/Issues/OTM-3 No marker.md: the Item has no <!-- otman:comments --> line",
+    "details": {
+      "path": "Projects/OTM/Issues/OTM-3 No marker.md",
+      "reason": "the Item has no <!-- otman:comments --> line"
+    },
+    "hint": "put the line <!-- otman:comments --> back just before ## Comments, then retry"
+  }
+}
+
+$ otman edit OTM-3 --clear-body --kind spec
+tty: true
+exit: 4
+-- stdout --
+-- stderr --
+error[unsafe_write]: refusing to rewrite Projects/OTM/Issues/OTM-3 No marker.md: the Item has no <!-- otman:comments --> line
+hint: put the line <!-- otman:comments --> back just before ## Comments, then retry
+
+$ otman edit OTM-4 --kind spec --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "unsafe_write",
+    "message": "refusing to rewrite Projects/OTM/Issues/OTM-4 In the way.md: Projects/OTM/Specs/OTM-4 In the way.md already exists",
+    "details": {
+      "path": "Projects/OTM/Issues/OTM-4 In the way.md",
+      "reason": "Projects/OTM/Specs/OTM-4 In the way.md already exists"
+    },
+    "hint": "move or rename the file in the way, then retry"
+  }
+}
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Handle sync collisions.md --
+---
+id: OTM-1
+title: Handle sync collisions
+aliases:
+  - Handle sync collisions
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: agent-b
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+Detect duplicate numbers and report both paths.
+
+## Comments
+
+This body has its own Comments heading; the marker is the boundary.
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+Reproduced with a copied note.
+
+### 2026-01-01T11:00:00Z · agent-b
+Fixed in the scanner.
+
+### A heading inside the comment
+stays part of it.
+-- vault/Projects/OTM/Issues/OTM-3 No marker.md --
+---
+id: OTM-3
+title: No marker
+kind: issue
+status: open
+---
+Body.
+
+## Comments
+-- vault/Projects/OTM/Issues/OTM-4 In the way.md --
+---
+id: OTM-4
+title: In the way
+kind: issue
+status: open
+parent: null
+blocked_by: []
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/OTM/Specs/
+-- vault/Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md --
+---
+id: OTM-2
+title: 'Item file format: frontmatter and body'
+aliases:
+  - 'Item file format: frontmatter and body'
+kind: spec
+status: closed
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T09:00:00Z
+updated: 2026-01-01T09:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/OTM/Specs/OTM-4 In the way.md/
+-- vault/Projects/OTM/Specs/OTM-4 In the way.md/keep --
+a folder in the way of the move
+vault/Projects/WEB/
+vault/Projects/WEB/PRDs/
+-- vault/Projects/WEB/PRDs/WEB-1 Landing page.md --
+---
+id: WEB-1
+title: Landing page
+aliases:
+  - Landing page
+kind: prd
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T08:00:00Z
+updated: 2026-01-01T08:00:00Z
+---
+Explain otman in one screen.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/WEB/WEB.md --
+---
+name: otman website
+kind: project
+---

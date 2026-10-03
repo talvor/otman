@@ -11,6 +11,7 @@ Available Commands:
   close       Close an Item
   config      Show or change user config
   create      Create an Item in the selected Project
+  edit        Change an Item's Kind, body or assignee
   help        Help about any command
   list        List the Items of the selected Project (default: open ones)
   project     Create, list, view and link Projects
