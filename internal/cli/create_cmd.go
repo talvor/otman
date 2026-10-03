@@ -85,7 +85,7 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 			map[string]any{"flags": []string{"--no-template", flag}},
 			"pass a body, or --no-template for an empty one, not both")
 	}
-	body, err := a.readBody(cmd, f.body, f.bodyFile)
+	body, err := a.readText(cmd, "body", f.body, f.bodyFile)
 	if err != nil {
 		return err
 	}
@@ -139,48 +139,50 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 	})
 }
 
-// readBody returns the body from --body or --body-file (- is stdin), which
-// conflict. It must be UTF-8 and must not contain the comments marker.
-func (a *app) readBody(cmd *cobra.Command, body, bodyFile string) (string, error) {
+// readText returns the text of --NAME or --NAME-file (- is stdin), such
+// as --body and --body-file, which conflict. It must be UTF-8 and must not
+// contain the comments marker.
+func (a *app) readText(cmd *cobra.Command, name, text, file string) (string, error) {
 	fl := cmd.Flags()
-	if fl.Changed("body") && fl.Changed("body-file") {
-		return "", conflictingFlags("--body", "--body-file",
-			"pass the body with either --body or --body-file, not both")
+	textFlag, fileFlag := "--"+name, "--"+name+"-file"
+	if fl.Changed(name) && fl.Changed(name+"-file") {
+		return "", conflictingFlags(textFlag, fileFlag,
+			"pass the "+name+" with either "+textFlag+" or "+fileFlag+", not both")
 	}
-	source := "--body"
-	if fl.Changed("body-file") {
+	source := textFlag
+	if fl.Changed(name + "-file") {
 		var b []byte
 		var err error
-		if bodyFile == "-" {
+		if file == "-" {
 			source = "stdin"
 			if a.opts.Stdin != nil {
 				b, err = io.ReadAll(a.opts.Stdin)
 			}
 		} else {
-			source = bodyFile
-			b, err = os.ReadFile(a.abs(bodyFile))
+			source = file
+			b, err = os.ReadFile(a.abs(file))
 		}
 		if err != nil {
 			msg := err.Error()
 			if errors.Is(err, os.ErrNotExist) {
-				msg = "no such file " + bodyFile
+				msg = "no such file " + file
 			}
-			return "", invalid("unreadable_body_file", "cannot read --body-file: "+msg,
-				map[string]any{"path": bodyFile}, "pass a readable file, or - for stdin")
+			return "", invalid("unreadable_"+name+"_file", "cannot read "+fileFlag+": "+msg,
+				map[string]any{"path": file}, "pass a readable file, or - for stdin")
 		}
-		body = string(b)
+		text = string(b)
 	}
-	if !utf8.ValidString(body) {
-		return "", invalid("invalid_body", "the body from "+source+" is not valid UTF-8",
-			map[string]any{"source": source}, "pass the body as UTF-8 Markdown")
+	if !utf8.ValidString(text) {
+		return "", invalid("invalid_"+name, "the "+name+" from "+source+" is not valid UTF-8",
+			map[string]any{"source": source}, "pass the "+name+" as UTF-8 Markdown")
 	}
-	if item.ContainsMarker(body) {
+	if item.ContainsMarker(text) {
 		return "", invalid("reserved_marker",
-			"the body from "+source+" contains the reserved line "+item.CommentsMarker,
+			"the "+name+" from "+source+" contains the reserved line "+item.CommentsMarker,
 			map[string]any{"source": source, "marker": item.CommentsMarker},
 			"remove that line; otman uses it to mark where comments begin")
 	}
-	return body, nil
+	return text, nil
 }
 
 // templateBody is the body a new Item of Kind kind in Project key starts

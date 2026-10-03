@@ -75,7 +75,7 @@ func (a *app) edit(cmd *cobra.Command, ref string, f editFlags) error {
 	case fl.Changed("clear-body"):
 		update.Body = new(string)
 	case fl.Changed("body"), fl.Changed("body-file"):
-		body, err := a.readBody(cmd, f.body, f.bodyFile)
+		body, err := a.readText(cmd, "body", f.body, f.bodyFile)
 		if err != nil {
 			return err
 		}

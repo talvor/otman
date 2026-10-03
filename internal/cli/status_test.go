@@ -90,6 +90,12 @@ var itemName = regexp.MustCompile(`^[A-Z][A-Z0-9]*-[1-9][0-9]* ?.*\.md$`)
 // and one that changes the status alters only the status and updated
 // spans. Files otman refuses to rewrite stay as they were.
 func TestRoundTrip(t *testing.T) {
+	eachFixtureItem(t, roundTrip)
+}
+
+// eachFixtureItem runs test as a subtest for every Item of every fixture
+// Vault, passing the fixture's directory and the Item's path within it.
+func eachFixtureItem(t *testing.T, test func(t *testing.T, fixture, rel string)) {
 	fixtures, err := os.ReadDir(filepath.Join("testdata", "vaults"))
 	if err != nil {
 		t.Fatal(err)
@@ -104,7 +110,7 @@ func TestRoundTrip(t *testing.T) {
 				return nil // not an Item, e.g. a template
 			}
 			rel, _ := filepath.Rel(src, p)
-			t.Run(fx.Name()+"/"+d.Name(), func(t *testing.T) { roundTrip(t, src, filepath.ToSlash(rel)) })
+			t.Run(fx.Name()+"/"+d.Name(), func(t *testing.T) { test(t, src, filepath.ToSlash(rel)) })
 			return nil
 		})
 		if err != nil {

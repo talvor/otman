@@ -390,12 +390,28 @@ func scalars(n *yaml.Node) []string {
 }
 
 // SetStatus sets an Item file's status and, when that changes it, its
-// updated time to now, splicing only those keys (ADR 0006). An Item that
-// already has status is returned unchanged, but only once the splicer has
+// updated time to now, splicing only those keys (ADR 0006). A comment that
+// is not nil is appended in the same rewrite, which changes the file even
+// when the status already matches. An Item that already has status, with
+// no comment, is returned unchanged, but only once the splicer has
 // accepted it: a file otman could not rewrite fails with a
 // *frontmatter.UnsafeError either way.
-func SetStatus(file []byte, status string, now time.Time) (out []byte, changed bool, err error) {
-	return rewrite(file, []frontmatter.Edit{{Key: "status", Value: str(status)}}, nil, now)
+func SetStatus(file []byte, status string, comment *Comment, now time.Time) (out []byte, changed bool, err error) {
+	var transform func([]byte) ([]byte, error)
+	if comment != nil {
+		transform = func(b []byte) ([]byte, error) { return appendComment(b, *comment) }
+	}
+	return rewrite(file, []frontmatter.Edit{{Key: "status", Value: str(status)}}, transform, now)
+}
+
+// AppendComment appends c at the end of an Item file's comments section
+// and sets its updated time to now. Everything already in the file is
+// kept byte for byte, and the comment uses the file's line endings. A file
+// with no comments marker line fails with ErrNoMarker, and one otman
+// could not rewrite with a *frontmatter.UnsafeError.
+func AppendComment(file []byte, c Comment, now time.Time) ([]byte, error) {
+	out, _, err := rewrite(file, nil, func(b []byte) ([]byte, error) { return appendComment(b, c) }, now)
+	return out, err
 }
 
 // Update is an edit to an Item file. A nil field is left alone.
@@ -429,19 +445,23 @@ func Apply(file []byte, update Update, now time.Time) (out []byte, changed bool,
 	} else if update.Assignee != nil {
 		edits = append(edits, frontmatter.Edit{Key: "assignee", Value: str(*update.Assignee)})
 	}
-	return rewrite(file, edits, update.Body, now)
+	var transform func([]byte) ([]byte, error)
+	if body := update.Body; body != nil {
+		transform = func(b []byte) ([]byte, error) { return replaceBody(b, *body) }
+	}
+	return rewrite(file, edits, transform, now)
 }
 
-// rewrite splices edits into file and replaces its body when body is not
-// nil. When that changes the file, it does so again with updated set to
-// now.
-func rewrite(file []byte, edits []frontmatter.Edit, body *string, now time.Time) ([]byte, bool, error) {
+// rewrite splices edits into file, then applies transform to the text
+// when it is not nil. When that changes the file, it does so again with
+// updated set to now.
+func rewrite(file []byte, edits []frontmatter.Edit, transform func([]byte) ([]byte, error), now time.Time) ([]byte, bool, error) {
 	apply := func(edits []frontmatter.Edit) ([]byte, error) {
 		out, err := frontmatter.Splice(file, edits)
-		if err != nil || body == nil {
+		if err != nil || transform == nil {
 			return out, err
 		}
-		return replaceBody(out, *body)
+		return transform(out)
 	}
 	out, err := apply(edits)
 	if err != nil || bytes.Equal(out, file) {
@@ -462,10 +482,7 @@ func replaceBody(file []byte, body string) ([]byte, error) {
 	if marker < 0 {
 		return nil, ErrNoMarker
 	}
-	eol := "\n"
-	if bytes.HasPrefix(file, []byte("---\r\n")) {
-		eol = "\r\n"
-	}
+	eol := lineEnding(file)
 	var b bytes.Buffer
 	b.Write(file[:len(file)-len(rest)])
 	if body = strings.TrimRight(normalizeLineEndings(body), "\n"); body != "" {
@@ -474,6 +491,39 @@ func replaceBody(file []byte, body string) ([]byte, error) {
 	}
 	b.Write(rest[marker:])
 	return b.Bytes(), nil
+}
+
+// appendComment appends c to file, which has frontmatter, as its last
+// entry: one blank line, the "### <created> · <author>" heading and the
+// comment's text, in the line endings of the frontmatter's opening line.
+// Leading and trailing line breaks of the text are not kept.
+func appendComment(file []byte, c Comment) ([]byte, error) {
+	_, rest, _ := frontmatter.Split(file)
+	if markerOffset(string(rest)) < 0 {
+		return nil, ErrNoMarker
+	}
+	eol := lineEnding(file)
+	var b bytes.Buffer
+	b.Write(file)
+	// End the last line, then leave one blank line before the heading.
+	switch {
+	case !bytes.HasSuffix(file, []byte("\n")):
+		b.WriteString(eol + eol)
+	case !bytes.HasSuffix(file, []byte("\n\n")) && !bytes.HasSuffix(file, []byte("\n\r\n")):
+		b.WriteString(eol)
+	}
+	b.WriteString("### " + c.Created + " · " + c.Author + eol)
+	text := strings.Trim(normalizeLineEndings(c.Body), "\n")
+	b.WriteString(strings.ReplaceAll(text, "\n", eol) + eol)
+	return b.Bytes(), nil
+}
+
+// lineEnding is the line break of file's first line: CRLF or LF.
+func lineEnding(file []byte) string {
+	if line, _, _ := bytes.Cut(file, []byte("\n")); bytes.HasSuffix(line, []byte("\r")) {
+		return "\r\n"
+	}
+	return "\n"
 }
 
 // markerOffset is the offset of text's first comments marker line, or -1.
@@ -520,14 +570,15 @@ func splitComments(text string) (body, comments string) {
 var commentHeading = regexp.MustCompile(`^### (\S+) · (.+?)\s*$`)
 
 // parseComments reads the "### <timestamp> · <author>" entries of a
-// comments section.
+// comments section. A comment's text reads with LF line breaks, whatever
+// the file uses.
 func parseComments(text string) []Comment {
 	out := []Comment{}
 	var cur *Comment
 	var body strings.Builder
 	flush := func() {
 		if cur != nil {
-			cur.Body = strings.Trim(body.String(), "\r\n")
+			cur.Body = strings.Trim(normalizeLineEndings(body.String()), "\n")
 			out = append(out, *cur)
 		}
 		body.Reset()

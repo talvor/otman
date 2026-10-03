@@ -1,0 +1,351 @@
+$ otman close OTM-1 --comment Fixed in the scanner.
+env: OTM_ACTOR=talvor
+tty: true
+exit: 0
+-- stdout --
+Closed OTM-1 · Handle sync collisions, with a comment
+-- stderr --
+
+$ otman close OTM-1 --comment-file - --json
+env: OTM_ACTOR=talvor
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-1",
+      "title": "Handle sync collisions",
+      "kind": "issue",
+      "status": "closed",
+      "labels": [],
+      "assignee": "agent-b",
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-1 Handle sync collisions.md",
+      "rev": "41a35a311399"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman close OTM-1 --comment Once more, as a human.
+env: OTM_ACTOR=talvor
+tty: true
+exit: 0
+-- stdout --
+OTM-1 · Handle sync collisions is already closed; commented
+-- stderr --
+
+$ otman close OTM-1 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-1",
+      "title": "Handle sync collisions",
+      "kind": "issue",
+      "status": "closed",
+      "labels": [],
+      "assignee": "agent-b",
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-1 Handle sync collisions.md",
+      "rev": "45aa4376d5d9"
+    },
+    "changed": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman view OTM-1 --comments
+tty: true
+exit: 0
+-- stdout --
+OTM-1 · Handle sync collisions
+issue · closed · assigned to agent-b
+Author: talvor · created 2026-01-01T10:00:00Z · updated 2026-01-02T03:04:05Z
+Path: Projects/OTM/Issues/OTM-1 Handle sync collisions.md
+
+Detect duplicate numbers and report both paths.
+
+## Comments
+
+This body has its own Comments heading; the marker is the boundary.
+
+Comments (5)
+
+### 2026-01-01T10:30:00Z · talvor
+Reproduced with a copied note.
+
+### 2026-01-01T11:00:00Z · agent-b
+Fixed in the scanner.
+
+### A heading inside the comment
+stays part of it.
+
+### 2026-01-02T03:04:05Z · talvor
+Fixed in the scanner.
+
+### 2026-01-02T03:04:05Z · talvor
+Retried: the reason is not lost.
+
+### 2026-01-02T03:04:05Z · talvor
+Once more, as a human.
+-- stderr --
+
+$ otman close OTM-2 --comment-file reason.md --json
+env: OTM_ACTOR=talvor
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-2",
+      "title": "Item file format: frontmatter and body",
+      "kind": "spec",
+      "status": "closed",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md",
+      "rev": "4410a9b7a4e1"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman close WEB-1 --comment No actor. --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "no_actor",
+    "message": "close --comment needs an actor, and none is configured",
+    "details": null,
+    "hint": "pass --actor NAME, set OTM_ACTOR, or run 'otman config set actor NAME'"
+  }
+}
+
+$ otman close WEB-1 --comment    --json
+env: OTM_ACTOR=talvor
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "empty_comment",
+    "message": "the comment is empty",
+    "details": null,
+    "hint": "pass the comment's text with --comment or --comment-file"
+  }
+}
+
+$ otman close WEB-1 --comment x --comment-file -
+env: OTM_ACTOR=talvor
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: conflicting_flags
+  message: "--comment conflicts with --comment-file"
+  details:
+    flags[2]: "--comment","--comment-file"
+  hint: "pass the comment with either --comment or --comment-file, not both"
+
+$ otman close WEB-1 --comment <!-- otman:comments -->
+env: OTM_ACTOR=talvor
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: reserved_marker
+  message: "the comment from --comment contains the reserved line <!-- otman:comments -->"
+  details:
+    marker: "<!-- otman:comments -->"
+    source: "--comment"
+  hint: remove that line; otman uses it to mark where comments begin
+
+$ otman close WEB-1 --comment-file missing.md --json
+env: OTM_ACTOR=talvor
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "unreadable_comment_file",
+    "message": "cannot read --comment-file: no such file missing.md",
+    "details": {
+      "path": "missing.md"
+    },
+    "hint": "pass a readable file, or - for stdin"
+  }
+}
+
+$ otman reopen WEB-1 --comment x
+env: OTM_ACTOR=talvor
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_arguments
+  message: "unknown flag: --comment"
+  details: null
+  hint: run 'otman --help' for usage
+
+$ otman close OTM-3 --comment x --json
+env: OTM_ACTOR=talvor
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "unsafe_write",
+    "message": "refusing to rewrite Projects/OTM/Issues/OTM-3 No marker.md: the Item has no <!-- otman:comments --> line",
+    "details": {
+      "path": "Projects/OTM/Issues/OTM-3 No marker.md",
+      "reason": "the Item has no <!-- otman:comments --> line"
+    },
+    "hint": "put the line <!-- otman:comments --> back just before ## Comments, then retry"
+  }
+}
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+-- reason.md --
+Superseded by WEB-1.
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Handle sync collisions.md --
+---
+id: OTM-1
+title: Handle sync collisions
+aliases:
+  - Handle sync collisions
+kind: issue
+status: closed
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: agent-b
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+Detect duplicate numbers and report both paths.
+
+## Comments
+
+This body has its own Comments heading; the marker is the boundary.
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+Reproduced with a copied note.
+
+### 2026-01-01T11:00:00Z · agent-b
+Fixed in the scanner.
+
+### A heading inside the comment
+stays part of it.
+
+### 2026-01-02T03:04:05Z · talvor
+Fixed in the scanner.
+
+### 2026-01-02T03:04:05Z · talvor
+Retried: the reason is not lost.
+
+### 2026-01-02T03:04:05Z · talvor
+Once more, as a human.
+-- vault/Projects/OTM/Issues/OTM-3 No marker.md --
+---
+id: OTM-3
+title: No marker
+kind: issue
+status: open
+---
+Body.
+
+## Comments
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/OTM/Specs/
+-- vault/Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md --
+---
+id: OTM-2
+title: 'Item file format: frontmatter and body'
+aliases:
+  - 'Item file format: frontmatter and body'
+kind: spec
+status: closed
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T09:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-02T03:04:05Z · talvor
+Superseded by WEB-1.
+vault/Projects/WEB/
+vault/Projects/WEB/PRDs/
+-- vault/Projects/WEB/PRDs/WEB-1 Landing page.md --
+---
+id: WEB-1
+title: Landing page
+aliases:
+  - Landing page
+kind: prd
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T08:00:00Z
+updated: 2026-01-01T08:00:00Z
+---
+Explain otman in one screen.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/WEB/WEB.md --
+---
+name: otman website
+kind: project
+---
