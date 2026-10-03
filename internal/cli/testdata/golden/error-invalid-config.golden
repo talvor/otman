@@ -1,0 +1,29 @@
+$ otman config show --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_config",
+    "message": "cannot read user config: $WORK/config/otman/config.toml: toml: line 1 (last key \"vault\"): expected value but found \"unterminated\" instead",
+    "details": {
+      "path": "$WORK/config/otman/config.toml"
+    },
+    "hint": "fix or remove $WORK/config/otman/config.toml"
+  }
+}
+
+$ otman --version
+exit: 0
+-- stdout --
+otman version dev
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = [unterminated
+home/
+vault/

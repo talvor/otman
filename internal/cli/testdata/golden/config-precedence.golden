@@ -1,0 +1,108 @@
+$ otman config show --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "config_path": "$WORK/config/otman/config.toml",
+    "vault": {
+      "value": "/from/config",
+      "source": "config"
+    },
+    "actor": {
+      "value": "config-actor",
+      "source": "config"
+    },
+    "project": {
+      "value": "CFG",
+      "source": "config"
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman config show --json
+env: OTM_ACTOR=env-actor OTM_PROJECT=ENV OTM_VAULT=/from/env
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "config_path": "$WORK/config/otman/config.toml",
+    "vault": {
+      "value": "/from/env",
+      "source": "env"
+    },
+    "actor": {
+      "value": "env-actor",
+      "source": "env"
+    },
+    "project": {
+      "value": "ENV",
+      "source": "env"
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman config show --json --vault /from/flag --actor flag-actor --project FLG
+env: OTM_ACTOR=env-actor OTM_PROJECT=ENV OTM_VAULT=/from/env
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "config_path": "$WORK/config/otman/config.toml",
+    "vault": {
+      "value": "/from/flag",
+      "source": "flag"
+    },
+    "actor": {
+      "value": "flag-actor",
+      "source": "flag"
+    },
+    "project": {
+      "value": "FLG",
+      "source": "flag"
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman config show --json --actor flag-actor
+env: OTM_PROJECT=ENV
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "config_path": "$WORK/config/otman/config.toml",
+    "vault": {
+      "value": "/from/config",
+      "source": "config"
+    },
+    "actor": {
+      "value": "flag-actor",
+      "source": "flag"
+    },
+    "project": {
+      "value": "ENV",
+      "source": "env"
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "/from/config"
+actor = "config-actor"
+project = "CFG"
+home/
+vault/

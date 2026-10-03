@@ -1,0 +1,78 @@
+$ otman config set vault $WORK/vault --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "key": "vault",
+    "value": "$WORK/vault",
+    "path": "$WORK/config/otman/config.toml",
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman config set actor phillip --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "key": "actor",
+    "value": "phillip",
+    "path": "$WORK/config/otman/config.toml",
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman config set project OTM --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "key": "project",
+    "value": "OTM",
+    "path": "$WORK/config/otman/config.toml",
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman config show --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "config_path": "$WORK/config/otman/config.toml",
+    "vault": {
+      "value": "$WORK/vault",
+      "source": "config"
+    },
+    "actor": {
+      "value": "phillip",
+      "source": "config"
+    },
+    "project": {
+      "value": "OTM",
+      "source": "config"
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+actor = "phillip"
+project = "OTM"
+home/
+vault/

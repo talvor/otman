@@ -1,0 +1,45 @@
+$ otman config set vault vault --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "key": "vault",
+    "value": "$WORK/vault",
+    "path": "$WORK/config/otman/config.toml",
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman config show --format axi
+env: OTM_PROJECT=OTM
+exit: 0
+-- stdout --
+config_path: $WORK/config/otman/config.toml
+vault:
+  value: $WORK/vault
+  source: config
+actor:
+  value: null
+  source: null
+project:
+  value: OTM
+  source: env
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+home/
+vault/
+vault/Projects/
+vault/Projects/OTM/
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---

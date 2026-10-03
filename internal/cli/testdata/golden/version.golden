@@ -1,0 +1,10 @@
+$ otman --version
+exit: 0
+-- stdout --
+otman version dev
+-- stderr --
+
+== tree ==
+config/
+home/
+vault/
