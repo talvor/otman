@@ -186,7 +186,7 @@ exit: 0
       "parent": null,
       "blocked_by": [],
       "path": "Projects/OTM/Specs/OTM-9 Built-in spec.md",
-      "rev": "e4d5d4ef32cf"
+      "rev": "ce02bc6e78ed"
     },
     "changed": true
   },
@@ -460,7 +460,11 @@ updated: 2026-01-02T03:04:05Z
 
 ## Out of Scope
 
+<!-- What this spec deliberately leaves out, and why. -->
+
 ## Further Notes
+
+<!-- Anything else a reader needs: links, history, risks. -->
 
 <!-- otman:comments -->
 ## Comments

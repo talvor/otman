@@ -20,4 +20,8 @@
 
 ## Out of Scope
 
+<!-- What this spec deliberately leaves out, and why. -->
+
 ## Further Notes
+
+<!-- Anything else a reader needs: links, history, risks. -->
