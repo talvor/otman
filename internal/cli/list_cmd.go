@@ -230,20 +230,20 @@ func listProject(v *vault.Vault, key string, q itemQuery) ([]itemSummary, []outp
 			continue
 		}
 		if s.Status == nil || (*s.Status != item.Open && *s.Status != item.Closed) {
-			warnings = append(warnings, unknownStatus(s))
+			warnings = append(warnings, invalidStatus(s))
 		}
 	}
 	return found, warnings, nil
 }
 
-// unknownStatus warns that the Item summarised by s was left out of a
+// invalidStatus warns that the Item summarised by s was left out of a
 // --state open or closed list because its status is neither.
-func unknownStatus(s itemSummary) output.Problem {
+func invalidStatus(s itemSummary) output.Problem {
 	msg := s.ID + " has no status"
 	if s.Status != nil {
 		msg = s.ID + " has status " + quoteArg(*s.Status)
 	}
-	return output.Warning("unknown_status", msg+", not open or closed, so it is not listed",
+	return output.Warning("invalid_status", msg+", not open or closed, so it is not listed",
 		map[string]any{"id": s.ID, "path": s.Path, "status": s.Status},
 		"set status: open or closed in "+s.Path+", or pass --state all")
 }
