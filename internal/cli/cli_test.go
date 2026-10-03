@@ -131,6 +131,18 @@ func TestHelpWithoutConfig(t *testing.T) {
 	})
 }
 
+// The harness copies a Vault fixture; config commands leave it untouched.
+func TestVaultFixtureUntouchedByConfig(t *testing.T) {
+	runGolden(t, goldenCase{
+		name:    "config-with-fixture",
+		fixture: "basic",
+		steps: []step{
+			{args: []string{"config", "set", "vault", "vault", "--json"}},
+			{args: []string{"config", "show", "--format", "axi"}, env: map[string]string{"OTM_PROJECT": "OTM"}},
+		},
+	})
+}
+
 func TestConfigSetThenShowJSON(t *testing.T) {
 	runGolden(t, goldenCase{
 		name: "config-set-show-json",
