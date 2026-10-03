@@ -123,3 +123,31 @@ func TestListPaging(t *testing.T) {
 		},
 	})
 }
+
+// Every invalid value or combination exits 2 before the Vault is read.
+func TestListErrors(t *testing.T) {
+	runGolden(t, goldenCase{
+		name:    "list-errors",
+		fixture: "list",
+		files:   withOTM(nil),
+		steps: []step{
+			{args: []string{"list", "--state", "done", "--json"}},
+			{args: []string{"list", "--state", ""}, tty: true},
+			{args: []string{"list", "--kind", "bug", "--json"}},
+			{args: []string{"list", "--kind", ""}},
+			{args: []string{"list", "--assignee", "talvor", "--unassigned", "--json"}},
+			{args: []string{"list", "--assignee", "@me", "--unassigned"}, tty: true},
+			{args: []string{"list", "--assignee", "@me", "--json"}},
+			{args: []string{"list", "--assignee", " ", "--json"}},
+			{args: []string{"list", "--search", "", "--json"}},
+			{args: []string{"list", "--all-projects", "--project", "WEB", "--json"}},
+			{args: []string{"list", "--all", "--limit", "5", "--json"}},
+			{args: []string{"list", "--all", "--offset", "1"}, tty: true},
+			{args: []string{"list", "--limit", "0", "--json"}},
+			{args: []string{"list", "--limit", "-3"}},
+			{args: []string{"list", "--offset", "-1", "--json"}},
+			{args: []string{"list", "--limit", "many", "--json"}},
+			{args: []string{"list", "OTM-1", "--json"}},
+		},
+	})
+}
