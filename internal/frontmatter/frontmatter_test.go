@@ -9,9 +9,10 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
-	"unicode/utf8"
+	"time"
 
 	"github.com/talvor/otman/internal/frontmatter"
 	"go.yaml.in/yaml/v3"
@@ -47,55 +48,55 @@ func seedFiles(f *testing.F) [][]byte {
 	)
 }
 
-var keyName = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_-]*$`)
+var keyName = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_-]{0,63}$`)
 
 // FuzzSplice drives the splicer's interface (test seam 2): file bytes and
-// one key edit go in, and new bytes or an *UnsafeError come out. A write
-// keeps every other key semantically unchanged, leaves the bytes outside
-// the edited key alone, sets the edited key and is always valid YAML.
+// two key edits go in, as close and reopen send them, and new bytes or an
+// *UnsafeError come out. A write keeps every other key semantically
+// unchanged, leaves every byte outside the edited keys' spans alone, sets
+// the edited keys and is always valid YAML.
 func FuzzSplice(f *testing.F) {
 	for _, file := range seedFiles(f) {
 		for _, key := range []string{"status", "updated", "title", "labels", "reviewer", "added"} {
-			f.Add(file, key, "closed", uint8(0))
-			f.Add(file, key, "a,b", uint8(1))
-			f.Add(file, key, "", uint8(2))
-			f.Add(file, key, "{x: [1, 2]}", uint8(3))
-			f.Add(file, key, "2026-01-02T03:04:05Z", uint8(4))
+			f.Add(file, key, "closed", uint8(0), "updated", "2026-01-02T03:04:05Z", uint8(4))
+			f.Add(file, key, "a,b", uint8(1), "status", "open", uint8(0))
+			f.Add(file, key, "", uint8(2), "labels", "", uint8(2))
+			f.Add(file, key, "{x: [1, 2]}", uint8(3), "added", "x", uint8(0))
 		}
-		// An edit to the value a key already holds changes nothing.
-		f.Add(file, "status", "open", uint8(0))
-		f.Add(file, "updated", "2026-01-01T11:00:00Z", uint8(4))
+		// Edits to the values keys already hold change nothing.
+		f.Add(file, "status", "open", uint8(0), "updated", "2026-01-01T11:00:00Z", uint8(4))
 	}
-	f.Fuzz(func(t *testing.T, file []byte, key, value string, op uint8) {
-		if !keyName.MatchString(key) {
-			t.Skip("otman only writes its own, plain key names")
+	f.Fuzz(func(t *testing.T, file []byte, key1, value1 string, op1 uint8, key2, value2 string, op2 uint8) {
+		if !keyName.MatchString(key1) || !keyName.MatchString(key2) || key1 == key2 {
+			t.Skip("otman edits its own, plain key names, each once")
 		}
-		v, ok := editValue(value, op)
-		if !ok {
+		v1, ok1 := editValue(value1, op1)
+		v2, ok2 := editValue(value2, op2)
+		if !ok1 || !ok2 {
 			t.Skip()
 		}
-		edit := frontmatter.Edit{Key: key, Value: v}
-		out, err := frontmatter.Splice(file, []frontmatter.Edit{edit})
+		edits := []frontmatter.Edit{{Key: key1, Value: v1}, {Key: key2, Value: v2}}
+		out, err := frontmatter.Splice(file, edits)
 		var unsafe *frontmatter.UnsafeError
 		if errors.As(err, &unsafe) {
 			return // refused, never mangled
 		}
 		if err != nil {
-			if op%5 == 3 {
+			if op1%5 == 3 || op2%5 == 3 {
 				t.Skip("an arbitrary YAML value need not encode as one key")
 			}
 			t.Fatalf("Splice: %v", err)
 		}
-		checkSplice(t, file, out, edit)
-		again, err := frontmatter.Splice(out, []frontmatter.Edit{edit})
+		checkSplice(t, file, out, edits)
+		again, err := frontmatter.Splice(out, edits)
 		if err != nil || !bytes.Equal(again, out) {
-			t.Fatalf("repeating the edit changed the file (%v):\n%q\n%q", err, out, again)
+			t.Fatalf("repeating the edits changed the file (%v):\n%q\n%q", err, out, again)
 		}
 	})
 }
 
 // editValue is the edit an op asks for: a string, a list of strings, a
-// removal, any YAML value, or a timestamp.
+// removal, any YAML value, or an RFC3339 timestamp.
 func editValue(value string, op uint8) (*yaml.Node, bool) {
 	switch op % 5 {
 	case 0:
@@ -120,19 +121,19 @@ func editValue(value string, op uint8) (*yaml.Node, bool) {
 		}
 		return doc.Content[0], true
 	default:
-		return &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!timestamp", Value: value}, utf8.ValidString(value)
+		_, err := time.Parse(time.RFC3339, value)
+		return &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!timestamp", Value: value}, err == nil
 	}
 }
 
 // topKey is one top-level key as the test reads it.
 type topKey struct {
-	name  string
-	value string // the decoded value, printed
-	start int    // where its line starts in the frontmatter
-	end   int    // where its line ends
+	name       string
+	value      string // the decoded value, printed
+	start, end int    // its span in the frontmatter
 }
 
-func checkSplice(t *testing.T, file, out []byte, edit frontmatter.Edit) {
+func checkSplice(t *testing.T, file, out []byte, edits []frontmatter.Edit) {
 	t.Helper()
 	fm, rest, ok := frontmatter.Split(file)
 	if !ok {
@@ -147,21 +148,25 @@ func checkSplice(t *testing.T, file, out []byte, edit frontmatter.Edit) {
 	}
 	before := topKeys(t, fm)
 	after := topKeys(t, outFM)
+	edited := map[string]*yaml.Node{}
+	for _, e := range edits {
+		edited[e.Key] = e.Value
+	}
 
 	var want []topKey
-	editedBefore := false
 	for _, k := range before {
-		if k.name != edit.Key {
+		v, ok := edited[k.name]
+		switch {
+		case !ok:
 			want = append(want, k)
-			continue
-		}
-		editedBefore = true
-		if edit.Value != nil {
-			want = append(want, topKey{name: k.name, value: decoded(t, edit.Value)})
+		case v != nil:
+			want = append(want, topKey{name: k.name, value: decoded(t, v)})
 		}
 	}
-	if !editedBefore && edit.Value != nil {
-		want = append(want, topKey{name: edit.Key, value: decoded(t, edit.Value)})
+	for _, e := range edits {
+		if e.Value != nil && !slices.ContainsFunc(before, func(k topKey) bool { return k.name == e.Key }) {
+			want = append(want, topKey{name: e.Key, value: decoded(t, e.Value)})
+		}
 	}
 	if len(after) != len(want) {
 		t.Fatalf("keys %v, want %v\n%q\n%q", names(after), names(want), fm, outFM)
@@ -173,36 +178,43 @@ func checkSplice(t *testing.T, file, out []byte, edit frontmatter.Edit) {
 		}
 	}
 
-	// The bytes that differ lie within the edited key's lines (or at the
-	// closing fence for a new key): no other key's line is touched.
-	// Both ends are taken back to whole lines, so a shared first letter
-	// of the next key does not pull the boundary into its line.
-	p := 0
-	for p < len(fm) && p < len(outFM) && fm[p] == outFM[p] {
-		p++
+	// Every byte outside the edited keys' spans is kept: comments, blank
+	// lines and every other key's lines.
+	if a, b := withoutSpans(fm, before, edited), withoutSpans(outFM, after, edited); !bytes.Equal(a, b) {
+		t.Fatalf("bytes outside the edited keys changed\n%q\n%q", fm, outFM)
 	}
-	p = bytes.LastIndexByte(fm[:p], '\n') + 1
-	s := 0
-	for s < len(fm)-p && s < len(outFM)-p && fm[len(fm)-1-s] == outFM[len(outFM)-1-s] {
-		s++
-	}
-	for s > 0 && fm[len(fm)-s-1] != '\n' {
-		s--
-	}
+	unchanged := true
 	for _, k := range before {
-		if k.name != edit.Key && k.end > p && k.start < len(fm)-s {
-			t.Fatalf("the line of key %q changed\n%q\n%q", k.name, fm, outFM)
+		if v, ok := edited[k.name]; ok && (v == nil || k.value != decoded(t, v)) {
+			unchanged = false
 		}
 	}
-	for i, k := range before {
-		if k.name == edit.Key && edit.Value != nil && k.value == want[i].value && !bytes.Equal(file, out) {
-			t.Fatalf("setting %q to the value it holds changed the file\n%q\n%q", k.name, file, out)
+	for _, e := range edits {
+		if e.Value != nil && !slices.ContainsFunc(before, func(k topKey) bool { return k.name == e.Key }) {
+			unchanged = false
 		}
+	}
+	if unchanged && !bytes.Equal(file, out) {
+		t.Fatalf("edits to the values keys hold changed the file\n%q\n%q", file, out)
 	}
 }
 
+// withoutSpans is fm with the spans of the edited keys cut out.
+func withoutSpans(fm []byte, keys []topKey, edited map[string]*yaml.Node) []byte {
+	var out []byte
+	at := 0
+	for _, k := range keys {
+		if _, ok := edited[k.name]; ok {
+			out = append(out, fm[at:k.start]...)
+			at = k.end
+		}
+	}
+	return append(out, fm[at:]...)
+}
+
 // topKeys parses frontmatter that must be valid YAML: an empty document
-// or a mapping.
+// or a mapping. A key's span runs from its line to the line before the
+// next key, less trailing blank and comment lines.
 func topKeys(t *testing.T, fm []byte) []topKey {
 	t.Helper()
 	dec := yaml.NewDecoder(bytes.NewReader(fm))
@@ -227,13 +239,26 @@ func topKeys(t *testing.T, fm []byte) []topKey {
 	}
 	var keys []topKey
 	for i := 0; i+1 < len(m.Content); i += 2 {
-		start := starts[m.Content[i].Line-1]
 		keys = append(keys, topKey{
 			name:  m.Content[i].Value,
 			value: decoded(t, m.Content[i+1]),
-			start: start,
-			end:   lineEnd(fm, start),
+			start: starts[m.Content[i].Line-1],
 		})
+	}
+	for i := range keys {
+		end := len(fm)
+		if i+1 < len(keys) {
+			end = keys[i+1].start
+		}
+		for {
+			s := bytes.LastIndexByte(fm[:end-1], '\n') + 1
+			line := strings.TrimSpace(string(fm[s:end]))
+			if s <= keys[i].start || (line != "" && !strings.HasPrefix(line, "#")) {
+				break
+			}
+			end = s
+		}
+		keys[i].end = end
 	}
 	return keys
 }

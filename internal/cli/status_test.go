@@ -55,7 +55,8 @@ func TestCloseReopenErrors(t *testing.T) {
 // Writes splice only status and updated into hand-edited frontmatter,
 // keeping comments, blank lines, quoting, unknown keys and line endings,
 // and repair a missing or invalid status. Frontmatter otman cannot splice
-// safely is refused with unsafe_write and left as it was.
+// safely is refused with unsafe_write and left as it was, even when the
+// status already matches.
 func TestCloseHandEdited(t *testing.T) {
 	runGolden(t, goldenCase{
 		name:    "item-close-hand-edited",
@@ -69,6 +70,7 @@ func TestCloseHandEdited(t *testing.T) {
 			{args: []string{"reopen", "HND-5", "--json"}},
 			{args: []string{"close", "HND-6", "--json"}},
 			{args: []string{"close", "HND-6"}, tty: true},
+			{args: []string{"reopen", "HND-6", "--json"}},
 			{args: []string{"close", "HND-7"}},
 			{args: []string{"reopen", "HND-8", "--json"}},
 			{args: []string{"close", "HND-9", "--json"}},

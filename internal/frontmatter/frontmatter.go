@@ -104,15 +104,15 @@ func Splice(file []byte, edits []Edit) ([]byte, error) {
 		return nil, err
 	}
 
-	// spans[i] is where key i's span ends; it starts at its key line.
+	// Key i's span runs from its line to ends[i].
 	keys := before.keys
-	spans := make([]int, len(keys))
+	ends := make([]int, len(keys))
 	for i := range keys {
 		next := len(fm)
 		if i+1 < len(keys) {
 			next = keys[i+1].offset
 		}
-		spans[i] = trimTrailing(fm, keys[i].offset, next)
+		ends[i] = trimTrailing(fm, keys[i].offset, next)
 	}
 
 	type replacement struct {
@@ -126,7 +126,7 @@ func Splice(file []byte, edits []Edit) ([]byte, error) {
 		i := before.index(e.Key)
 		if e.Value == nil {
 			if i >= 0 {
-				reps = append(reps, replacement{keys[i].offset, spans[i], nil})
+				reps = append(reps, replacement{keys[i].offset, ends[i], nil})
 			}
 			continue
 		}
@@ -145,7 +145,7 @@ func Splice(file []byte, edits []Edit) ([]byte, error) {
 		case i < 0:
 			added = append(added, text...)
 		case !equal(keys[i].value, value):
-			reps = append(reps, replacement{keys[i].offset, spans[i], text})
+			reps = append(reps, replacement{keys[i].offset, ends[i], text})
 		}
 	}
 	if len(reps) == 0 && len(added) == 0 {
@@ -197,12 +197,8 @@ func (p parsed) index(name string) int {
 func parse(fm []byte) (parsed, error) {
 	// yaml also breaks lines at a lone CR, NEL, LS and PS; locating keys
 	// by line would then disagree with the parser.
-	for i, c := range fm {
-		if c == '\r' && (i+1 == len(fm) || fm[i+1] != '\n') {
-			return parsed{}, unsafe("the frontmatter has a line break other than LF or CRLF")
-		}
-	}
-	if bytes.Contains(fm, []byte("\u0085")) || bytes.Contains(fm, []byte(" ")) || bytes.Contains(fm, []byte(" ")) {
+	if bytes.Contains(bytes.ReplaceAll(fm, []byte("\r\n"), nil), []byte("\r")) ||
+		bytes.Contains(fm, []byte("\u0085")) || bytes.Contains(fm, []byte("\u2028")) || bytes.Contains(fm, []byte("\u2029")) {
 		return parsed{}, unsafe("the frontmatter has a line break other than LF or CRLF")
 	}
 	starts := []int{0}
@@ -302,6 +298,11 @@ func render(name string, value *yaml.Node, eol string) ([]byte, *yaml.Node, erro
 	if !equal(p.keys[0].value, value) {
 		return nil, nil, fmt.Errorf("frontmatter: the value of %q does not survive encoding", name)
 	}
+	// A value ending in blank lines (a kept block scalar) would leave them
+	// outside its span, where a later write could not find them.
+	if trimTrailing(text, 0, len(text)) != len(text) {
+		return nil, nil, unsafe("the value of %q ends in blank lines", name)
+	}
 	if eol != "\n" {
 		text = bytes.ReplaceAll(text, []byte("\n"), []byte(eol))
 	}
@@ -313,8 +314,11 @@ func render(name string, value *yaml.Node, eol string) ([]byte, *yaml.Node, erro
 // want and every other key semantically unchanged, then the new keys.
 func verify(before parsed, fm []byte, edits []Edit, want map[string]*yaml.Node) error {
 	after, err := parse(fm)
-	if err != nil {
-		return unsafe("splicing would corrupt the frontmatter: %v", err.(*UnsafeError).Reason)
+	var refused *UnsafeError
+	if errors.As(err, &refused) {
+		return unsafe("splicing would corrupt the frontmatter: %s", refused.Reason)
+	} else if err != nil {
+		return err
 	}
 	var expected []key
 	for _, k := range before.keys {
@@ -354,8 +358,9 @@ func removed(edits []Edit, name string) bool {
 const equalBudget = 1 << 16
 
 // equal reports whether two parsed values are semantically the same:
-// the same kinds, resolved tags and scalar values, whatever their style,
-// comments or position. Aliases compare as the nodes they refer to.
+// the same kinds, resolved tags and scalar values (00 is 0), whatever
+// their style, comments or position. Aliases compare as the nodes they
+// refer to.
 func equal(a, b *yaml.Node) bool {
 	budget := equalBudget
 	return equalNodes(a, b, &budget)
@@ -374,7 +379,7 @@ func equalNodes(a, b *yaml.Node, budget *int) bool {
 	if a.Kind != b.Kind || a.ShortTag() != b.ShortTag() || len(a.Content) != len(b.Content) {
 		return false
 	}
-	if a.Kind == yaml.ScalarNode && a.Value != b.Value {
+	if a.Kind == yaml.ScalarNode && a.Value != b.Value && !sameScalar(a, b) {
 		return false
 	}
 	for i := range a.Content {
@@ -383,4 +388,15 @@ func equalNodes(a, b *yaml.Node, budget *int) bool {
 		}
 	}
 	return true
+}
+
+// sameScalar reports whether two scalars of one tag written differently
+// decode to the same value, such as 00 and 0. Printing the values makes
+// NaN equal to NaN.
+func sameScalar(a, b *yaml.Node) bool {
+	var va, vb any
+	if a.Decode(&va) != nil || b.Decode(&vb) != nil {
+		return false
+	}
+	return fmt.Sprintf("%#v", va) == fmt.Sprintf("%#v", vb)
 }

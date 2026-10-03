@@ -148,6 +148,23 @@ exit: 4
 error[unsafe_write]: refusing to rewrite Projects/HND/Issues/HND-6 Flow style.md: the frontmatter is flow-style YAML
 hint: make the frontmatter plain block-style YAML between --- lines, then retry
 
+$ otman reopen HND-6 --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "unsafe_write",
+    "message": "refusing to rewrite Projects/HND/Issues/HND-6 Flow style.md: the frontmatter is flow-style YAML",
+    "details": {
+      "path": "Projects/HND/Issues/HND-6 Flow style.md",
+      "reason": "the frontmatter is flow-style YAML"
+    },
+    "hint": "make the frontmatter plain block-style YAML between --- lines, then retry"
+  }
+}
+
 $ otman close HND-7
 exit: 4
 -- stdout --

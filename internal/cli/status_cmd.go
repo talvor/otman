@@ -11,24 +11,33 @@ import (
 	"github.com/talvor/otman/internal/vault"
 )
 
-// newStatusCmd is close or reopen: the command use sets an Item's status
-// to status.
-func (a *app) newStatusCmd(use, short, status string) *cobra.Command {
+// statusCommand is a command that sets an Item's status: close or reopen.
+type statusCommand struct {
+	use, short, status string
+	done               string // what a change reports, such as "Closed"
+}
+
+var statusCommands = []statusCommand{
+	{"close", "Close an Item", item.Closed, "Closed"},
+	{"reopen", "Reopen a closed Item", item.Open, "Reopened"},
+}
+
+func (a *app) newStatusCmd(c statusCommand) *cobra.Command {
 	return &cobra.Command{
-		Use:   use + " REF",
-		Short: short,
+		Use:   c.use + " REF",
+		Short: c.short,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(_ *cobra.Command, args []string) error {
-			return a.setStatus(args[0], status)
+			return a.setStatus(c, args[0])
 		},
 	}
 }
 
-// setStatus sets status and updated on the Item ref names. An Item that
-// already has status is left alone and reported unchanged. Nothing else
+// setStatus sets c.status, and updated, on the Item ref names. An Item
+// that already has it is left alone and reported unchanged. Nothing else
 // changes: the assignee is kept and children are untouched. A missing or
 // invalid status is repaired.
-func (a *app) setStatus(ref, status string) error {
+func (a *app) setStatus(c statusCommand, ref string) error {
 	s, err := a.settings()
 	if err != nil {
 		return err
@@ -42,32 +51,27 @@ func (a *app) setStatus(ref, status string) error {
 		if err != nil {
 			return ioError(err)
 		}
-		p := item.Parse(data)
-		changed := p.Status == nil || *p.Status != status
+		data, changed, err := item.SetStatus(data, c.status, a.opts.Now())
+		if err != nil {
+			return writeError(f, err)
+		}
 		if changed {
-			data, err = item.SetStatus(data, status, a.opts.Now())
-			if err != nil {
-				return writeError(f, err)
-			}
 			if err := v.WriteItemFile(f, data); err != nil {
 				return ioError(err)
 			}
-			p = item.Parse(data)
 		}
 		files, err := v.ItemFiles(f.Key)
 		if err != nil {
 			return ioError(err)
 		}
-		summary := newItemSummary(f, p, data, newItemLinks(files))
-		human := fmt.Sprintf("%s %s · %s\n", statusVerbs[status], summary.ID, summary.Title)
+		summary := newItemSummary(f, item.Parse(data), data, newItemLinks(files))
+		human := fmt.Sprintf("%s %s · %s\n", c.done, summary.ID, summary.Title)
 		if !changed {
-			human = fmt.Sprintf("%s · %s is already %s\n", summary.ID, summary.Title, status)
+			human = fmt.Sprintf("%s · %s is already %s\n", summary.ID, summary.Title, c.status)
 		}
 		return a.emit(mutationResult{summary, changed, human}, warnings)
 	})
 }
-
-var statusVerbs = map[string]string{item.Closed: "Closed", item.Open: "Reopened"}
 
 // writeError reports a failed rewrite of Item file f: unsafe_write when
 // otman refused to splice it, an I/O error otherwise.

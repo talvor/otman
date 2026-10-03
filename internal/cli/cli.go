@@ -14,7 +14,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/talvor/otman/internal/config"
-	"github.com/talvor/otman/internal/item"
 	"github.com/talvor/otman/internal/output"
 )
 
@@ -121,8 +120,9 @@ func (a *app) newRoot() *cobra.Command {
 	root.AddCommand(a.newCreateCmd())
 	root.AddCommand(a.newViewCmd())
 	root.AddCommand(a.newListCmd())
-	root.AddCommand(a.newStatusCmd("close", "Close an Item", item.Closed))
-	root.AddCommand(a.newStatusCmd("reopen", "Reopen a closed Item", item.Open))
+	for _, c := range statusCommands {
+		root.AddCommand(a.newStatusCmd(c))
+	}
 	root.AddCommand(a.newConfigCmd())
 	root.AddCommand(a.newProjectCmd())
 	return root

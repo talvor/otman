@@ -304,7 +304,7 @@ type Parsed struct {
 // at the last "## Comments" heading, if any.
 func Parse(b []byte) Parsed {
 	var p Parsed
-	fm, rest, ok := SplitFrontmatter(b)
+	fm, rest, ok := frontmatter.Split(b)
 	if !ok {
 		rest = b
 	} else {
@@ -389,18 +389,21 @@ func scalars(n *yaml.Node) []string {
 	return out
 }
 
-// SplitFrontmatter returns the YAML between a leading --- line and the next
-// --- line, and what follows it, and false when the file has none.
-func SplitFrontmatter(b []byte) (fm, rest []byte, ok bool) { return frontmatter.Split(b) }
-
-// SetStatus sets an Item file's status and its updated time to now,
-// splicing only those two keys (ADR 0006). It fails with a
-// *frontmatter.UnsafeError when the file cannot be rewritten safely.
-func SetStatus(file []byte, status string, now time.Time) ([]byte, error) {
-	return frontmatter.Splice(file, []frontmatter.Edit{
+// SetStatus sets an Item file's status and, when that changes it, its
+// updated time to now, splicing only those keys (ADR 0006). An Item that
+// already has status is returned unchanged, but only once the splicer has
+// accepted it: a file otman could not rewrite fails with a
+// *frontmatter.UnsafeError either way.
+func SetStatus(file []byte, status string, now time.Time) (out []byte, changed bool, err error) {
+	out, err = frontmatter.Splice(file, []frontmatter.Edit{{Key: "status", Value: str(status)}})
+	if err != nil || bytes.Equal(out, file) {
+		return out, false, err
+	}
+	out, err = frontmatter.Splice(file, []frontmatter.Edit{
 		{Key: "status", Value: str(status)},
 		{Key: "updated", Value: timestamp(now)},
 	})
+	return out, err == nil, err
 }
 
 // splitComments splits text after the frontmatter at the comments marker
