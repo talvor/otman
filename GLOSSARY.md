@@ -40,6 +40,10 @@ _Avoid_: Re-ID, reassign
 Who created an Item: the person or agent acting when it was created. An Item may have no Author. Each comment also has its own Author.
 _Avoid_: Reporter, creator, owner
 
+**Label**:
+A free-form, lowercase marker on an Item, used for triage roles and grouping. A label exists as long as some Item carries it; there is no declared vocabulary.
+_Avoid_: Tag (Obsidian tags are a different property), category
+
 **Tracker template**:
 The `issue-tracker-otman.md` doc that tells the Matt Pocock skills how to perform tracker operations through otman.
 _Avoid_: Adapter, integration, plugin
