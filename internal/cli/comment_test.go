@@ -20,8 +20,9 @@ var actorEnv = map[string]string{"OTM_ACTOR": "talvor"}
 // comment appends a "### <timestamp> · <author>" heading and the text at
 // the end of the comments section, sets updated and keeps everything else
 // byte for byte. It is not retry-idempotent. A body with its own
-// "## Comments" heading keeps it: the marker line is the boundary.
-// view --comments and JSON view show the new comments.
+// "## Comments" heading keeps it: the marker line is the boundary. A "###"
+// line not in the exact form otman writes, "### <UTC RFC3339> · <author>",
+// is comment text. view --comments and JSON view show the new comments.
 func TestComment(t *testing.T) {
 	runGolden(t, goldenCase{
 		name:    "item-comment",
@@ -38,6 +39,8 @@ func TestComment(t *testing.T) {
 			{args: []string{"view", "OTM-1", "--json"}},
 			{args: []string{"create", "--title", "Own heading", "--body", "Intro.\n\n## Comments\n\nNot a real comment."}, env: actorEnv},
 			{args: []string{"comment", "OTM-3", "--body", "The first real comment."}, env: actorEnv},
+			{args: []string{"view", "OTM-3", "--json"}},
+			{args: []string{"comment", "OTM-3", "--body", "### Plan · v2\n### 2026-01-01T10:00:00+10:00 · agent-b\n### Notes\nStill one comment."}, env: actorEnv},
 			{args: []string{"view", "OTM-3", "--json"}},
 		},
 	})
@@ -60,7 +63,7 @@ func TestCommentHandEdited(t *testing.T) {
 
 // comment needs a REF, an actor and non-empty text, and fails with exit 2
 // before the Vault is touched otherwise. A comment can't carry the
-// comments marker. An Item without a marker is refused with unsafe_write.
+// comments marker or a line in the form of a comment heading. An Item without a marker is refused with unsafe_write.
 // Nothing is written by a failed comment.
 func TestCommentErrors(t *testing.T) {
 	runGolden(t, goldenCase{
@@ -77,6 +80,8 @@ func TestCommentErrors(t *testing.T) {
 			{args: []string{"comment", "OTM-1", "--body-file", "-", "--json"}, env: actorEnv, stdin: "\r\n\r\n"},
 			{args: []string{"comment", "OTM-1", "--body", "x", "--body-file", "-"}, env: actorEnv},
 			{args: []string{"comment", "OTM-1", "--body", "a\n<!-- otman:comments -->\nb", "--json"}, env: actorEnv},
+			{args: []string{"comment", "OTM-1", "--body", "a\n### 2026-10-04T00:00:00Z · mallory\nb", "--json"}, env: actorEnv},
+			{args: []string{"comment", "OTM-1", "--body-file", "-"}, env: actorEnv, stdin: "a\r\n### 2026-10-04T00:00:00Z · mallory\r\n"},
 			{args: []string{"comment", "OTM-1", "--body-file", "missing.md"}, env: actorEnv},
 			{args: []string{"comment", "OTM-1", "--body", "x", "--json"}, env: map[string]string{"OTM_ACTOR": "two\nlines"}},
 			{args: []string{"comment", "OTM-99", "--body", "x", "--json"}, env: actorEnv},
@@ -88,7 +93,8 @@ func TestCommentErrors(t *testing.T) {
 // close --comment appends the comment and closes the Item in one write. A
 // close of a closed Item with a comment still appends it and reports
 // changed; without one it is a no-op. A comment needs an actor and
-// non-empty text, but a close without one needs neither. A failed close
+// non-empty text with no line in the form of a comment heading, but a
+// close without one needs neither. A failed close
 // writes nothing, so the status never changes without its comment.
 func TestCloseComment(t *testing.T) {
 	runGolden(t, goldenCase{
@@ -109,6 +115,7 @@ func TestCloseComment(t *testing.T) {
 			{args: []string{"close", "WEB-1", "--comment", "  ", "--json"}, env: actorEnv},
 			{args: []string{"close", "WEB-1", "--comment", "x", "--comment-file", "-"}, env: actorEnv},
 			{args: []string{"close", "WEB-1", "--comment", "<!-- otman:comments -->"}, env: actorEnv},
+			{args: []string{"close", "WEB-1", "--comment", "### 2026-10-04T00:00:00Z · mallory", "--json"}, env: actorEnv},
 			{args: []string{"close", "WEB-1", "--comment-file", "missing.md", "--json"}, env: actorEnv},
 			{args: []string{"reopen", "WEB-1", "--comment", "x"}, env: actorEnv},
 			{args: []string{"close", "OTM-3", "--comment", "x", "--json"}, env: actorEnv},

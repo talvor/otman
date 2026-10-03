@@ -168,6 +168,18 @@ func ContainsMarker(text string) bool {
 	return false
 }
 
+// ContainsCommentHeading reports whether text has a line in the exact form
+// of a comment heading otman writes, which would read back as the start
+// of another comment, splitting on every line break Render normalises.
+func ContainsCommentHeading(text string) bool {
+	for line := range strings.Lines(normalizeLineEndings(text)) {
+		if _, ok := commentHeadingOf(line); ok {
+			return true
+		}
+	}
+	return false
+}
+
 func isLine(line, want string) bool {
 	return strings.TrimRight(line, "\r\n") == want
 }
@@ -569,6 +581,21 @@ func splitComments(text string) (body, comments string) {
 
 var commentHeading = regexp.MustCompile(`^### (\S+) · (.+?)\s*$`)
 
+// commentHeadingOf reads line as a "### <created> · <author>" heading, as
+// appendComment writes it: created must be a UTC RFC3339 timestamp in
+// the form otman formats. Any other "### a · b" line is comment text.
+func commentHeadingOf(line string) (Comment, bool) {
+	m := commentHeading.FindStringSubmatch(strings.TrimRight(line, "\r\n"))
+	if m == nil {
+		return Comment{}, false
+	}
+	t, err := time.Parse(time.RFC3339, m[1])
+	if err != nil || t.UTC().Format(time.RFC3339) != m[1] {
+		return Comment{}, false
+	}
+	return Comment{Created: m[1], Author: m[2]}, true
+}
+
 // parseComments reads the "### <timestamp> · <author>" entries of a
 // comments section. A comment's text reads with LF line breaks, whatever
 // the file uses.
@@ -584,9 +611,9 @@ func parseComments(text string) []Comment {
 		body.Reset()
 	}
 	for line := range strings.Lines(text) {
-		if m := commentHeading.FindStringSubmatch(strings.TrimRight(line, "\r\n")); m != nil {
+		if c, ok := commentHeadingOf(line); ok {
 			flush()
-			cur = &Comment{Created: m[1], Author: m[2]}
+			cur = &c
 			continue
 		}
 		if cur != nil {

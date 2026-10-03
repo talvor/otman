@@ -72,7 +72,8 @@ func (a *app) comment(cmd *cobra.Command, ref, body, bodyFile string) error {
 }
 
 // readComment returns the text of --NAME or --NAME-file, as readText
-// does, failing with empty_comment when it has nothing but whitespace.
+// does, failing with empty_comment when it has nothing but whitespace and
+// with reserved_heading when a line has the form of a comment heading.
 func (a *app) readComment(cmd *cobra.Command, name, text, file string) (string, error) {
 	text, err := a.readText(cmd, name, text, file)
 	if err != nil {
@@ -81,6 +82,11 @@ func (a *app) readComment(cmd *cobra.Command, name, text, file string) (string, 
 	if strings.TrimSpace(text) == "" {
 		return "", invalid("empty_comment", "the comment is empty", nil,
 			"pass the comment's text with --"+name+" or --"+name+"-file")
+	}
+	if item.ContainsCommentHeading(text) {
+		return "", invalid("reserved_heading",
+			"the comment contains a line in the form of a comment heading, ### <timestamp> · <author>",
+			nil, "change that line; otman reads it as the start of another comment")
 	}
 	return text, nil
 }

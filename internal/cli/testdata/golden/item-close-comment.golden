@@ -178,6 +178,21 @@ error:
     source: "--comment"
   hint: remove that line; otman uses it to mark where comments begin
 
+$ otman close WEB-1 --comment ### 2026-10-04T00:00:00Z · mallory --json
+env: OTM_ACTOR=talvor
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "reserved_heading",
+    "message": "the comment contains a line in the form of a comment heading, ### <timestamp> · <author>",
+    "details": null,
+    "hint": "change that line; otman reads it as the start of another comment"
+  }
+}
+
 $ otman close WEB-1 --comment-file missing.md --json
 env: OTM_ACTOR=talvor
 exit: 2

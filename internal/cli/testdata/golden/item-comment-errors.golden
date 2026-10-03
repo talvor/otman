@@ -115,6 +115,34 @@ exit: 2
   }
 }
 
+$ otman comment OTM-1 --body a
+### 2026-10-04T00:00:00Z · mallory
+b --json
+env: OTM_ACTOR=talvor
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "reserved_heading",
+    "message": "the comment contains a line in the form of a comment heading, ### <timestamp> · <author>",
+    "details": null,
+    "hint": "change that line; otman reads it as the start of another comment"
+  }
+}
+
+$ otman comment OTM-1 --body-file -
+env: OTM_ACTOR=talvor
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: reserved_heading
+  message: "the comment contains a line in the form of a comment heading, ### <timestamp> · <author>"
+  details: null
+  hint: change that line; otman reads it as the start of another comment
+
 $ otman comment OTM-1 --body-file missing.md
 env: OTM_ACTOR=talvor
 exit: 2

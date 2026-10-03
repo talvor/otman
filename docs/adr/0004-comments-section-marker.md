@@ -11,5 +11,5 @@ An Item file is frontmatter, then a free-form Markdown body, then the otman-mana
 ## Consequences
 
 - Obsidian's reading view hides the marker, while Live Preview and Source mode show it as a faint line. A human editing in Obsidian can delete it. Detecting and repairing a missing marker (falling back to the last `## Comments` heading with a warning, and `doctor --fix` restoring it) belongs to hand-edit and drift handling.
-- Individual comments carry no markers in v1. They are delimited by their `### <timestamp> · <author>` headings. Per-comment markers can be added if comment editing or deletion is ever introduced.
+- Individual comments carry no markers in v1. They are delimited by their `### <timestamp> · <author>` headings, and only a line in exactly the form otman writes, with a UTC RFC3339 timestamp, starts a comment. A comment passed to comment or close that contains such a line is rejected with exit 2 (`reserved_heading`); other `###` headings stay allowed. Per-comment markers can be added if comment editing or deletion is ever introduced.
 - Item bodies no longer start with a `# Title` H1 (a change from the vault-layout prototype). The title lives only in `title` and the filename, and Obsidian's inline title displays it.
