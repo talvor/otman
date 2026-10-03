@@ -42,6 +42,7 @@ func TestCreate(t *testing.T) {
 			{args: []string{"create", "--title", "Item file format", "--kind", "spec", "--body", "Line one\n\nLine two", "--actor", "talvor", "--json"}},
 			{args: []string{"create", "--title", "Why: a tracker?", "--kind", "prd", "--body-file", "-", "--assignee", "@me", "--actor", "agent-b"}, stdin: "From stdin.\n"},
 			{args: []string{"create", "--title", "Body from a file", "--body-file", "notes/body.md", "--assignee", "someone", "--json"}},
+			{args: []string{"create", "--title", "CRLF body", "--body-file", "-"}, stdin: "Windows line one\r\nline two\r\n\r\nOld Mac\rline\r\n"},
 		},
 	})
 }

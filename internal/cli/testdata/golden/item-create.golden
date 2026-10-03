@@ -73,6 +73,23 @@ exit: 0
 }
 -- stderr --
 
+$ otman create --title CRLF body --body-file -
+exit: 0
+-- stdout --
+item:
+  id: OTM-5
+  title: CRLF body
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-5 CRLF body.md
+  rev: e4b588b41ce0
+changed: true
+-- stderr --
+
 == tree ==
 config/
 config/otman/
@@ -136,6 +153,30 @@ From a file.
 ## Comments
 
 A body may have its own Comments heading.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-5 CRLF body.md --
+---
+id: OTM-5
+title: CRLF body
+aliases:
+  - CRLF body
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+Windows line one
+line two
+
+Old Mac
+line
 
 <!-- otman:comments -->
 ## Comments

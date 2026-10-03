@@ -221,7 +221,8 @@ func Render(f Fields, body string) ([]byte, error) {
 		return nil, err
 	}
 	b.WriteString("---\n")
-	if body = strings.TrimRight(body, "\r\n"); body != "" {
+	body = strings.NewReplacer("\r\n", "\n", "\r", "\n").Replace(body)
+	if body = strings.TrimRight(body, "\n"); body != "" {
 		b.WriteString(body)
 		b.WriteString("\n\n")
 	}
