@@ -18,7 +18,7 @@ func parseLabels(flag string, values []string) ([]string, error) {
 	for _, v := range values {
 		l, ok := item.ParseLabel(v)
 		if !ok {
-			return nil, invalid("invalid_label", "invalid label "+quoteArg(v)+" for "+flag,
+			return nil, invalid("invalid_label", "invalid Label "+quoteArg(v)+" for "+flag,
 				map[string]any{"flag": flag, "label": v, "pattern": item.LabelPattern, "max_length": item.LabelLimit},
 				"use lowercase letters, digits and . _ : / -, starting with a letter or digit, at most 64 characters")
 		}
@@ -111,9 +111,9 @@ func editDistance(a, b string) int {
 // suggestionHint points at the closest Labels, or at label list.
 func suggestionHint(closest []string) string {
 	if len(closest) == 0 {
-		return "check the spelling; 'otman label list' shows the labels in use"
+		return "check the spelling; 'otman label list' shows the Labels in use"
 	}
-	return "did you mean " + strings.Join(closest, ", ") + "? 'otman label list' shows the labels in use"
+	return "did you mean " + strings.Join(closest, ", ") + "? 'otman label list' shows the Labels in use"
 }
 
 // newLabelWarnings warn new_label for each of added that no other Item in

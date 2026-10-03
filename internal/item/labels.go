@@ -42,10 +42,12 @@ func HasLabel(labels []string, label string) bool {
 	return slices.ContainsFunc(labels, func(l string) bool { return strings.EqualFold(l, label) })
 }
 
-// storedLabels is the labels key of file's frontmatter when it is a list
-// of plain values otman can rewrite without losing any of them; ok is
-// false otherwise, including when the key is absent.
-func storedLabels(file []byte) (labels []string, ok bool) {
+// storedLabels is the labels key of file's frontmatter as Parse reads it:
+// the plain values of a list, or none for any other value. lossless is
+// true when that list is all there is, so rewriting it loses nothing; it
+// is false for a list holding null or nested entries, and for a missing
+// key or any other value.
+func storedLabels(file []byte) (labels []string, lossless bool) {
 	fm, _, found := frontmatter.Split(file)
 	if !found {
 		return nil, false
@@ -64,15 +66,8 @@ func storedLabels(file []byte) (labels []string, ok bool) {
 	if value == nil || value.Kind != yaml.SequenceNode {
 		return nil, false
 	}
-	labels = []string{}
-	for _, c := range value.Content {
-		s := scalar(c)
-		if s == nil {
-			return nil, false
-		}
-		labels = append(labels, *s)
-	}
-	return labels, true
+	labels = scalars(value)
+	return labels, len(labels) == len(value.Content)
 }
 
 // labelEdits are the edits an Update makes to the labels of file: none
@@ -81,8 +76,8 @@ func labelEdits(file []byte, add, remove []string) []frontmatter.Edit {
 	if len(add) == 0 && len(remove) == 0 {
 		return nil
 	}
-	// A labels value that is not a list reads as no Labels, and setting
-	// the Labels replaces it.
+	// Setting the Labels replaces a value that is not a list, which reads
+	// as no Labels, and drops entries of a list that are not plain values.
 	stored, _ := storedLabels(file)
 	before := NormalizeLabels(stored)
 	after := slices.DeleteFunc(slices.Clone(before), func(l string) bool { return HasLabel(remove, l) })
@@ -97,8 +92,8 @@ func labelEdits(file []byte, add, remove []string) []frontmatter.Edit {
 // file, or nil when they need no healing or cannot be rewritten without
 // loss. Labels still invalid once lowercased are kept.
 func healLabels(file []byte) *frontmatter.Edit {
-	stored, ok := storedLabels(file)
-	if !ok {
+	stored, lossless := storedLabels(file)
+	if !lossless {
 		return nil
 	}
 	if healed := NormalizeLabels(stored); !slices.Equal(stored, healed) {

@@ -15,16 +15,16 @@ import (
 )
 
 type listFlags struct {
-	state       string
-	kind        string
-	assignee    string
-	unassigned  bool
-	search      string
-	labels      []string
-	without     []string
-	unlabeled   bool
-	allProjects bool
-	paging      *paging
+	state         string
+	kind          string
+	assignee      string
+	unassigned    bool
+	search        string
+	labels        []string
+	withoutLabels []string
+	unlabeled     bool
+	allProjects   bool
+	paging        *paging
 }
 
 // listStates are the values of list --state.
@@ -41,7 +41,7 @@ func (a *app) newListCmd() *cobra.Command {
 	fl.StringVar(&f.state, "state", "open", "open, closed or all")
 	fl.StringVar(&f.kind, "kind", "", "only Items of this Kind: issue, prd or spec")
 	fl.StringArrayVar(&f.labels, "label", nil, "only Items with the Label L (repeatable; Items must have every one)")
-	fl.StringArrayVar(&f.without, "without-label", nil, "only Items without the Label L (repeatable)")
+	fl.StringArrayVar(&f.withoutLabels, "without-label", nil, "only Items without the Label L (repeatable)")
 	fl.BoolVar(&f.unlabeled, "unlabeled", false, "only Items with no Labels (conflicts with --label)")
 	fl.StringVar(&f.assignee, "assignee", "", "only Items assigned to NAME, or to the actor with @me")
 	fl.BoolVar(&f.unassigned, "unassigned", false, "only Items with no assignee (conflicts with --assignee)")
@@ -86,10 +86,11 @@ type itemQuery struct {
 	// search is the lowercased text the title or body must contain; ""
 	// for no search.
 	search string
-	// labels are Labels an Item must all have, without those it must not
-	// have, both lowercase; unlabeled keeps only Items with no Labels.
-	labels, without []string
-	unlabeled       bool
+	// labels are Labels an Item must all have, withoutLabels those it
+	// must not have, both lowercase; unlabeled keeps only Items with no
+	// Labels.
+	labels, withoutLabels []string
+	unlabeled             bool
 }
 
 // match reports whether the Item summarised by s, with body, passes every
@@ -112,7 +113,7 @@ func (q itemQuery) match(s itemSummary, body string) bool {
 			return false
 		}
 	}
-	for _, l := range q.without {
+	for _, l := range q.withoutLabels {
 		if item.HasLabel(s.Labels, l) {
 			return false
 		}
@@ -151,7 +152,7 @@ func (f listFlags) query(cmd *cobra.Command) (itemQuery, error) {
 	if q.labels, err = parseLabels("--label", f.labels); err != nil {
 		return itemQuery{}, err
 	}
-	if q.without, err = parseLabels("--without-label", f.without); err != nil {
+	if q.withoutLabels, err = parseLabels("--without-label", f.withoutLabels); err != nil {
 		return itemQuery{}, err
 	}
 	if cmd.Flags().Changed("search") && f.search == "" {
@@ -207,7 +208,7 @@ func (a *app) list(cmd *cobra.Command, f listFlags) error {
 			ws = append(ws, pws...)
 		}
 		ws = append(ws, unknownLabelWarnings("--label", q.labels, inUse)...)
-		ws = append(ws, unknownLabelWarnings("--without-label", q.without, inUse)...)
+		ws = append(ws, unknownLabelWarnings("--without-label", q.withoutLabels, inUse)...)
 		return a.emit(listResult{page(f.paging, all)}, append(warnings, ws...))
 	})
 }

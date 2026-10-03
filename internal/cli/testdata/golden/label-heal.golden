@@ -165,6 +165,82 @@ exit: 0
 }
 -- stderr --
 
+$ otman close OTM-9 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-9",
+      "title": "Null entry",
+      "kind": "issue",
+      "status": "closed",
+      "labels": [
+        "Bug"
+      ],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-9 Null entry.md",
+      "rev": "a1141ec2c8f7"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman edit OTM-9 --add-label bug --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-9",
+      "title": "Null entry",
+      "kind": "issue",
+      "status": "closed",
+      "labels": [
+        "Bug"
+      ],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-9 Null entry.md",
+      "rev": "a1141ec2c8f7"
+    },
+    "changed": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman edit OTM-9 --remove-label bug --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-9",
+      "title": "Null entry",
+      "kind": "issue",
+      "status": "closed",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-9 Null entry.md",
+      "rev": "52b93804a83e"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
 == tree ==
 config/
 config/otman/
@@ -283,6 +359,18 @@ kind: issue
 status: closed
 labels:
   - bug
+assignee: null
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-9 Null entry.md --
+---
+id: OTM-9
+title: Null entry
+kind: issue
+status: closed
+labels: []
 assignee: null
 updated: 2026-01-02T03:04:05Z
 ---

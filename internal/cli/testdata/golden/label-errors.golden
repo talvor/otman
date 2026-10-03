@@ -6,7 +6,7 @@ exit: 2
   "schema_version": 1,
   "error": {
     "code": "invalid_label",
-    "message": "invalid label \"has space\" for --label",
+    "message": "invalid Label \"has space\" for --label",
     "details": {
       "flag": "--label",
       "label": "has space",
@@ -22,7 +22,7 @@ tty: true
 exit: 2
 -- stdout --
 -- stderr --
-error[invalid_label]: invalid label "" for --label
+error[invalid_label]: invalid Label "" for --label
 hint: use lowercase letters, digits and . _ : / -, starting with a letter or digit, at most 64 characters
 
 $ otman create --title X --label ok --label -dash
@@ -31,7 +31,7 @@ exit: 2
 -- stderr --
 error:
   code: invalid_label
-  message: "invalid label \"-dash\" for --label"
+  message: "invalid Label \"-dash\" for --label"
   details:
     flag: "--label"
     label: "-dash"
@@ -47,7 +47,7 @@ exit: 2
   "schema_version": 1,
   "error": {
     "code": "invalid_label",
-    "message": "invalid label \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\" for --label",
+    "message": "invalid Label \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\" for --label",
     "details": {
       "flag": "--label",
       "label": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
@@ -64,7 +64,7 @@ exit: 2
 -- stderr --
 error:
   code: invalid_label
-  message: "invalid label \"Ünicode\" for --label"
+  message: "invalid Label \"Ünicode\" for --label"
   details:
     flag: "--label"
     label: Ünicode
@@ -80,7 +80,7 @@ exit: 2
   "schema_version": 1,
   "error": {
     "code": "invalid_label",
-    "message": "invalid label \"a b\" for --add-label",
+    "message": "invalid Label \"a b\" for --add-label",
     "details": {
       "flag": "--add-label",
       "label": "a b",
@@ -96,7 +96,7 @@ tty: true
 exit: 2
 -- stdout --
 -- stderr --
-error[invalid_label]: invalid label "_x" for --remove-label
+error[invalid_label]: invalid Label "_x" for --remove-label
 hint: use lowercase letters, digits and . _ : / -, starting with a letter or digit, at most 64 characters
 
 $ otman edit OTM-1 --add-label bug --remove-label BUG --json
@@ -127,7 +127,7 @@ exit: 2
   "schema_version": 1,
   "error": {
     "code": "invalid_label",
-    "message": "invalid label \"Bad Label\" for --label",
+    "message": "invalid Label \"Bad Label\" for --label",
     "details": {
       "flag": "--label",
       "label": "Bad Label",
@@ -144,7 +144,7 @@ exit: 2
 -- stderr --
 error:
   code: invalid_label
-  message: "invalid label \"why?\" for --without-label"
+  message: "invalid Label \"why?\" for --without-label"
   details:
     flag: "--without-label"
     label: why?

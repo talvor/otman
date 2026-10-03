@@ -183,7 +183,7 @@ exit: 0
         "flag": "--label",
         "label": "bgu"
       },
-      "hint": "did you mean bug? 'otman label list' shows the labels in use"
+      "hint": "did you mean bug? 'otman label list' shows the Labels in use"
     }
   ]
 }
@@ -199,7 +199,7 @@ OTM-2  issue  open    -         Map the way
 OTM-5  issue  open    -         Hand edited case
 -- stderr --
 warning[unknown_label]: no Item in scope has the label "nope" that --without-label names
-hint: check the spelling; 'otman label list' shows the labels in use
+hint: check the spelling; 'otman label list' shows the Labels in use
 
 $ otman list --label design
 exit: 0
@@ -216,7 +216,7 @@ warning:
     closest[0]:
     flag: "--label"
     label: design
-  hint: check the spelling; 'otman label list' shows the labels in use
+  hint: check the spelling; 'otman label list' shows the Labels in use
 
 $ otman list --label design --all-projects --json
 exit: 0

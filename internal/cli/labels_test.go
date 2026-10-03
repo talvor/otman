@@ -146,8 +146,9 @@ func TestLabelList(t *testing.T) {
 // Hand-edited Labels differing only by case read as written and match in
 // lowercase. The next otman write to that Item, whatever it changes,
 // lowercases and dedupes them, keeping any still invalid; a write that
-// changes nothing heals nothing. A labels value that is not a list is
-// left alone, until a Label edit replaces it.
+// changes nothing heals nothing. A labels value that is not a list, or a
+// list with null entries, is left alone until a Label edit replaces it;
+// Label edits see the Labels a read shows.
 func TestLabelHealing(t *testing.T) {
 	runGolden(t, goldenCase{
 		name:    "label-heal",
@@ -155,6 +156,7 @@ func TestLabelHealing(t *testing.T) {
 		files: withOTM(labelVault(map[string]string{
 			"vault/Projects/OTM/Issues/OTM-7 Still invalid.md": labelItem("OTM-7", "Still invalid", "open", "\n  - Needs-Triage\n  - needs-triage\n  - Not Valid!"),
 			"vault/Projects/OTM/Issues/OTM-8 Not a list.md":    labelItem("OTM-8", "Not a list", "open", "Bug"),
+			"vault/Projects/OTM/Issues/OTM-9 Null entry.md":    labelItem("OTM-9", "Null entry", "open", "[Bug, ~]"),
 		})),
 		steps: []step{
 			{args: []string{"view", "OTM-5", "--json"}},
@@ -163,6 +165,9 @@ func TestLabelHealing(t *testing.T) {
 			{args: []string{"comment", "OTM-7", "--body", "Healed by a comment.", "--json"}, env: map[string]string{"OTM_ACTOR": "talvor"}},
 			{args: []string{"close", "OTM-8", "--json"}},
 			{args: []string{"edit", "OTM-8", "--add-label", "bug", "--json"}},
+			{args: []string{"close", "OTM-9", "--json"}},
+			{args: []string{"edit", "OTM-9", "--add-label", "bug", "--json"}},
+			{args: []string{"edit", "OTM-9", "--remove-label", "bug", "--json"}},
 		},
 	})
 }

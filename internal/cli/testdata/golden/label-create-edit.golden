@@ -33,7 +33,7 @@ Created OTM-8 · A typo
 Projects/OTM/Issues/OTM-8 A typo.md
 -- stderr --
 warning[new_label]: no other Item in OTM has the label "bgu"
-hint: did you mean bug? 'otman label list' shows the labels in use
+hint: did you mean bug? 'otman label list' shows the Labels in use
 
 $ otman create --title Map typo --label wayfinder:mpa --label triage --json
 exit: 0
@@ -69,7 +69,7 @@ exit: 0
         "label": "wayfinder:mpa",
         "project": "OTM"
       },
-      "hint": "did you mean wayfinder:map? 'otman label list' shows the labels in use"
+      "hint": "did you mean wayfinder:map? 'otman label list' shows the Labels in use"
     },
     {
       "code": "new_label",
@@ -81,7 +81,7 @@ exit: 0
         "label": "triage",
         "project": "OTM"
       },
-      "hint": "did you mean needs-triage? 'otman label list' shows the labels in use"
+      "hint": "did you mean needs-triage? 'otman label list' shows the Labels in use"
     }
   ]
 }
@@ -110,7 +110,7 @@ warning:
     closest[0]:
     label: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     project: OTM
-  hint: check the spelling; 'otman label list' shows the labels in use
+  hint: check the spelling; 'otman label list' shows the Labels in use
 warning:
   code: new_label
   message: "no other Item in OTM has the label \"x\""
@@ -118,7 +118,7 @@ warning:
     closest[0]:
     label: x
     project: OTM
-  hint: check the spelling; 'otman label list' shows the labels in use
+  hint: check the spelling; 'otman label list' shows the Labels in use
 
 $ otman edit OTM-1 --add-label enhancement --json
 exit: 0
@@ -245,7 +245,7 @@ Edited OTM-1 · Triage me
 Projects/OTM/Issues/OTM-1 Triage me.md
 -- stderr --
 warning[new_label]: no other Item in OTM has the label "docs"
-hint: check the spelling; 'otman label list' shows the labels in use
+hint: check the spelling; 'otman label list' shows the Labels in use
 
 $ otman edit OTM-4 --add-label bug --add-label wayfinder:map --json
 exit: 0
@@ -332,7 +332,7 @@ exit: 0
         "label": "bug",
         "project": "WEB"
       },
-      "hint": "check the spelling; 'otman label list' shows the labels in use"
+      "hint": "check the spelling; 'otman label list' shows the Labels in use"
     }
   ]
 }
