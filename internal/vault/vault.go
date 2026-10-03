@@ -1,6 +1,7 @@
 // Package vault opens the Vault on disk: it bootstraps .otman/, holds the
-// writer lock, keeps the per-device db in step with the markdown (ADR 0003)
-// and reads and creates Projects.
+// writer lock, opens the per-device db (ADR 0003), rebuilding it when
+// needed and adopting Project folders into its registry, and reads and
+// creates Projects.
 package vault
 
 import (

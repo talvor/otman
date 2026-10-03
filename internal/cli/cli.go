@@ -237,9 +237,18 @@ type resolved struct {
 }
 
 // project returns the selected Project, failing when it depends on a repo
-// pointer otman cannot read.
+// pointer otman cannot read or names a malformed key.
 func (r resolved) project() (config.Value, error) {
-	return r.Project, r.pointerErr
+	if r.pointerErr != nil {
+		return config.Value{}, r.pointerErr
+	}
+	if r.Project.IsSet() {
+		if err := checkKey(r.Project.Value); err != nil {
+			err.(*Error).Details["source"] = string(r.Project.Source)
+			return config.Value{}, err
+		}
+	}
+	return r.Project, nil
 }
 
 // settings resolves the effective Vault, Project and actor. The repo
@@ -294,13 +303,10 @@ func pointerError(err error, hint string) error {
 func configWarnings(f config.File, path string) []output.Problem {
 	var ws []output.Problem
 	for _, k := range f.Unknown {
-		hint := "otman reads only " + strings.Join(config.KeyNames(), ", ") + "; remove or rename it in " + path
-		ws = append(ws, output.Problem{
-			Code:    "unknown_config_key",
-			Message: "ignoring unknown config key " + quoteArg(k),
-			Details: map[string]any{"key": k, "path": path},
-			Hint:    &hint,
-		})
+		ws = append(ws, output.Warning("unknown_config_key",
+			"ignoring unknown config key "+quoteArg(k),
+			map[string]any{"key": k, "path": path},
+			"otman reads only "+strings.Join(config.KeyNames(), ", ")+"; remove or rename it in "+path))
 	}
 	return ws
 }

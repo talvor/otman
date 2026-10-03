@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -156,8 +157,17 @@ func (a *app) configShow() error {
 	if err != nil {
 		return err
 	}
-	if _, err := s.project(); err != nil {
-		return err
+	// config show is for debugging, so an unreadable pointer is reported
+	// rather than hiding every other setting; the Project shows as unset.
+	warnings := s.Warnings
+	if s.pointerErr != nil {
+		var e *Error
+		if errors.As(s.pointerErr, &e) {
+			warnings = append(warnings, e.problem())
+			s.Project = config.Value{}
+		} else {
+			return s.pointerErr
+		}
 	}
 	r := configShowResult{ConfigPath: s.ConfigPath}
 	if s.PointerPath != "" {
@@ -166,5 +176,5 @@ func (a *app) configShow() error {
 	for _, k := range config.Keys {
 		r.Settings = append(r.Settings, newSetting(s.Get(k)))
 	}
-	return a.emit(r, s.Warnings)
+	return a.emit(r, warnings)
 }

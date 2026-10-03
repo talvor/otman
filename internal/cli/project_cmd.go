@@ -290,8 +290,11 @@ func (a *app) projectLink(key string, force bool) error {
 		r := projectLinkResult{Project: key, Path: path, Changed: true}
 
 		current, err := config.ReadPointer(path)
+		var parseErr *config.ParseError
 		switch {
 		case errors.Is(err, os.ErrNotExist):
+		case err != nil && !errors.As(err, &parseErr):
+			return ioError(err)
 		case err != nil && !force:
 			return pointerError(err, "fix "+path+", or pass --force to replace it")
 		case err != nil:

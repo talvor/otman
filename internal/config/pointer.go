@@ -18,32 +18,44 @@ const PointerFile = ".otman.toml"
 // up to the git root, or to the filesystem root outside git. It returns ""
 // when there is none.
 func FindPointer(dir string) (string, error) {
-	for d := filepath.Clean(dir); ; {
+	var found string
+	_, err := walkToGitRoot(dir, func(d string) (bool, error) {
 		p := filepath.Join(d, PointerFile)
-		if ok, err := exists(p); err != nil || ok {
-			return p, err
+		ok, err := exists(p)
+		if ok {
+			found = p
 		}
-		if ok, err := exists(filepath.Join(d, ".git")); err != nil || ok {
-			return "", err
-		}
-		parent := filepath.Dir(d)
-		if parent == d {
-			return "", nil
-		}
-		d = parent
-	}
+		return ok, err
+	})
+	return found, err
 }
 
 // LinkDir is where project link writes the pointer: the git root above
 // dir, or dir itself outside git.
 func LinkDir(dir string) (string, error) {
+	root, err := walkToGitRoot(dir, nil)
+	if err != nil || root == "" {
+		return filepath.Clean(dir), err
+	}
+	return root, nil
+}
+
+// walkToGitRoot visits dir and each parent in turn, stopping when visit
+// says so, after the git root (a folder holding .git), or at the
+// filesystem root. It returns the git root, or "" when it found none.
+func walkToGitRoot(dir string, visit func(string) (bool, error)) (string, error) {
 	for d := filepath.Clean(dir); ; {
+		if visit != nil {
+			if stop, err := visit(d); err != nil || stop {
+				return "", err
+			}
+		}
 		if ok, err := exists(filepath.Join(d, ".git")); err != nil || ok {
 			return d, err
 		}
 		parent := filepath.Dir(d)
 		if parent == d {
-			return filepath.Clean(dir), nil
+			return "", nil
 		}
 		d = parent
 	}

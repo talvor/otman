@@ -30,5 +30,5 @@ func (a *app) openVault(s resolved) (*vault.Vault, []output.Problem, error) {
 	case err != nil:
 		return nil, nil, ioError(err)
 	}
-	return v, append(s.Warnings, warnings...), nil
+	return v, append(append([]output.Problem{}, s.Warnings...), warnings...), nil
 }

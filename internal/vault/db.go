@@ -19,13 +19,13 @@ const schemaVersion = 1
 // schema is the per-device db. projects is the registry of Projects seen on
 // this device, each with its high-water mark: the highest Item number it
 // has issued, which never goes down (ADR 0003).
-const schema = `
+var schema = fmt.Sprintf(`
 CREATE TABLE projects (
 	key        TEXT PRIMARY KEY,
 	high_water INTEGER NOT NULL DEFAULT 0
 );
-PRAGMA user_version = 1;
-`
+PRAGMA user_version = %d;
+`, schemaVersion)
 
 // openDB opens the db at path with one connection. A missing db is created;
 // one that fails quick_check or has an unknown schema is deleted and
@@ -44,7 +44,7 @@ func openDB(path string) (*sql.DB, []output.Problem, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	reason := check(db)
+	reason := unusableReason(db)
 	if reason == "" {
 		return db, nil, nil
 	}
@@ -58,17 +58,14 @@ func openDB(path string) (*sql.DB, []output.Problem, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	hint := "nothing to do; the db is a per-device cache rebuilt from the markdown"
-	return db, []output.Problem{{
-		Code:    "db_rebuilt",
-		Message: "rebuilt the per-device db from the markdown: " + reason,
-		Details: map[string]any{"path": path, "reason": reason},
-		Hint:    &hint,
-	}}, nil
+	return db, []output.Problem{output.Warning("db_rebuilt",
+		"rebuilt the per-device db from the markdown: "+reason,
+		map[string]any{"path": path, "reason": reason},
+		"nothing to do; the db is a per-device cache rebuilt from the markdown")}, nil
 }
 
-// check returns why the db is unusable, or "" when it is sound.
-func check(db *sql.DB) string {
+// unusableReason returns why the db is unusable, or "" when it is sound.
+func unusableReason(db *sql.DB) string {
 	var result string
 	if err := db.QueryRow("PRAGMA quick_check").Scan(&result); err != nil {
 		return "quick_check failed: " + err.Error()
@@ -91,7 +88,7 @@ func createDB(path string) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := immediate(db, func(tx *sql.Tx) error {
+	if err := inImmediateTx(db, func(tx *sql.Tx) error {
 		_, err := tx.Exec(schema)
 		return err
 	}); err != nil {
@@ -118,8 +115,8 @@ func connect(path string) (*sql.DB, error) {
 	return db, nil
 }
 
-// immediate runs fn in one short BEGIN IMMEDIATE transaction.
-func immediate(db *sql.DB, fn func(*sql.Tx) error) error {
+// inImmediateTx runs fn in one short BEGIN IMMEDIATE transaction.
+func inImmediateTx(db *sql.DB, fn func(*sql.Tx) error) error {
 	tx, err := db.BeginTx(context.Background(), nil)
 	if err != nil {
 		return err

@@ -47,6 +47,15 @@ type Problem struct {
 	Hint    *string        `json:"hint"`
 }
 
+// Warning builds a warning; an empty hint is left out.
+func Warning(code, msg string, details map[string]any, hint string) Problem {
+	p := Problem{Code: code, Message: msg, Details: details}
+	if hint != "" {
+		p.Hint = &hint
+	}
+	return p
+}
+
 // HumanRenderer is implemented by every result type; it writes the
 // terminal-friendly form of the result.
 type HumanRenderer interface {

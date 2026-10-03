@@ -1,18 +1,36 @@
 $ otman config show --json
-exit: 2
+exit: 0
 -- stdout --
--- stderr --
 {
   "schema_version": 1,
-  "error": {
-    "code": "invalid_pointer",
-    "message": "cannot read repo pointer: $WORK/repo/.otman.toml: toml: line 1 (last key \"project\"): unexpected EOF; expected value",
-    "details": {
-      "path": "$WORK/repo/.otman.toml"
+  "data": {
+    "config_path": "$WORK/config/otman/config.toml",
+    "pointer_path": "$WORK/repo/.otman.toml",
+    "vault": {
+      "value": "$WORK/vault",
+      "source": "config"
     },
-    "hint": "fix $WORK/repo/.otman.toml to hold project = \"KEY\", or run 'otman project link KEY --force'"
-  }
+    "actor": {
+      "value": null,
+      "source": null
+    },
+    "project": {
+      "value": null,
+      "source": null
+    }
+  },
+  "warnings": [
+    {
+      "code": "invalid_pointer",
+      "message": "cannot read repo pointer: $WORK/repo/.otman.toml: toml: line 1 (last key \"project\"): unexpected EOF; expected value",
+      "details": {
+        "path": "$WORK/repo/.otman.toml"
+      },
+      "hint": "fix $WORK/repo/.otman.toml to hold project = \"KEY\", or run 'otman project link KEY --force'"
+    }
+  ]
 }
+-- stderr --
 
 $ otman project view
 exit: 2

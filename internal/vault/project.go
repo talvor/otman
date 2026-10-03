@@ -46,7 +46,7 @@ func (v *Vault) Projects() ([]Project, []output.Problem, error) {
 	}
 	ps := make([]Project, 0, len(keys))
 	for _, k := range keys {
-		p, ws, err := v.load(k)
+		p, ws, err := v.loadProject(k)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -61,14 +61,10 @@ func (v *Vault) Project(key string) (Project, bool, []output.Problem, error) {
 	if !ValidKey(key) {
 		return Project{}, false, nil, nil
 	}
-	fi, err := os.Stat(filepath.Join(v.Root, ProjectsDir, key))
-	if errors.Is(err, os.ErrNotExist) || (err == nil && !fi.IsDir()) {
-		return Project{}, false, nil, nil
-	}
-	if err != nil {
+	if ok, err := isDir(filepath.Join(v.Root, ProjectsDir, key)); err != nil || !ok {
 		return Project{}, false, nil, err
 	}
-	p, ws, err := v.load(key)
+	p, ws, err := v.loadProject(key)
 	return p, err == nil, ws, err
 }
 
@@ -85,22 +81,17 @@ func (v *Vault) projectKeys() ([]string, []output.Problem, error) {
 	var keys []string
 	var warnings []output.Problem
 	for _, e := range entries {
-		fi, err := os.Stat(filepath.Join(dir, e.Name()))
-		if err != nil {
+		if ok, err := isDir(filepath.Join(dir, e.Name())); err != nil {
 			return nil, nil, err
-		}
-		if !fi.IsDir() {
+		} else if !ok {
 			continue
 		}
 		if !ValidKey(e.Name()) {
 			rel := path.Join(ProjectsDir, e.Name())
-			hint := "rename the folder to a Project key such as OTM (uppercase letters and digits)"
-			warnings = append(warnings, output.Problem{
-				Code:    "ignored_project_folder",
-				Message: "ignoring " + rel + ": its name is not a Project key",
-				Details: map[string]any{"path": rel},
-				Hint:    &hint,
-			})
+			warnings = append(warnings, output.Warning("ignored_project_folder",
+				"ignoring "+rel+": its name is not a Project key",
+				map[string]any{"path": rel},
+				"rename the folder to a Project key such as OTM (uppercase letters and digits)"))
 			continue
 		}
 		keys = append(keys, e.Name())
@@ -109,20 +100,27 @@ func (v *Vault) projectKeys() ([]string, []output.Problem, error) {
 	return keys, warnings, nil
 }
 
-// load reads a Project's note. A missing or unreadable note leaves the
+// isDir reports whether p is a directory, following symlinks. A missing p
+// is not an error.
+func isDir(p string) (bool, error) {
+	fi, err := os.Stat(p)
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+	return err == nil && fi.IsDir(), err
+}
+
+// loadProject reads a Project's note. A missing or unreadable note leaves the
 // name unset and warns, but the Project still exists.
-func (v *Vault) load(key string) (Project, []output.Problem, error) {
+func (v *Vault) loadProject(key string) (Project, []output.Problem, error) {
 	p := Project{Key: key, Path: path.Join(ProjectsDir, key)}
 	note := path.Join(p.Path, key+".md")
 	b, err := os.ReadFile(filepath.Join(v.Root, filepath.FromSlash(note)))
 	if errors.Is(err, os.ErrNotExist) {
-		hint := "create " + note + " with frontmatter name: and kind: project"
-		return p, []output.Problem{{
-			Code:    "missing_project_note",
-			Message: "Project " + key + " has no Project note " + note,
-			Details: map[string]any{"project": key, "path": note},
-			Hint:    &hint,
-		}}, nil
+		return p, []output.Problem{output.Warning("missing_project_note",
+			"Project "+key+" has no Project note "+note,
+			map[string]any{"project": key, "path": note},
+			"create "+note+" with frontmatter name: and kind: project")}, nil
 	}
 	if err != nil {
 		return p, nil, err
@@ -134,13 +132,10 @@ func (v *Vault) load(key string) (Project, []output.Problem, error) {
 	}
 	var doc map[string]any
 	if err := yaml.Unmarshal(fm, &doc); err != nil {
-		hint := "fix the YAML between the --- lines in " + note
-		return p, []output.Problem{{
-			Code:    "malformed_frontmatter",
-			Message: "cannot read the frontmatter of " + note + ": " + err.Error(),
-			Details: map[string]any{"path": note},
-			Hint:    &hint,
-		}}, nil
+		return p, []output.Problem{output.Warning("malformed_frontmatter",
+			"cannot read the frontmatter of "+note+": "+err.Error(),
+			map[string]any{"path": note},
+			"fix the YAML between the --- lines in "+note)}, nil
 	}
 	if name, ok := doc["name"].(string); ok && name != "" {
 		p.Name = &name
@@ -176,7 +171,13 @@ func (v *Vault) adopt() error {
 	if err != nil || len(keys) == 0 {
 		return err
 	}
-	return immediate(v.db, func(tx *sql.Tx) error {
+	return v.register(keys...)
+}
+
+// register adds Projects to the db registry, keeping any existing row and
+// its high-water mark.
+func (v *Vault) register(keys ...string) error {
+	return inImmediateTx(v.db, func(tx *sql.Tx) error {
 		for _, k := range keys {
 			if _, err := tx.Exec(`INSERT OR IGNORE INTO projects (key) VALUES (?)`, k); err != nil {
 				return err
@@ -188,7 +189,8 @@ func (v *Vault) adopt() error {
 
 // CreateProject creates Projects/<KEY>/ with its Project note and its two
 // Bases views. An existing folder is ErrProjectExists; nothing is ever
-// overwritten.
+// overwritten. If writing the files fails, the new folder is removed, so a
+// retry is not blocked by a half-made Project.
 func (v *Vault) CreateProject(key, name string) (Project, error) {
 	if !ValidKey(key) {
 		return Project{}, fmt.Errorf("invalid project key %q", key)
@@ -203,9 +205,25 @@ func (v *Vault) CreateProject(key, name string) (Project, error) {
 	} else if err != nil {
 		return Project{}, err
 	}
+	if err := writeProject(dir, key, name); err != nil {
+		os.RemoveAll(dir)
+		return Project{}, err
+	}
+	if err := fsutil.SyncDir(projects); err != nil {
+		return Project{}, err
+	}
+	if err := v.register(key); err != nil {
+		return Project{}, err
+	}
+	p, _, err := v.loadProject(key)
+	return p, err
+}
+
+// writeProject writes a new Project's note and Bases views into dir.
+func writeProject(dir, key, name string) error {
 	note, err := projectNote(name)
 	if err != nil {
-		return Project{}, err
+		return err
 	}
 	files := []struct {
 		name string
@@ -217,20 +235,10 @@ func (v *Vault) CreateProject(key, name string) (Project, error) {
 	}
 	for _, f := range files {
 		if err := fsutil.WriteFile(filepath.Join(dir, f.name), f.data); err != nil {
-			return Project{}, err
+			return err
 		}
 	}
-	if err := fsutil.SyncDir(projects); err != nil {
-		return Project{}, err
-	}
-	if err := immediate(v.db, func(tx *sql.Tx) error {
-		_, err := tx.Exec(`INSERT OR IGNORE INTO projects (key) VALUES (?)`, key)
-		return err
-	}); err != nil {
-		return Project{}, err
-	}
-	p, _, err := v.load(key)
-	return p, err
+	return nil
 }
 
 func projectNote(name string) ([]byte, error) {

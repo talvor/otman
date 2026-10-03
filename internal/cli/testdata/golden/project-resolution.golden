@@ -137,16 +137,16 @@ exit: 3
 
 $ otman project view
 env: OTM_PROJECT=lower
-exit: 3
+exit: 2
 -- stdout --
 -- stderr --
 error:
-  code: project_not_found
-  message: no Project lower in the Vault
+  code: invalid_project_key
+  message: "invalid Project key \"lower\""
   details:
     key: lower
     source: env
-  hint: "run 'otman project list' to see the Projects, or 'otman project create lower --name NAME'"
+  hint: "use an uppercase letter followed by up to 15 uppercase letters or digits, such as OTM"
 
 == tree ==
 config/
