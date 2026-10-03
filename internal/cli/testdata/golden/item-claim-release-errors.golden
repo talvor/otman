@@ -104,6 +104,43 @@ exit: 4
   }
 }
 
+$ otman release OTM-4 --json
+env: OTM_ACTOR=talvor
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "claim_conflict",
+    "message": "cannot release OTM-4: it is claimed by agent-b, not talvor",
+    "details": {
+      "actor": "talvor",
+      "assignee": "agent-b",
+      "path": "Projects/OTM/Issues/OTM-4 Closed by another.md"
+    },
+    "hint": "leave the release to agent-b, or unassign deliberately with 'otman edit OTM-4 --clear-assignee'"
+  }
+}
+
+$ otman claim OTM-5 --json
+env: OTM_ACTOR=talvor
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "item_not_open",
+    "message": "cannot claim OTM-5: it is closed",
+    "details": {
+      "path": "Projects/OTM/Issues/OTM-5 Closed and mine.md",
+      "status": "closed"
+    },
+    "hint": "run 'otman reopen OTM-5' first if the work is not done"
+  }
+}
+
 $ otman claim WEB-1 --json
 exit: 2
 -- stdout --
@@ -234,6 +271,26 @@ stays part of it.
 id: OTM-3
 title: No status
 kind: issue
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-4 Closed by another.md --
+---
+id: OTM-4
+title: Closed by another
+kind: issue
+status: closed
+assignee: agent-b
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-5 Closed and mine.md --
+---
+id: OTM-5
+title: Closed and mine
+kind: issue
+status: closed
+assignee: talvor
 ---
 <!-- otman:comments -->
 ## Comments

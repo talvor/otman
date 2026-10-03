@@ -93,9 +93,8 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 	if err != nil {
 		return err
 	}
-	if s.Actor.IsSet() && !utf8.ValidString(s.Actor.Value) {
-		return invalid("invalid_arguments", "the actor is not valid UTF-8",
-			map[string]any{"source": string(s.Actor.Source)}, "")
+	if err := checkActor(s); err != nil {
+		return err
 	}
 	var assignee *string
 	if cmd.Flags().Changed("assignee") {

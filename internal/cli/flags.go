@@ -30,9 +30,35 @@ func nameOrActor(s resolved, flag, value string) (string, error) {
 	}
 	name, err := s.ResolveUser(value)
 	if errors.Is(err, config.ErrNoActor) {
-		return "", invalid("no_actor", flag+" @me needs an actor, and none is configured",
-			map[string]any{"flag": flag},
-			"pass --actor NAME, set "+config.Actor.EnvVar+", or run 'otman config set actor NAME'")
+		return "", noActor(flag+" @me", map[string]any{"flag": flag})
 	}
 	return name, err
+}
+
+// requireActor is the Actor a command that records an identity acts as,
+// failing with no_actor when none is configured.
+func requireActor(s resolved, command string) (string, error) {
+	actor, err := s.ResolveUser("@me")
+	if errors.Is(err, config.ErrNoActor) {
+		return "", noActor(command, nil)
+	}
+	if err := checkActor(s); err != nil {
+		return "", err
+	}
+	return actor, err
+}
+
+// checkActor rejects a configured Actor that is not valid UTF-8.
+func checkActor(s resolved) error {
+	if s.Actor.IsSet() && !utf8.ValidString(s.Actor.Value) {
+		return invalid("invalid_arguments", "the actor is not valid UTF-8",
+			map[string]any{"source": string(s.Actor.Source)}, "")
+	}
+	return nil
+}
+
+// noActor reports that what needs an Actor, and none is configured.
+func noActor(what string, details map[string]any) *Error {
+	return invalid("no_actor", what+" needs an actor, and none is configured", details,
+		"pass --actor NAME, set "+config.Actor.EnvVar+", or run 'otman config set actor NAME'")
 }

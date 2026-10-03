@@ -94,7 +94,7 @@ env: OTM_ACTOR=talvor
 tty: true
 exit: 0
 -- stdout --
-OTM-3 · Blocked by the first is already unassigned
+OTM-3 · Blocked by the first is already unclaimed
 -- stderr --
 
 $ otman release OTM-3 --json

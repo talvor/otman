@@ -45,9 +45,9 @@ func TestClaimRelease(t *testing.T) {
 }
 
 // claim and release need an actor and one REF. A claim on a closed Item,
-// or one with no valid status, is refused with item_not_open, and a claim
-// or release of an Item someone else holds with claim_conflict; both exit
-// 4 and write nothing.
+// even one the actor holds, or one with no valid status, is refused with
+// item_not_open, and a claim or release of an Item someone else holds,
+// at either status, with claim_conflict; both exit 4 and write nothing.
 func TestClaimReleaseErrors(t *testing.T) {
 	me := map[string]string{"OTM_ACTOR": "talvor"}
 	runGolden(t, goldenCase{
@@ -56,6 +56,10 @@ func TestClaimReleaseErrors(t *testing.T) {
 		files: withOTM(map[string]string{
 			"vault/Projects/OTM/Issues/OTM-3 No status.md": "---\nid: OTM-3\ntitle: No status\nkind: issue\n" +
 				"---\n<!-- otman:comments -->\n## Comments\n",
+			"vault/Projects/OTM/Issues/OTM-4 Closed by another.md": "---\nid: OTM-4\ntitle: Closed by another\n" +
+				"kind: issue\nstatus: closed\nassignee: agent-b\n---\n<!-- otman:comments -->\n## Comments\n",
+			"vault/Projects/OTM/Issues/OTM-5 Closed and mine.md": "---\nid: OTM-5\ntitle: Closed and mine\n" +
+				"kind: issue\nstatus: closed\nassignee: talvor\n---\n<!-- otman:comments -->\n## Comments\n",
 		}),
 		steps: []step{
 			{args: []string{"claim", "OTM-1", "--json"}, env: me},
@@ -65,6 +69,8 @@ func TestClaimReleaseErrors(t *testing.T) {
 			{args: []string{"claim", "OTM-2", "--json"}, env: me},
 			{args: []string{"claim", "OTM-2"}, env: me, tty: true},
 			{args: []string{"claim", "OTM-3", "--json"}, env: me},
+			{args: []string{"release", "OTM-4", "--json"}, env: me},
+			{args: []string{"claim", "OTM-5", "--json"}, env: me},
 			{args: []string{"claim", "WEB-1", "--json"}},
 			{args: []string{"release", "WEB-1"}, tty: true},
 			{args: []string{"claim", "WEB-1", "--actor", ""}},

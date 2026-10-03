@@ -2,26 +2,37 @@ package cli
 
 import (
 	"fmt"
-	"strings"
-	"unicode/utf8"
 
 	"github.com/spf13/cobra"
-	"github.com/talvor/otman/internal/config"
 	"github.com/talvor/otman/internal/item"
 	"github.com/talvor/otman/internal/output"
 	"github.com/talvor/otman/internal/vault"
 )
 
-// claimCommand is a command that sets or clears the actor's Claim on an
-// Item: claim or release.
+// claimCommand is a command that takes or gives up the Actor's Claim on
+// an Item: claim or release.
 type claimCommand struct {
 	use, short string
-	claim      bool
+	claim      bool   // take the Claim rather than give it up
+	done       string // what a change reports, such as "Claimed"
+	// unchanged is what a no-op reports after the Item, given the Actor.
+	unchanged func(actor string) string
+	// conflictHint is the hint of claim_conflict, given the Item's ID and
+	// the assignee.
+	conflictHint func(id, assignee string) string
 }
 
 var claimCommands = []claimCommand{
-	{"claim", "Assign an open Item to the actor", true},
-	{"release", "Unassign an Item the actor holds", false},
+	{"claim", "Claim an open Item for the actor", true, "Claimed",
+		func(actor string) string { return "is already claimed by " + actor },
+		func(id, _ string) string {
+			return "pick another Item, or reassign this one deliberately with 'otman edit " + id + " --assignee @me'"
+		}},
+	{"release", "Release the actor's Claim on an Item", false, "Released",
+		func(string) string { return "is already unclaimed" },
+		func(id, assignee string) string {
+			return "leave the release to " + assignee + ", or unassign deliberately with 'otman edit " + id + " --clear-assignee'"
+		}},
 }
 
 func (a *app) newClaimCmd(c claimCommand) *cobra.Command {
@@ -35,7 +46,7 @@ func (a *app) newClaimCmd(c claimCommand) *cobra.Command {
 	}
 }
 
-// setClaim claims or releases the Item ref names for the actor. A claim
+// setClaim claims or releases the Item ref names for the Actor. A claim
 // needs an open Item, blocked or not; a release works at either status.
 // Neither takes an Item from someone else. The check and the write happen
 // under the Vault lock, so two claims on one device never both win.
@@ -48,9 +59,9 @@ func (a *app) setClaim(c claimCommand, ref string) error {
 	if err != nil {
 		return err
 	}
-	update := item.Update{Assignee: &actor}
-	if !c.claim {
-		update = item.Update{ClearAssignee: true}
+	update := item.Update{ClearAssignee: true}
+	if c.claim {
+		update = item.Update{Assignee: &actor}
 	}
 	return a.withVault(s, func(v *vault.Vault, warnings []output.Problem) error {
 		f, err := resolveRef(s, v, ref)
@@ -72,9 +83,14 @@ func (a *app) setClaim(c claimCommand, ref string) error {
 			return notOpen(f, before.Status)
 		}
 		if before.Assignee != nil && *before.Assignee != actor {
-			return claimConflict(c, f, *before.Assignee, actor)
+			return &Error{Exit: ExitConflict, Code: "claim_conflict",
+				Message: "cannot " + c.use + " " + f.ID() + ": it is claimed by " + *before.Assignee + ", not " + actor,
+				Details: map[string]any{"path": f.Path, "assignee": *before.Assignee, "actor": actor},
+				Hint:    c.conflictHint(f.ID(), *before.Assignee)}
 		}
 		if !c.claim && before.Assignee == nil {
+			// Already unclaimed: clearing would only add an assignee: null
+			// line to a file that has no assignee key.
 			out, changed = data, false
 		}
 		if changed {
@@ -87,34 +103,12 @@ func (a *app) setClaim(c claimCommand, ref string) error {
 			return ioError(err)
 		}
 		summary := newItemSummary(f, item.Parse(out), out, newItemLinks(files))
-		var human string
-		switch {
-		case changed && c.claim:
-			human = fmt.Sprintf("Claimed %s · %s\n", summary.ID, summary.Title)
-		case changed:
-			human = fmt.Sprintf("Released %s · %s\n", summary.ID, summary.Title)
-		case c.claim:
-			human = fmt.Sprintf("%s · %s is already claimed by %s\n", summary.ID, summary.Title, actor)
-		default:
-			human = fmt.Sprintf("%s · %s is already unassigned\n", summary.ID, summary.Title)
+		human := fmt.Sprintf("%s %s · %s\n", c.done, summary.ID, summary.Title)
+		if !changed {
+			human = fmt.Sprintf("%s · %s %s\n", summary.ID, summary.Title, c.unchanged(actor))
 		}
 		return a.emit(mutationResult{summary, changed, human}, warnings)
 	})
-}
-
-// requireActor is the actor a command that records an identity acts as,
-// failing with no_actor when none is configured.
-func requireActor(s resolved, command string) (string, error) {
-	if !s.Actor.IsSet() {
-		return "", invalid("no_actor", command+" needs an actor, and none is configured", nil,
-			"pass --actor NAME, set "+config.Actor.EnvVar+", or run 'otman config set actor NAME'")
-	}
-	actor := s.Actor.Value
-	if !utf8.ValidString(actor) || strings.ContainsAny(actor, "\r\n") {
-		return "", invalid("invalid_arguments", "the actor must be a single-line UTF-8 name",
-			map[string]any{"source": string(s.Actor.Source)}, "")
-	}
-	return actor, nil
 }
 
 // notOpen refuses a claim on Item file f, whose status is closed, invalid
@@ -131,16 +125,4 @@ func notOpen(f vault.ItemFile, status *string) error {
 	}
 	return &Error{Exit: ExitConflict, Code: "item_not_open", Message: msg,
 		Details: map[string]any{"path": f.Path, "status": status}, Hint: hint}
-}
-
-// claimConflict refuses to claim or release Item file f, which assignee
-// holds rather than actor.
-func claimConflict(c claimCommand, f vault.ItemFile, assignee, actor string) error {
-	hint := "pick another Item, or reassign this one deliberately with 'otman edit " + f.ID() + " --assignee @me'"
-	if !c.claim {
-		hint = "leave the release to " + assignee + ", or unassign deliberately with 'otman edit " + f.ID() + " --clear-assignee'"
-	}
-	return &Error{Exit: ExitConflict, Code: "claim_conflict",
-		Message: "cannot " + c.use + " " + f.ID() + ": it is claimed by " + assignee + ", not " + actor,
-		Details: map[string]any{"path": f.Path, "assignee": assignee, "actor": actor}, Hint: hint}
 }
