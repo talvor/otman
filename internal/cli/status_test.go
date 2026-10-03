@@ -158,7 +158,7 @@ func roundTrip(t *testing.T, fixture, rel string) {
 			}
 			return false
 		}
-		if want := withoutKeys(before); !bytes.Equal(withoutKeys(after), want) {
+		if want := withoutKeys(before, "status", "updated"); !bytes.Equal(withoutKeys(after, "status", "updated"), want) {
 			t.Fatalf("%s changed more than status and updated:\n%q\n%q", verb[status], before, after)
 		}
 		eol := "\n"
@@ -185,12 +185,9 @@ func roundTrip(t *testing.T, fixture, rel string) {
 	set(status)
 }
 
-// withoutKeys drops keys, by default status and updated, from a file's
-// frontmatter: each key's line and the indented lines continuing its value.
+// withoutKeys drops keys from a file's frontmatter: each key's line and
+// the indented lines continuing its value.
 func withoutKeys(b []byte, keys ...string) []byte {
-	if len(keys) == 0 {
-		keys = []string{"status", "updated"}
-	}
 	isKey := func(line string) bool {
 		for _, k := range keys {
 			if strings.HasPrefix(line, k+":") {

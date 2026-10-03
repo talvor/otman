@@ -45,10 +45,10 @@ func TestEdit(t *testing.T) {
 
 // Contradictory flags, an empty edit and invalid values fail with exit 2
 // before the Vault is touched; a stale --if-rev fails with exit 4
-// stale_item. A body edit of an Item without a comments marker, and a
-// Kind move onto an existing file, are refused with unsafe_write. Nothing
-// is written by a failed edit, even one that fails after the Vault is
-// opened.
+// stale_item. A body edit of an Item without a comments marker is refused
+// with unsafe_write, and a Kind move onto an existing file with
+// move_target_exists. Nothing is written by a failed edit, even one that
+// fails after the Vault is opened.
 func TestEditErrors(t *testing.T) {
 	runGolden(t, goldenCase{
 		name:    "item-edit-errors",
@@ -177,7 +177,7 @@ func TestEditByteDiff(t *testing.T) {
 		{"handedited", "Projects/HND/Issues/HND-3 Windows line endings.md"},
 	} {
 		for _, c := range cases {
-			t.Run(fx.fixture+"/"+path0(fx.rel)+"/"+c.name, func(t *testing.T) {
+			t.Run(fx.fixture+"/"+idOf(fx.rel)+"/"+c.name, func(t *testing.T) {
 				vault := filepath.Join(t.TempDir(), "vault")
 				copyTree(t, filepath.Join("testdata", "vaults", fx.fixture), vault)
 				before, err := os.ReadFile(filepath.Join(vault, filepath.FromSlash(fx.rel)))
@@ -220,16 +220,16 @@ func TestEditByteDiff(t *testing.T) {
 	}
 }
 
-func path0(rel string) string { return strings.SplitN(filepath.Base(rel), " ", 2)[0] }
+func idOf(rel string) string { return strings.SplitN(filepath.Base(rel), " ", 2)[0] }
 
 // splitItem splits an Item file into its frontmatter (with its fences),
 // its body and its comments section, from the marker line on.
 func splitItem(t *testing.T, b []byte) (fm, body, comments []byte) {
 	t.Helper()
-	close := bytes.Index(b[3:], []byte("\n---")) + 3
-	end := close + 1 + bytes.IndexByte(b[close+1:], '\n') + 1
+	fence := bytes.Index(b[3:], []byte("\n---")) + 3
+	end := fence + 1 + bytes.IndexByte(b[fence+1:], '\n') + 1
 	marker := bytes.Index(b, []byte(item.CommentsMarker))
-	if close < 3 || marker < end {
+	if fence < 3 || marker < end {
 		t.Fatalf("not an Item with frontmatter and a marker:\n%q", b)
 	}
 	return b[:end], b[end:marker], b[marker:]

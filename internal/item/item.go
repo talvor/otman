@@ -403,8 +403,9 @@ type Update struct {
 	Kind *Kind
 	// Body replaces the main body; "" clears it.
 	Body *string
-	// Assignee sets the assignee, or clears it when *Assignee is nil.
-	Assignee **string
+	// Assignee sets the assignee; ClearAssignee clears it.
+	Assignee      *string
+	ClearAssignee bool
 }
 
 // ErrNoMarker refuses a body rewrite of an Item file that has no comments
@@ -423,8 +424,10 @@ func Apply(file []byte, update Update, now time.Time) (out []byte, changed bool,
 	if update.Kind != nil {
 		edits = append(edits, frontmatter.Edit{Key: "kind", Value: str(string(*update.Kind))})
 	}
-	if update.Assignee != nil {
-		edits = append(edits, frontmatter.Edit{Key: "assignee", Value: optional(*update.Assignee)})
+	if update.ClearAssignee {
+		edits = append(edits, frontmatter.Edit{Key: "assignee", Value: null()})
+	} else if update.Assignee != nil {
+		edits = append(edits, frontmatter.Edit{Key: "assignee", Value: str(*update.Assignee)})
 	}
 	return rewrite(file, edits, update.Body, now)
 }
@@ -444,6 +447,8 @@ func rewrite(file []byte, edits []frontmatter.Edit, body *string, now time.Time)
 	if err != nil || bytes.Equal(out, file) {
 		return out, false, err
 	}
+	// The full slice expression makes append copy rather than write into
+	// the caller's backing array.
 	out, err = apply(append(edits[:len(edits):len(edits)], frontmatter.Edit{Key: "updated", Value: timestamp(now)}))
 	return out, err == nil, err
 }
@@ -453,15 +458,7 @@ func rewrite(file []byte, edits []frontmatter.Edit, body *string, now time.Time)
 // opening line.
 func replaceBody(file []byte, body string) ([]byte, error) {
 	_, rest, _ := frontmatter.Split(file)
-	marker := -1
-	offset := 0
-	for line := range strings.Lines(string(rest)) {
-		if isLine(line, CommentsMarker) {
-			marker = offset
-			break
-		}
-		offset += len(line)
-	}
+	marker := markerOffset(string(rest))
 	if marker < 0 {
 		return nil, ErrNoMarker
 	}
@@ -479,23 +476,35 @@ func replaceBody(file []byte, body string) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
+// markerOffset is the offset of text's first comments marker line, or -1.
+func markerOffset(text string) int {
+	offset := 0
+	for line := range strings.Lines(text) {
+		if isLine(line, CommentsMarker) {
+			return offset
+		}
+		offset += len(line)
+	}
+	return -1
+}
+
 // splitComments splits text after the frontmatter at the comments marker
 // into the body and the comments that follow the heading. Without a
 // marker it falls back to the last "## Comments" heading.
 func splitComments(text string) (body, comments string) {
-	var lastHeading = -1
+	if marker := markerOffset(text); marker >= 0 {
+		_, after, _ := strings.Cut(text[marker:], "\n")
+		first, _, _ := strings.Cut(after, "\n")
+		if isLine(first, CommentsHeading) {
+			after = strings.TrimPrefix(after, first)
+			after = strings.TrimPrefix(after, "\n")
+		}
+		return text[:marker], after
+	}
+	lastHeading := -1
 	offset := 0
 	for line := range strings.Lines(text) {
-		switch {
-		case isLine(line, CommentsMarker):
-			after := text[offset+len(line):]
-			first, _, _ := strings.Cut(after, "\n")
-			if isLine(first, CommentsHeading) {
-				after = strings.TrimPrefix(after, first)
-				after = strings.TrimPrefix(after, "\n")
-			}
-			return text[:offset], after
-		case isLine(line, CommentsHeading):
+		if isLine(line, CommentsHeading) {
 			lastHeading = offset
 		}
 		offset += len(line)

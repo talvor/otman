@@ -186,8 +186,11 @@ func (v *Vault) ItemAt(p string) (ItemFile, bool, error) {
 	return ItemFile{Key: key, Number: n, Path: p}, true, nil
 }
 
-// ErrTargetExists refuses to move an Item file onto an existing file.
-var ErrTargetExists = errors.New("already exists")
+// TargetExistsError refuses to move an Item file onto Target, a
+// Vault-relative path that already exists.
+type TargetExistsError struct{ Target string }
+
+func (e *TargetExistsError) Error() string { return e.Target + " already exists" }
 
 // KindPath is the Vault-relative path Item file f has in the folder for
 // Kind kind under its Project.
@@ -195,16 +198,16 @@ func (f ItemFile) KindPath(kind item.Kind) string {
 	return path.Join(ProjectsDir, f.Key, kind.Folder(), f.Name())
 }
 
-// CheckMove fails with ErrTargetExists when moving Item file f to the
-// Vault-relative path to would replace another file.
-func (v *Vault) CheckMove(f ItemFile, to string) error {
+// checkMove fails with a *TargetExistsError when moving Item file f to
+// the Vault-relative path to would replace another file.
+func (v *Vault) checkMove(f ItemFile, to string) error {
 	if to == f.Path {
 		return nil
 	}
 	_, err := os.Lstat(filepath.Join(v.Root, filepath.FromSlash(to)))
 	switch {
 	case err == nil:
-		return fmt.Errorf("%s %w", to, ErrTargetExists)
+		return &TargetExistsError{Target: to}
 	case errors.Is(err, os.ErrNotExist):
 		return nil
 	default:
@@ -214,10 +217,10 @@ func (v *Vault) CheckMove(f ItemFile, to string) error {
 
 // MoveItemFile replaces the bytes of Item file f atomically and then
 // renames it to the Vault-relative path to, creating its folder. A crash
-// between the two leaves the new bytes at the old path. It fails with
-// ErrTargetExists, before writing anything, when to is another file.
+// between the two leaves the new bytes at the old path. It fails with a
+// *TargetExistsError, before writing anything, when to is another file.
 func (v *Vault) MoveItemFile(f ItemFile, to string, data []byte) (ItemFile, error) {
-	if err := v.CheckMove(f, to); err != nil {
+	if err := v.checkMove(f, to); err != nil {
 		return f, err
 	}
 	if err := v.WriteItemFile(f, data); err != nil {

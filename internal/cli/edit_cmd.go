@@ -1,11 +1,11 @@
 package cli
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/talvor/otman/internal/item"
 	"github.com/talvor/otman/internal/output"
 	"github.com/talvor/otman/internal/vault"
@@ -20,9 +20,6 @@ type editFlags struct {
 	clearAssignee bool
 	ifRev         string
 }
-
-// editChanges are the flags that change an Item; an edit needs one.
-var editChanges = []string{"kind", "body", "body-file", "clear-body", "assignee", "clear-assignee"}
 
 func (a *app) newEditCmd() *cobra.Command {
 	var f editFlags
@@ -53,13 +50,18 @@ func (a *app) edit(cmd *cobra.Command, ref string, f editFlags) error {
 	if err := exclusive(fl.Changed, "assignee", "clear-assignee"); err != nil {
 		return err
 	}
+	// Every flag of edit's own but --if-rev is a change; an edit needs one.
+	var changes []string
 	given := false
-	for _, name := range editChanges {
-		given = given || fl.Changed(name)
-	}
+	cmd.LocalNonPersistentFlags().VisitAll(func(fl *pflag.Flag) {
+		if fl.Name != "if-rev" && fl.Name != "help" {
+			changes = append(changes, "--"+fl.Name)
+			given = given || fl.Changed
+		}
+	})
 	if !given {
 		return invalid("empty_edit", "edit needs something to change", nil,
-			"pass --"+strings.Join(editChanges, ", --"))
+			"pass "+strings.Join(changes, ", "))
 	}
 	var update item.Update
 	if fl.Changed("kind") {
@@ -89,14 +91,13 @@ func (a *app) edit(cmd *cobra.Command, ref string, f editFlags) error {
 	}
 	switch {
 	case fl.Changed("clear-assignee"):
-		update.Assignee = new(*string)
+		update.ClearAssignee = true
 	case fl.Changed("assignee"):
 		name, err := nameOrActor(s, "--assignee", f.assignee)
 		if err != nil {
 			return err
 		}
-		assignee := &name
-		update.Assignee = &assignee
+		update.Assignee = &name
 	}
 
 	return a.withVault(s, func(v *vault.Vault, warnings []output.Problem) error {
@@ -117,7 +118,7 @@ func (a *app) edit(cmd *cobra.Command, ref string, f editFlags) error {
 		before := item.Parse(data)
 		data, changed, err := item.Apply(data, update, a.opts.Now())
 		if err != nil {
-			return editError(file, err)
+			return writeError(file, err)
 		}
 		if changed {
 			to := file.Path
@@ -125,7 +126,7 @@ func (a *app) edit(cmd *cobra.Command, ref string, f editFlags) error {
 				to = file.KindPath(*update.Kind)
 			}
 			if file, err = v.MoveItemFile(file, to, data); err != nil {
-				return editError(file, err)
+				return writeError(file, err)
 			}
 		}
 		files, err := v.ItemFiles(file.Key)
@@ -139,39 +140,4 @@ func (a *app) edit(cmd *cobra.Command, ref string, f editFlags) error {
 		}
 		return a.emit(mutationResult{summary, changed, human}, warnings)
 	})
-}
-
-// exclusive fails with conflicting_flags when more than one of the flags
-// names was given.
-func exclusive(changed func(string) bool, names ...string) error {
-	var given []string
-	for _, n := range names {
-		if changed(n) {
-			given = append(given, "--"+n)
-		}
-	}
-	if len(given) < 2 {
-		return nil
-	}
-	return conflictingFlags(given[0], given[1], "pass only one of --"+strings.Join(names, ", --"))
-}
-
-// editError reports a failed edit of Item file f: unsafe_write when otman
-// refused to rewrite or move it, an I/O error otherwise.
-func editError(f vault.ItemFile, err error) error {
-	var reason, hint string
-	switch {
-	case errors.Is(err, item.ErrNoMarker):
-		reason = err.Error()
-		hint = "put the line " + item.CommentsMarker + " back just before " + item.CommentsHeading +
-			", then retry"
-	case errors.Is(err, vault.ErrTargetExists):
-		reason = err.Error()
-		hint = "move or rename the file in the way, then retry"
-	default:
-		return writeError(f, err)
-	}
-	return &Error{Exit: ExitConflict, Code: "unsafe_write",
-		Message: "refusing to rewrite " + f.Path + ": " + reason,
-		Details: map[string]any{"path": f.Path, "reason": reason}, Hint: hint}
 }

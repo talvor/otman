@@ -1,6 +1,10 @@
 package cli
 
-import "github.com/talvor/otman/internal/output"
+import (
+	"strings"
+
+	"github.com/talvor/otman/internal/output"
+)
 
 // Exit codes are part of otman's stable contract.
 const (
@@ -45,6 +49,28 @@ func invalidArgs(msg, hint string) *Error { return invalid("invalid_arguments", 
 func conflictingFlags(flag, other, hint string) *Error {
 	return invalid("conflicting_flags", flag+" conflicts with "+other,
 		map[string]any{"flags": []string{flag, other}}, hint)
+}
+
+// exclusive fails with conflicting_flags when more than one of the flags
+// names was given.
+func exclusive(changed func(string) bool, names ...string) error {
+	var given []string
+	for _, n := range names {
+		if changed(n) {
+			given = append(given, "--"+n)
+		}
+	}
+	if len(given) < 2 {
+		return nil
+	}
+	return conflictingFlags(given[0], given[1], "pass only one of --"+strings.Join(names, ", --"))
+}
+
+// unsafeWrite refuses to rewrite the Item file at path for reason.
+func unsafeWrite(path, reason, hint string) *Error {
+	return &Error{Exit: ExitConflict, Code: "unsafe_write",
+		Message: "refusing to rewrite " + path + ": " + reason,
+		Details: map[string]any{"path": path, "reason": reason}, Hint: hint}
 }
 
 func ioError(err error) *Error {
