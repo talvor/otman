@@ -32,6 +32,10 @@ _Avoid_: Type, category
 Giving an Item a new number because another Item in the same Project already holds its number. The Item created earlier keeps the number.
 _Avoid_: Re-ID, reassign
 
+**Author**:
+Who created an Item: the person or agent acting when it was created. An Item may have no Author. Each comment also has its own Author.
+_Avoid_: Reporter, creator, owner
+
 **Tracker template**:
 The `issue-tracker-otman.md` doc that tells the Matt Pocock skills how to perform tracker operations through otman.
 _Avoid_: Adapter, integration, plugin
