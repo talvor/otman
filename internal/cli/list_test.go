@@ -64,3 +64,22 @@ func TestListStateAndKind(t *testing.T) {
 		},
 	})
 }
+
+// --assignee keeps the Items assigned to exactly NAME, or to the actor
+// with @me; --unassigned keeps those with no assignee.
+func TestListAssignee(t *testing.T) {
+	runGolden(t, goldenCase{
+		name:    "list-assignee",
+		fixture: "list",
+		files:   withOTM(nil),
+		steps: []step{
+			{args: []string{"list", "--assignee", "talvor", "--state", "all"}, tty: true},
+			{args: []string{"list", "--assignee", "talvor", "--all-projects", "--state", "all", "--json"}},
+			{args: []string{"list", "--assignee", "@me"}, env: map[string]string{"OTM_ACTOR": "agent-b"}, tty: true},
+			{args: []string{"list", "--assignee", "@me", "--actor", "Talvor"}, tty: true},
+			{args: []string{"list", "--assignee", "nobody", "--json"}},
+			{args: []string{"list", "--unassigned"}, tty: true},
+			{args: []string{"list", "--unassigned", "--state", "closed", "--all-projects", "--json"}},
+		},
+	})
+}
