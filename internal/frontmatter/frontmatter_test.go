@@ -270,14 +270,38 @@ func lineEnd(b []byte, from int) int {
 	return len(b)
 }
 
-// decoded is a value as Go sees it, printed so that NaN equals NaN.
+// decoded is a value as Go sees it, printed so that NaN equals NaN and
+// with every scalar's type, so that 0.0 and 0 differ.
 func decoded(t *testing.T, n *yaml.Node) string {
 	t.Helper()
 	var v any
 	if err := n.Decode(&v); err != nil {
 		return "error: " + err.Error()
 	}
-	return fmt.Sprintf("%#v", v)
+	return typed(v)
+}
+
+func typed(v any) string {
+	var parts []string
+	switch x := v.(type) {
+	case []any:
+		for _, c := range x {
+			parts = append(parts, typed(c))
+		}
+		return "[" + strings.Join(parts, ", ") + "]"
+	case map[string]any:
+		for k, c := range x {
+			parts = append(parts, fmt.Sprintf("%q: %s", k, typed(c)))
+		}
+	case map[any]any:
+		for k, c := range x {
+			parts = append(parts, typed(k)+": "+typed(c))
+		}
+	default:
+		return fmt.Sprintf("%T(%#v)", v, v)
+	}
+	slices.Sort(parts)
+	return "{" + strings.Join(parts, ", ") + "}"
 }
 
 func names(keys []topKey) []string {
