@@ -100,27 +100,15 @@ exit: 0
 -- stderr --
 
 $ otman view OTM-2 Item file format frontmatter and body
-exit: 0
+exit: 3
 -- stdout --
-item:
-  id: OTM-2
-  title: "Item file format: frontmatter and body"
-  kind: spec
-  status: closed
-  labels[0]:
-  assignee: null
-  parent: null
-  blocked_by[0]:
-  path: Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md
-  rev: fc9a1f15b73e
-  author: null
-  body: ""
-  created: "2026-01-01T09:00:00Z"
-  updated: "2026-01-01T09:00:00Z"
-  children[0]:
-  blocks[0]:
-truncated: false
 -- stderr --
+error:
+  code: item_not_found
+  message: "no Item matches \"OTM-2 Item file format frontmatter and body\""
+  details:
+    ref: OTM-2 Item file format frontmatter and body
+  hint: "name an Item by its ID (OTM-12), its number, its full filename or its Vault-relative path; titles do not match"
 
 $ otman view Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md
 tty: true
@@ -380,9 +368,8 @@ exit: 3
 -- stderr --
 error:
   code: item_not_found
-  message: "no Item matches \"OTM-1 Handle sync\" in Project OTM"
+  message: "no Item matches \"OTM-1 Handle sync\""
   details:
-    project: OTM
     ref: OTM-1 Handle sync
   hint: "name an Item by its ID (OTM-12), its number, its full filename or its Vault-relative path; titles do not match"
 

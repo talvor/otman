@@ -144,8 +144,7 @@ func TestCreateNumbering(t *testing.T) {
 }
 
 // view takes a qualified ID, a bare number in the selected Project, a
-// unique full filename (with or without .md) or an exact Vault-relative
-// path. A qualified ID overrides the implicit Project, but not an explicit
+// unique full filename (with its .md) or an exact Vault-relative path. A qualified ID overrides the implicit Project, but not an explicit
 // conflicting --project. Nothing matches by title.
 func TestViewRefs(t *testing.T) {
 	runGolden(t, goldenCase{

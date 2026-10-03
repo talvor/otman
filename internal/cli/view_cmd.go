@@ -240,12 +240,13 @@ var (
 )
 
 // resolveRef finds the one Item ref names: a qualified ID, a bare number
-// in the selected Project, a unique full filename (".md" optional) or an
+// in the selected Project, a unique full filename (with its ".md") or an
 // exact Vault-relative path. There is no title or fuzzy matching. A ref
 // that names its Project overrides the implicit Project, but an explicit
 // --project that disagrees fails.
 func resolveRef(s resolved, v *vault.Vault, ref string) (vault.ItemFile, error) {
 	var key string
+	var details map[string]any // for project_not_found
 	var match func([]vault.ItemFile) []vault.ItemFile
 	switch {
 	case qualifiedRef.MatchString(ref):
@@ -265,10 +266,8 @@ func resolveRef(s resolved, v *vault.Vault, ref string) (vault.ItemFile, error) 
 		if err != nil {
 			return vault.ItemFile{}, itemNotFound(ref, sel.Value)
 		}
-		if err := requireProject(v, sel.Value, map[string]any{"source": string(sel.Source)}); err != nil {
-			return vault.ItemFile{}, err
-		}
-		return uniqueItem(v, ref, sel.Value, func(fs []vault.ItemFile) []vault.ItemFile { return matchNumber(fs, n) })
+		key, details = sel.Value, map[string]any{"source": string(sel.Source)}
+		match = func(fs []vault.ItemFile) []vault.ItemFile { return matchNumber(fs, n) }
 	case strings.Contains(ref, "/"):
 		f, ok, err := v.ItemAt(ref)
 		if err != nil {
@@ -282,11 +281,7 @@ func resolveRef(s resolved, v *vault.Vault, ref string) (vault.ItemFile, error) 
 		}
 		return f, nil
 	default:
-		name := ref
-		if !strings.HasSuffix(name, ".md") {
-			name += ".md"
-		}
-		k, _, _, ok := item.ParseFilename(name)
+		k, _, _, ok := item.ParseFilename(ref)
 		if !ok {
 			return vault.ItemFile{}, itemNotFound(ref, "")
 		}
@@ -294,7 +289,7 @@ func resolveRef(s resolved, v *vault.Vault, ref string) (vault.ItemFile, error) 
 		match = func(fs []vault.ItemFile) []vault.ItemFile {
 			var out []vault.ItemFile
 			for _, f := range fs {
-				if f.Name() == name {
+				if f.Name() == ref {
 					out = append(out, f)
 				}
 			}
@@ -304,7 +299,7 @@ func resolveRef(s resolved, v *vault.Vault, ref string) (vault.ItemFile, error) 
 	if err := checkRefProject(s, ref, key); err != nil {
 		return vault.ItemFile{}, err
 	}
-	if err := requireProject(v, key, nil); err != nil {
+	if err := requireProject(v, key, details); err != nil {
 		return vault.ItemFile{}, err
 	}
 	return uniqueItem(v, ref, key, match)
