@@ -7,6 +7,8 @@ OTM-1   issue  open    agent-b   Handle sync collisions
 OTM-3   prd    open    -         Why a tracker
 OTM-10  issue  open    Talvor    Sync tens after nines
 -- stderr --
+warning[malformed_frontmatter]: cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Unreadable.md: yaml: line 1: did not find expected ',' or ']'
+hint: fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Unreadable.md
 
 $ otman list --search DUPLICATE NUMBERS --json
 exit: 0
@@ -32,7 +34,16 @@ exit: 0
     "count": 1,
     "has_more": false
   },
-  "warnings": []
+  "warnings": [
+    {
+      "code": "malformed_frontmatter",
+      "message": "cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Unreadable.md: yaml: line 1: did not find expected ',' or ']'",
+      "details": {
+        "path": "Projects/OTM/Issues/OTM-7 Unreadable.md"
+      },
+      "hint": "fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Unreadable.md"
+    }
+  ]
 }
 -- stderr --
 
@@ -42,6 +53,8 @@ exit: 0
 -- stdout --
 No Items match
 -- stderr --
+warning[malformed_frontmatter]: cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Unreadable.md: yaml: line 1: did not find expected ',' or ']'
+hint: fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Unreadable.md
 
 $ otman list --search FILE FORMAT --state all --kind spec
 tty: true
@@ -50,6 +63,8 @@ exit: 0
 ID     KIND  STATUS  ASSIGNEE  TITLE
 OTM-2  spec  closed  -         Item file format
 -- stderr --
+warning[malformed_frontmatter]: cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Unreadable.md: yaml: line 1: did not find expected ',' or ']'
+hint: fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Unreadable.md
 
 $ otman list --search screen --all-projects --unassigned
 tty: true
@@ -58,6 +73,8 @@ exit: 0
 ID     KIND  STATUS  ASSIGNEE  TITLE
 WEB-1  prd   open    -         Landing page
 -- stderr --
+warning[malformed_frontmatter]: cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Unreadable.md: yaml: line 1: did not find expected ',' or ']'
+hint: fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Unreadable.md
 
 $ otman list --search nothing like this
 exit: 0
@@ -67,6 +84,12 @@ total: 0
 count: 0
 has_more: false
 -- stderr --
+warning:
+  code: malformed_frontmatter
+  message: "cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Unreadable.md: yaml: line 1: did not find expected ',' or ']'"
+  details:
+    path: Projects/OTM/Issues/OTM-7 Unreadable.md
+  hint: fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Unreadable.md
 
 == tree ==
 config/

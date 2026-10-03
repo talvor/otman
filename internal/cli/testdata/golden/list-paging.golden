@@ -8,6 +8,12 @@ OTM-3  prd    open    -         Why a tracker
 
 Showing 1-2 of 5; pass --offset 2 for more, or --all
 -- stderr --
+warning[unknown_status]: OTM-5 has no status, not open or closed, so it is not listed
+hint: set status: open or closed in Projects/OTM/Issues/OTM-5 No status.md, or pass --state all
+warning[unknown_status]: OTM-6 has status "wip", not open or closed, so it is not listed
+hint: set status: open or closed in Projects/OTM/Issues/OTM-6 Odd status.md, or pass --state all
+warning[malformed_frontmatter]: cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Unreadable.md: yaml: line 1: did not find expected ',' or ']'
+hint: fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Unreadable.md
 
 $ otman list --limit 2 --offset 2
 tty: true
@@ -19,6 +25,12 @@ OTM-9  spec   open    -         Paging spec
 
 Showing 3-4 of 5; pass --offset 4 for more, or --all
 -- stderr --
+warning[unknown_status]: OTM-5 has no status, not open or closed, so it is not listed
+hint: set status: open or closed in Projects/OTM/Issues/OTM-5 No status.md, or pass --state all
+warning[unknown_status]: OTM-6 has status "wip", not open or closed, so it is not listed
+hint: set status: open or closed in Projects/OTM/Issues/OTM-6 Odd status.md, or pass --state all
+warning[malformed_frontmatter]: cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Unreadable.md: yaml: line 1: did not find expected ',' or ']'
+hint: fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Unreadable.md
 
 $ otman list --limit 2 --offset 4 --json
 exit: 0
@@ -44,7 +56,36 @@ exit: 0
     "count": 1,
     "has_more": false
   },
-  "warnings": []
+  "warnings": [
+    {
+      "code": "unknown_status",
+      "message": "OTM-5 has no status, not open or closed, so it is not listed",
+      "details": {
+        "id": "OTM-5",
+        "path": "Projects/OTM/Issues/OTM-5 No status.md",
+        "status": null
+      },
+      "hint": "set status: open or closed in Projects/OTM/Issues/OTM-5 No status.md, or pass --state all"
+    },
+    {
+      "code": "unknown_status",
+      "message": "OTM-6 has status \"wip\", not open or closed, so it is not listed",
+      "details": {
+        "id": "OTM-6",
+        "path": "Projects/OTM/Issues/OTM-6 Odd status.md",
+        "status": "wip"
+      },
+      "hint": "set status: open or closed in Projects/OTM/Issues/OTM-6 Odd status.md, or pass --state all"
+    },
+    {
+      "code": "malformed_frontmatter",
+      "message": "cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Unreadable.md: yaml: line 1: did not find expected ',' or ']'",
+      "details": {
+        "path": "Projects/OTM/Issues/OTM-7 Unreadable.md"
+      },
+      "hint": "fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Unreadable.md"
+    }
+  ]
 }
 -- stderr --
 
@@ -76,6 +117,28 @@ total: 5
 count: 2
 has_more: true
 -- stderr --
+warning:
+  code: unknown_status
+  message: "OTM-5 has no status, not open or closed, so it is not listed"
+  details:
+    id: OTM-5
+    path: Projects/OTM/Issues/OTM-5 No status.md
+    status: null
+  hint: "set status: open or closed in Projects/OTM/Issues/OTM-5 No status.md, or pass --state all"
+warning:
+  code: unknown_status
+  message: "OTM-6 has status \"wip\", not open or closed, so it is not listed"
+  details:
+    id: OTM-6
+    path: Projects/OTM/Issues/OTM-6 Odd status.md
+    status: wip
+  hint: "set status: open or closed in Projects/OTM/Issues/OTM-6 Odd status.md, or pass --state all"
+warning:
+  code: malformed_frontmatter
+  message: "cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Unreadable.md: yaml: line 1: did not find expected ',' or ']'"
+  details:
+    path: Projects/OTM/Issues/OTM-7 Unreadable.md
+  hint: fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Unreadable.md
 
 $ otman list --offset 5 --json
 exit: 0
@@ -88,7 +151,36 @@ exit: 0
     "count": 0,
     "has_more": false
   },
-  "warnings": []
+  "warnings": [
+    {
+      "code": "unknown_status",
+      "message": "OTM-5 has no status, not open or closed, so it is not listed",
+      "details": {
+        "id": "OTM-5",
+        "path": "Projects/OTM/Issues/OTM-5 No status.md",
+        "status": null
+      },
+      "hint": "set status: open or closed in Projects/OTM/Issues/OTM-5 No status.md, or pass --state all"
+    },
+    {
+      "code": "unknown_status",
+      "message": "OTM-6 has status \"wip\", not open or closed, so it is not listed",
+      "details": {
+        "id": "OTM-6",
+        "path": "Projects/OTM/Issues/OTM-6 Odd status.md",
+        "status": "wip"
+      },
+      "hint": "set status: open or closed in Projects/OTM/Issues/OTM-6 Odd status.md, or pass --state all"
+    },
+    {
+      "code": "malformed_frontmatter",
+      "message": "cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Unreadable.md: yaml: line 1: did not find expected ',' or ']'",
+      "details": {
+        "path": "Projects/OTM/Issues/OTM-7 Unreadable.md"
+      },
+      "hint": "fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Unreadable.md"
+    }
+  ]
 }
 -- stderr --
 
@@ -98,6 +190,12 @@ exit: 0
 -- stdout --
 No Items at --offset 99; 5 match
 -- stderr --
+warning[unknown_status]: OTM-5 has no status, not open or closed, so it is not listed
+hint: set status: open or closed in Projects/OTM/Issues/OTM-5 No status.md, or pass --state all
+warning[unknown_status]: OTM-6 has status "wip", not open or closed, so it is not listed
+hint: set status: open or closed in Projects/OTM/Issues/OTM-6 Odd status.md, or pass --state all
+warning[malformed_frontmatter]: cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Unreadable.md: yaml: line 1: did not find expected ',' or ']'
+hint: fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Unreadable.md
 
 $ otman list --limit 9223372036854775807 --offset 6 --state all --all-projects --json
 exit: 0
@@ -106,6 +204,30 @@ exit: 0
   "schema_version": 1,
   "data": {
     "items": [
+      {
+        "id": "OTM-5",
+        "title": "No status",
+        "kind": "issue",
+        "status": null,
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/OTM/Issues/OTM-5 No status.md",
+        "rev": "9cb864454fc2"
+      },
+      {
+        "id": "OTM-6",
+        "title": "Odd status",
+        "kind": "issue",
+        "status": "wip",
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/OTM/Issues/OTM-6 Odd status.md",
+        "rev": "2904335a50fa"
+      },
       {
         "id": "OTM-9",
         "title": "Paging spec",
@@ -155,11 +277,20 @@ exit: 0
         "rev": "a676aea1ce8a"
       }
     ],
-    "total": 10,
-    "count": 4,
+    "total": 12,
+    "count": 6,
     "has_more": false
   },
-  "warnings": []
+  "warnings": [
+    {
+      "code": "malformed_frontmatter",
+      "message": "cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Unreadable.md: yaml: line 1: did not find expected ',' or ']'",
+      "details": {
+        "path": "Projects/OTM/Issues/OTM-7 Unreadable.md"
+      },
+      "hint": "fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Unreadable.md"
+    }
+  ]
 }
 -- stderr --
 
@@ -174,11 +305,15 @@ OTM-2   spec   closed  -         Item file format
 OTM-3   prd    open    -         Why a tracker
 OTM-4   issue  open    talvor    Status bar
 OTM-4   prd    closed  talvor    Status bar copy
+OTM-5   issue  -       -         No status
+OTM-6   issue  wip     -         Odd status
 OTM-9   spec   open    -         Paging spec
 OTM-10  issue  open    Talvor    Sync tens after nines
 WEB-1   prd    open    -         Landing page
 WEB-2   issue  closed  talvor    Fix the logo
 -- stderr --
+warning[malformed_frontmatter]: cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Unreadable.md: yaml: line 1: did not find expected ',' or ']'
+hint: fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Unreadable.md
 
 $ otman list --limit 1 --all-projects --kind prd --json
 exit: 0
@@ -222,7 +357,16 @@ exit: 0
     "count": 1,
     "has_more": true
   },
-  "warnings": []
+  "warnings": [
+    {
+      "code": "malformed_frontmatter",
+      "message": "cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Unreadable.md: yaml: line 1: did not find expected ',' or ']'",
+      "details": {
+        "path": "Projects/OTM/Issues/OTM-7 Unreadable.md"
+      },
+      "hint": "fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Unreadable.md"
+    }
+  ]
 }
 -- stderr --
 

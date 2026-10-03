@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"regexp"
 	"strconv"
 	"strings"
@@ -292,6 +293,10 @@ type Parsed struct {
 
 	Body     string
 	Comments []Comment
+
+	// FrontmatterErr is why the frontmatter could not be read, leaving
+	// every field nil; nil when it was read or there is none.
+	FrontmatterErr error
 }
 
 // Parse reads an Item file. Without a comments marker line, the body ends
@@ -313,6 +318,7 @@ func Parse(b []byte) Parsed {
 func (p *Parsed) readFrontmatter(fm []byte) {
 	var doc yaml.Node
 	if err := yaml.Unmarshal(fm, &doc); err != nil {
+		p.FrontmatterErr = err
 		return
 	}
 	if len(doc.Content) == 0 {
@@ -320,6 +326,7 @@ func (p *Parsed) readFrontmatter(fm []byte) {
 	}
 	m := doc.Content[0]
 	if m.Kind != yaml.MappingNode {
+		p.FrontmatterErr = errors.New("not a mapping of keys to values")
 		return
 	}
 	for i := 0; i+1 < len(m.Content); i += 2 {

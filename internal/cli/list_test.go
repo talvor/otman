@@ -3,9 +3,9 @@ package cli_test
 import "testing"
 
 // list defaults to the open Items of the selected Project, sorted by
-// number, then path, in every output format. Items whose status is
-// missing or not open/closed, or whose frontmatter cannot be read, are
-// left out; files under Templates/ are not Items.
+// number, then path, in every output format. An Item whose status is
+// missing or not open/closed is left out with a warning, as is one whose
+// frontmatter cannot be read; files under Templates/ are not Items.
 func TestListDefault(t *testing.T) {
 	runGolden(t, goldenCase{
 		name:    "list-default",
@@ -44,8 +44,10 @@ func TestListAllProjects(t *testing.T) {
 	})
 }
 
-// --state picks open (the default), closed or all Items; an Item whose
-// status is neither is never listed. --kind picks one Kind, read from the
+// --state picks open (the default), closed or all Items. An Item whose
+// status is neither is listed only by --state all, with its status as
+// found, and otherwise named in a warning unless another filter left it
+// out. An unreadable Item is named in a warning in every state. --kind picks one Kind, read from the
 // frontmatter or else the folder.
 func TestListStateAndKind(t *testing.T) {
 	runGolden(t, goldenCase{
@@ -55,6 +57,7 @@ func TestListStateAndKind(t *testing.T) {
 		steps: []step{
 			{args: []string{"list", "--state", "closed"}, tty: true},
 			{args: []string{"list", "--state", "all"}, tty: true},
+			{args: []string{"list", "--state", "all", "--kind", "issue", "--search", "status", "--json"}},
 			{args: []string{"list", "--state", "open", "--json"}, env: map[string]string{"OTM_PROJECT": "WEB"}},
 			{args: []string{"list", "--kind", "spec"}, tty: true},
 			{args: []string{"list", "--kind", "prd", "--state", "all", "--json"}},

@@ -82,15 +82,9 @@ type itemQuery struct {
 	search string
 }
 
-// match reports whether the Item summarised by s, with body, is kept. An
-// Item whose status is neither open nor closed is never kept.
+// match reports whether the Item summarised by s, with body, passes every
+// filter but --state.
 func (q itemQuery) match(s itemSummary, body string) bool {
-	if s.Status == nil || (*s.Status != item.Open && *s.Status != item.Closed) {
-		return false
-	}
-	if q.state != "all" && *s.Status != q.state {
-		return false
-	}
 	if q.kind != nil && (s.Kind == nil || *s.Kind != *q.kind) {
 		return false
 	}
@@ -170,11 +164,12 @@ func (a *app) list(cmd *cobra.Command, f listFlags) error {
 		}
 		all := []itemSummary{}
 		for _, key := range keys {
-			found, err := listProject(v, key, q)
+			found, pws, err := listProject(v, key, q)
 			if err != nil {
 				return ioError(err)
 			}
 			all = append(all, found...)
+			ws = append(ws, pws...)
 		}
 		return a.emit(listResult{page(f.paging, all)}, append(warnings, ws...))
 	})
@@ -201,23 +196,54 @@ func listScope(v *vault.Vault, sel config.Value) ([]string, []output.Problem, er
 }
 
 // listProject is the summaries of the Items of Project key that q keeps,
-// sorted by number, then path.
-func listProject(v *vault.Vault, key string, q itemQuery) ([]itemSummary, error) {
+// sorted by number, then path, and a warning for each Item left out
+// because it drifted: its frontmatter cannot be read, or only its status,
+// missing or neither open nor closed, kept it from --state open or closed.
+// --state all keeps any status.
+func listProject(v *vault.Vault, key string, q itemQuery) ([]itemSummary, []output.Problem, error) {
 	files, err := v.ItemFiles(key)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	links := newItemLinks(files)
 	var found []itemSummary
+	var warnings []output.Problem
 	for _, f := range files {
 		data, err := v.ReadItemFile(f)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		p := item.Parse(data)
-		if s := newItemSummary(f, p, data, links); q.match(s, p.Body) {
+		if p.FrontmatterErr != nil {
+			warnings = append(warnings, output.Warning("malformed_frontmatter",
+				"cannot read the frontmatter of "+f.Path+": "+p.FrontmatterErr.Error(),
+				map[string]any{"path": f.Path},
+				"fix the YAML between the --- lines in "+f.Path))
+			continue
+		}
+		s := newItemSummary(f, p, data, links)
+		if !q.match(s, p.Body) {
+			continue
+		}
+		if q.state == "all" || (s.Status != nil && *s.Status == q.state) {
 			found = append(found, s)
+			continue
+		}
+		if s.Status == nil || (*s.Status != item.Open && *s.Status != item.Closed) {
+			warnings = append(warnings, unknownStatus(s))
 		}
 	}
-	return found, nil
+	return found, warnings, nil
+}
+
+// unknownStatus warns that the Item summarised by s was left out of a
+// --state open or closed list because its status is neither.
+func unknownStatus(s itemSummary) output.Problem {
+	msg := s.ID + " has no status"
+	if s.Status != nil {
+		msg = s.ID + " has status " + quoteArg(*s.Status)
+	}
+	return output.Warning("unknown_status", msg+", not open or closed, so it is not listed",
+		map[string]any{"id": s.ID, "path": s.Path, "status": s.Status},
+		"set status: open or closed in "+s.Path+", or pass --state all")
 }
