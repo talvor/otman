@@ -1,0 +1,77 @@
+$ otman config show --json --format axi
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: conflicting_flags
+  message: "--json conflicts with --format axi"
+  details:
+    flags[2]: "--json","--format"
+  hint: "pass either --json or --format, not both"
+
+$ otman config show --format xml
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_format
+  message: "unknown output format \"xml\""
+  details:
+    allowed[3]: human,axi,json
+    format: xml
+  hint: "use --format human, axi or json"
+
+$ otman bogus --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "unknown command \"bogus\" for \"otman\"",
+    "details": null,
+    "hint": "run 'otman --help' for usage"
+  }
+}
+
+$ otman config show --nope --format=json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "unknown flag: --nope",
+    "details": null,
+    "hint": "run 'otman --help' for usage"
+  }
+}
+
+$ otman bogus --json=true
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "unknown command \"bogus\" for \"otman\"",
+    "details": null,
+    "hint": "run 'otman --help' for usage"
+  }
+}
+
+$ otman bogus --json --json=false
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[invalid_arguments]: unknown command "bogus" for "otman"
+hint: run 'otman --help' for usage
+
+== tree ==
+config/
+home/
+vault/

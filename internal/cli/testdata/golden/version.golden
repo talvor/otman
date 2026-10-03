@@ -1,0 +1,36 @@
+$ otman --version
+tty: true
+exit: 0
+-- stdout --
+otman version dev
+-- stderr --
+
+$ otman --version
+exit: 0
+-- stdout --
+version: dev
+-- stderr --
+
+$ otman --version --json
+tty: true
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "version": "dev"
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman -v --format human
+exit: 0
+-- stdout --
+otman version dev
+-- stderr --
+
+== tree ==
+config/
+home/
+vault/

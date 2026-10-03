@@ -1,0 +1,69 @@
+$ otman config show --json --vault ""
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "--vault cannot be empty",
+    "details": {
+      "flag": "--vault"
+    },
+    "hint": "pass a value, or omit --vault to use OTM_VAULT or config"
+  }
+}
+
+$ otman config show --actor=
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[invalid_arguments]: --actor cannot be empty
+hint: pass a value, or omit --actor to use OTM_ACTOR or config
+
+$ otman config show --project ""
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_arguments
+  message: "--project cannot be empty"
+  details:
+    flag: "--project"
+  hint: "pass a value, or omit --project to use OTM_PROJECT or config"
+
+$ otman config show --json
+env: OTM_ACTOR= OTM_PROJECT= OTM_VAULT=
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "config_path": "$WORK/config/otman/config.toml",
+    "vault": {
+      "value": "/from/config",
+      "source": "config"
+    },
+    "actor": {
+      "value": "config-actor",
+      "source": "config"
+    },
+    "project": {
+      "value": "CFG",
+      "source": "config"
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "/from/config"
+actor = "config-actor"
+project = "CFG"
+home/
+vault/

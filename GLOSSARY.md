@@ -40,6 +40,10 @@ _Avoid_: Corruption, inconsistency
 Giving an Item a new number because another Item in the same Project already holds its number. The Item created earlier keeps the number.
 _Avoid_: Re-ID, reassign
 
+**Actor**:
+The configured identity of whoever is running otman, from `--actor`, else `OTM_ACTOR`, else the user config. `@me` resolves to it, and comments, Claims and Authors carry it. It is never derived from git or the OS.
+_Avoid_: User, identity, whoami
+
 **Author**:
 Who created an Item: the person or agent acting when it was created. An Item may have no Author. Each comment also has its own Author.
 _Avoid_: Reporter, creator, owner
