@@ -114,11 +114,19 @@ func (a *app) withVault(fn func(resolved, *vault.Vault, []output.Problem) error)
 	if err != nil {
 		return err
 	}
+	return a.withOpenVault(s, func(v *vault.Vault, warnings []output.Problem) error {
+		return fn(s, v, warnings)
+	})
+}
+
+// withOpenVault opens the Vault s selects, runs fn and closes the Vault,
+// releasing the lock.
+func (a *app) withOpenVault(s resolved, fn func(*vault.Vault, []output.Problem) error) error {
 	v, warnings, err := a.openVault(s)
 	if err != nil {
 		return err
 	}
-	err = fn(s, v, warnings)
+	err = fn(v, warnings)
 	if cerr := v.Close(); err == nil && cerr != nil {
 		err = ioError(cerr)
 	}

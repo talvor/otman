@@ -1,0 +1,190 @@
+$ otman create --title Handle sync collisions
+tty: true
+exit: 0
+-- stdout --
+Created OTM-1 · Handle sync collisions
+Projects/OTM/Issues/OTM-1 Handle sync collisions.md
+-- stderr --
+
+$ otman create --title Item file format --kind spec --body Line one
+
+Line two --actor talvor --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-2",
+      "title": "Item file format",
+      "kind": "spec",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Specs/OTM-2 Item file format.md",
+      "rev": "2a372f070e80"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman create --title Why: a tracker? --kind prd --body-file - --assignee @me --actor agent-b
+exit: 0
+-- stdout --
+item:
+  id: OTM-3
+  title: "Why: a tracker?"
+  kind: prd
+  status: open
+  labels[0]:
+  assignee: agent-b
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/PRDs/OTM-3 Why a tracker.md
+  rev: 34133be91b83
+changed: true
+-- stderr --
+
+$ otman create --title Body from a file --body-file notes/body.md --assignee someone --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-4",
+      "title": "Body from a file",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": "someone",
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-4 Body from a file.md",
+      "rev": "31349af69cdb"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+notes/
+-- notes/body.md --
+From a file.
+
+## Comments
+
+A body may have its own Comments heading.
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Handle sync collisions.md --
+---
+id: OTM-1
+title: Handle sync collisions
+aliases:
+  - Handle sync collisions
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-4 Body from a file.md --
+---
+id: OTM-4
+title: Body from a file
+aliases:
+  - Body from a file
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: someone
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+From a file.
+
+## Comments
+
+A body may have its own Comments heading.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/OTM/PRDs/
+-- vault/Projects/OTM/PRDs/OTM-3 Why a tracker.md --
+---
+id: OTM-3
+title: 'Why: a tracker?'
+aliases:
+  - 'Why: a tracker?'
+kind: prd
+status: open
+author: agent-b
+parent: null
+blocked_by: []
+labels: []
+assignee: agent-b
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+From stdin.
+
+<!-- otman:comments -->
+## Comments
+vault/Projects/OTM/Specs/
+-- vault/Projects/OTM/Specs/OTM-2 Item file format.md --
+---
+id: OTM-2
+title: Item file format
+aliases:
+  - Item file format
+kind: spec
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+Line one
+
+Line two
+
+<!-- otman:comments -->
+## Comments

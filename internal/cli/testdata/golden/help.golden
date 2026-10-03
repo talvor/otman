@@ -9,6 +9,7 @@ Usage:
 
 Available Commands:
   config      Show or change user config
+  create      Create an Item in the selected Project
   help        Help about any command
   project     Create, list, view and link Projects
 
