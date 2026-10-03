@@ -1,0 +1,45 @@
+$ otman config set colour blue
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error: unknown config key "colour"
+hint: use one of: vault, actor, project
+
+$ otman config set colour blue
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_config_key
+  message: "unknown config key \"colour\""
+  details:
+    allowed[3]: vault,actor,project
+    key: colour
+  hint: "use one of: vault, actor, project"
+
+$ otman config set colour blue --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_config_key",
+    "message": "unknown config key \"colour\"",
+    "details": {
+      "allowed": [
+        "vault",
+        "actor",
+        "project"
+      ],
+      "key": "colour"
+    },
+    "hint": "use one of: vault, actor, project"
+  }
+}
+
+== tree ==
+config/
+home/
+vault/

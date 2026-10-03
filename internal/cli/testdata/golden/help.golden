@@ -1,0 +1,28 @@
+$ otman --help
+exit: 0
+-- stdout --
+Run an Obsidian Vault as an issue tracker
+
+Usage:
+  otman [command]
+
+Available Commands:
+  config      Show or change user config
+  help        Help about any command
+
+Flags:
+      --actor string     actor name (overrides OTM_ACTOR and config)
+      --format string    output format: human|axi|json (default human on a terminal, axi otherwise)
+  -h, --help             help for otman
+      --json             shorthand for --format json
+      --project string   Project key (overrides OTM_PROJECT and config)
+      --vault string     Vault path (overrides OTM_VAULT and config)
+  -v, --version          version for otman
+
+Use "otman [command] --help" for more information about a command.
+-- stderr --
+
+== tree ==
+config/
+home/
+vault/

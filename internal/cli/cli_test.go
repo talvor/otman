@@ -87,6 +87,50 @@ func TestConfigSetFormats(t *testing.T) {
 	})
 }
 
+// A representative failure in every format: nonzero exit, empty stdout,
+// diagnostic on stderr, and nothing written.
+func TestErrorFormats(t *testing.T) {
+	args := []string{"config", "set", "colour", "blue"}
+	runGolden(t, goldenCase{
+		name: "error-formats",
+		steps: []step{
+			{args: args, tty: true},
+			{args: args},
+			{args: append(args, "--json")},
+		},
+	})
+}
+
+func TestFormatFlagErrors(t *testing.T) {
+	runGolden(t, goldenCase{
+		name: "error-format-flags",
+		steps: []step{
+			{args: []string{"config", "show", "--json", "--format", "axi"}},
+			{args: []string{"config", "show", "--format", "xml"}},
+			{args: []string{"bogus", "--json"}},
+			{args: []string{"config", "show", "--nope", "--format=json"}},
+		},
+	})
+}
+
+func TestInvalidConfigFile(t *testing.T) {
+	runGolden(t, goldenCase{
+		name:   "error-invalid-config",
+		config: "vault = [unterminated\n",
+		steps: []step{
+			{args: []string{"config", "show", "--json"}},
+			{args: []string{"--version"}},
+		},
+	})
+}
+
+func TestHelpWithoutConfig(t *testing.T) {
+	runGolden(t, goldenCase{
+		name:  "help",
+		steps: []step{{args: []string{"--help"}}},
+	})
+}
+
 func TestConfigSetThenShowJSON(t *testing.T) {
 	runGolden(t, goldenCase{
 		name: "config-set-show-json",
