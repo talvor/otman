@@ -1,0 +1,512 @@
+$ otman view OTM-10 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-10",
+      "title": "Relations hub",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": {
+        "id": "OTM-1",
+        "path": "Projects/OTM/Issues/OTM-1 Handle sync collisions.md",
+        "resolved": true
+      },
+      "blocked_by": [
+        {
+          "id": "OTM-2",
+          "path": "Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md",
+          "resolved": true
+        },
+        {
+          "id": null,
+          "path": null,
+          "resolved": false,
+          "link": "[[OTM-99 Gone]]"
+        },
+        {
+          "id": null,
+          "path": null,
+          "resolved": false,
+          "link": "[[OTM-3 Twin]]"
+        },
+        {
+          "id": null,
+          "path": null,
+          "resolved": false,
+          "link": "[[WEB-1 Landing page]]"
+        }
+      ],
+      "path": "Projects/OTM/Specs/OTM-10 Relations hub.md",
+      "rev": "e1c099ae34e5",
+      "author": null,
+      "body": "",
+      "created": null,
+      "updated": null,
+      "comments": [],
+      "children": [
+        {
+          "id": "OTM-11",
+          "path": "Projects/OTM/Issues/OTM-11 Child of the hub.md",
+          "resolved": true
+        }
+      ],
+      "blocks": [
+        {
+          "id": "OTM-11",
+          "path": "Projects/OTM/Issues/OTM-11 Child of the hub.md",
+          "resolved": true
+        },
+        {
+          "id": "OTM-12",
+          "path": "Projects/OTM/Issues/OTM-12 Lowercase link.md",
+          "resolved": true
+        }
+      ]
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman view OTM-10
+tty: true
+exit: 0
+-- stdout --
+OTM-10 · Relations hub
+issue · open · unassigned
+Author: - · created - · updated -
+Parent: OTM-1
+Blocked by: OTM-2, [[OTM-99 Gone]] (unresolved), [[OTM-3 Twin]] (unresolved), [[WEB-1 Landing page]] (unresolved)
+Children: OTM-11
+Blocks: OTM-11, OTM-12
+Path: Projects/OTM/Specs/OTM-10 Relations hub.md
+
+(no body)
+-- stderr --
+
+$ otman view OTM-10
+exit: 0
+-- stdout --
+item:
+  id: OTM-10
+  title: Relations hub
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent:
+    id: OTM-1
+    path: Projects/OTM/Issues/OTM-1 Handle sync collisions.md
+    resolved: true
+  blocked_by[4]:
+    - id: OTM-2
+      path: Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md
+      resolved: true
+    - id: null
+      path: null
+      resolved: false
+      link: "[[OTM-99 Gone]]"
+    - id: null
+      path: null
+      resolved: false
+      link: "[[OTM-3 Twin]]"
+    - id: null
+      path: null
+      resolved: false
+      link: "[[WEB-1 Landing page]]"
+  path: Projects/OTM/Specs/OTM-10 Relations hub.md
+  rev: e1c099ae34e5
+  author: null
+  body: ""
+  created: null
+  updated: null
+  children[1]{id,path,resolved}:
+    OTM-11,Projects/OTM/Issues/OTM-11 Child of the hub.md,true
+  blocks[2]{id,path,resolved}:
+    OTM-11,Projects/OTM/Issues/OTM-11 Child of the hub.md,true
+    OTM-12,Projects/OTM/Issues/OTM-12 Lowercase link.md,true
+truncated: false
+-- stderr --
+
+$ otman view OTM-11 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-11",
+      "title": "Child of the hub",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": {
+        "id": "OTM-10",
+        "path": "Projects/OTM/Specs/OTM-10 Relations hub.md",
+        "resolved": true
+      },
+      "blocked_by": [
+        {
+          "id": "OTM-10",
+          "path": "Projects/OTM/Specs/OTM-10 Relations hub.md",
+          "resolved": true
+        }
+      ],
+      "path": "Projects/OTM/Issues/OTM-11 Child of the hub.md",
+      "rev": "d07b63a96bf1",
+      "author": null,
+      "body": "",
+      "created": null,
+      "updated": null,
+      "comments": [],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman view OTM-1 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-1",
+      "title": "Handle sync collisions",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": "agent-b",
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-1 Handle sync collisions.md",
+      "rev": "8c015b8d4fe9",
+      "author": "talvor",
+      "body": "Detect duplicate numbers and report both paths.\n\n## Comments\n\nThis body has its own Comments heading; the marker is the boundary.",
+      "created": "2026-01-01T10:00:00Z",
+      "updated": "2026-01-01T11:00:00Z",
+      "comments": [
+        {
+          "author": "talvor",
+          "created": "2026-01-01T10:30:00Z",
+          "body": "Reproduced with a copied note."
+        },
+        {
+          "author": "agent-b",
+          "created": "2026-01-01T11:00:00Z",
+          "body": "Fixed in the scanner.\n\n### A heading inside the comment\nstays part of it."
+        }
+      ],
+      "children": [
+        {
+          "id": "OTM-10",
+          "path": "Projects/OTM/Specs/OTM-10 Relations hub.md",
+          "resolved": true
+        }
+      ],
+      "blocks": []
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman view OTM-13 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-13",
+      "title": "Malformed relations",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-13 Malformed relations.md",
+      "rev": "a932ea22c2ea",
+      "author": null,
+      "body": "",
+      "created": null,
+      "updated": null,
+      "comments": [],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman view OTM-14 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-14",
+      "title": "Unquoted link",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-14 Unquoted link.md",
+      "rev": "ce9a37a73f82",
+      "author": null,
+      "body": "",
+      "created": null,
+      "updated": null,
+      "comments": [],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman view OTM-15 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-15",
+      "title": "Unreadable",
+      "kind": "issue",
+      "status": null,
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-15 Unreadable.md",
+      "rev": "e68ab3382e59",
+      "author": null,
+      "body": "",
+      "created": null,
+      "updated": null,
+      "comments": [],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Handle sync collisions.md --
+---
+id: OTM-1
+title: Handle sync collisions
+aliases:
+  - Handle sync collisions
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: agent-b
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+Detect duplicate numbers and report both paths.
+
+## Comments
+
+This body has its own Comments heading; the marker is the boundary.
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+Reproduced with a copied note.
+
+### 2026-01-01T11:00:00Z · agent-b
+Fixed in the scanner.
+
+### A heading inside the comment
+stays part of it.
+-- vault/Projects/OTM/Issues/OTM-11 Child of the hub.md --
+---
+id: OTM-11
+title: Child of the hub
+kind: issue
+status: open
+parent: "[[OTM-10 Relations hub|the hub]]"
+blocked_by: ["[[Projects/OTM/Specs/OTM-10 Relations hub]]"]
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-12 Lowercase link.md --
+---
+id: OTM-12
+title: Lowercase link
+kind: issue
+status: open
+parent: null
+blocked_by: ["[[otm-10 relations hub]]"]
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-13 Malformed relations.md --
+---
+id: OTM-13
+title: Malformed relations
+kind: issue
+status: open
+parent: 42
+blocked_by: "[[OTM-10 Relations hub]]"
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-14 Unquoted link.md --
+---
+id: OTM-14
+title: Unquoted link
+kind: issue
+status: open
+parent: [[OTM-10 Relations hub]]
+blocked_by: []
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-15 Unreadable.md --
+---
+parent: [unclosed
+---
+-- vault/Projects/OTM/Issues/OTM-3 Twin.md --
+---
+id: OTM-3
+title: Twin
+kind: issue
+status: open
+parent: null
+blocked_by: []
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/OTM/PRDs/
+-- vault/Projects/OTM/PRDs/OTM-3 Twin.md --
+---
+id: OTM-3
+title: Twin
+kind: issue
+status: open
+parent: null
+blocked_by: []
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/OTM/Specs/
+-- vault/Projects/OTM/Specs/OTM-10 Relations hub.md --
+---
+id: OTM-10
+title: Relations hub
+kind: issue
+status: open
+parent: "[[OTM-1 Handle sync collisions]]"
+blocked_by: 
+  - "[[OTM-2 Item file format frontmatter and body]]"
+  - "[[OTM-99 Gone]]"
+  - "[[OTM-3 Twin]]"
+  - "[[WEB-1 Landing page]]"
+  - "OTM-2"
+  - 7
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md --
+---
+id: OTM-2
+title: 'Item file format: frontmatter and body'
+aliases:
+  - 'Item file format: frontmatter and body'
+kind: spec
+status: closed
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T09:00:00Z
+updated: 2026-01-01T09:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/WEB/
+vault/Projects/WEB/PRDs/
+-- vault/Projects/WEB/PRDs/WEB-1 Landing page.md --
+---
+id: WEB-1
+title: Landing page
+aliases:
+  - Landing page
+kind: prd
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T08:00:00Z
+updated: 2026-01-01T08:00:00Z
+---
+Explain otman in one screen.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/WEB/PRDs/WEB-2 Elsewhere.md --
+---
+id: WEB-2
+title: Elsewhere
+kind: issue
+status: open
+parent: "[[OTM-10 Relations hub]]"
+blocked_by: ["[[OTM-10 Relations hub]]"]
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/WEB/WEB.md --
+---
+name: otman website
+kind: project
+---

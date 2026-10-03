@@ -293,9 +293,9 @@ item:
   body: Just this.
   created: "2026-01-02T03:04:05Z"
   updated: "2026-01-02T03:04:05Z"
+  comments[0]:
   children[0]:
   blocks[0]:
-  comments[0]:
 truncated: false
 -- stderr --
 

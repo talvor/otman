@@ -184,6 +184,55 @@ func TestViewRefs(t *testing.T) {
 	})
 }
 
+// relationItem is an Item file whose frontmatter carries relations, given
+// as raw YAML.
+func relationItem(id, title, parent, blockedBy string) string {
+	return "---\nid: " + id + "\ntitle: " + title + "\nkind: issue\nstatus: open\n" +
+		"parent: " + parent + "\nblocked_by: " + blockedBy + "\n---\n<!-- otman:comments -->\n## Comments\n"
+}
+
+// view reports the relations on disk. parent and blocked_by are quoted
+// full-filename wikilinks resolved by basename within the Item's Project;
+// a link that matches no Item, or more than one, stays unresolved with its
+// raw text, and a malformed value is absent. children and blocks are the
+// Items of the same Project whose links resolve to this one. Broken links
+// elsewhere never make view fail.
+func TestViewRelations(t *testing.T) {
+	runGolden(t, goldenCase{
+		name:    "item-view-relations",
+		fixture: "items",
+		files: withOTM(map[string]string{
+			"vault/Projects/OTM/Specs/OTM-10 Relations hub.md": relationItem("OTM-10", "Relations hub",
+				`"[[OTM-1 Handle sync collisions]]"`,
+				"\n  - \"[[OTM-2 Item file format frontmatter and body]]\"\n  - \"[[OTM-99 Gone]]\"\n"+
+					"  - \"[[OTM-3 Twin]]\"\n  - \"[[WEB-1 Landing page]]\"\n  - \"OTM-2\"\n  - 7"),
+			"vault/Projects/OTM/Issues/OTM-3 Twin.md": relationItem("OTM-3", "Twin", "null", "[]"),
+			"vault/Projects/OTM/PRDs/OTM-3 Twin.md":   relationItem("OTM-3", "Twin", "null", "[]"),
+			"vault/Projects/OTM/Issues/OTM-11 Child of the hub.md": relationItem("OTM-11", "Child of the hub",
+				`"[[OTM-10 Relations hub|the hub]]"`, `["[[Projects/OTM/Specs/OTM-10 Relations hub]]"]`),
+			"vault/Projects/OTM/Issues/OTM-12 Lowercase link.md": relationItem("OTM-12", "Lowercase link",
+				"null", `["[[otm-10 relations hub]]"]`),
+			"vault/Projects/OTM/Issues/OTM-13 Malformed relations.md": relationItem("OTM-13", "Malformed relations",
+				"42", `"[[OTM-10 Relations hub]]"`),
+			"vault/Projects/OTM/Issues/OTM-14 Unquoted link.md": relationItem("OTM-14", "Unquoted link",
+				"[[OTM-10 Relations hub]]", "[]"),
+			"vault/Projects/OTM/Issues/OTM-15 Unreadable.md": "---\nparent: [unclosed\n---\n",
+			"vault/Projects/WEB/PRDs/WEB-2 Elsewhere.md": relationItem("WEB-2", "Elsewhere",
+				`"[[OTM-10 Relations hub]]"`, `["[[OTM-10 Relations hub]]"]`),
+		}),
+		steps: []step{
+			{args: []string{"view", "OTM-10", "--json"}},
+			{args: []string{"view", "OTM-10"}, tty: true},
+			{args: []string{"view", "OTM-10"}},
+			{args: []string{"view", "OTM-11", "--json"}},
+			{args: []string{"view", "OTM-1", "--json"}},
+			{args: []string{"view", "OTM-13", "--json"}},
+			{args: []string{"view", "OTM-14", "--json"}},
+			{args: []string{"view", "OTM-15", "--json"}},
+		},
+	})
+}
+
 // longText is n numbered lines of 99 Unicode characters each, so a
 // 2,000-character cut falls inside line 21 and counts runes, not bytes.
 func longText(n int) string {

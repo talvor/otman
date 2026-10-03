@@ -106,7 +106,12 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 		if err != nil {
 			return ioError(err)
 		}
-		return a.emit(createResult{newItemSummary(file, item.Parse(data), data), true}, warnings)
+		files, err := v.ItemFiles(key.Value)
+		if err != nil {
+			return ioError(err)
+		}
+		summary := newItemSummary(file, item.Parse(data), data, newItemLinks(files))
+		return a.emit(createResult{summary, true}, warnings)
 	})
 }
 

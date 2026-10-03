@@ -242,20 +242,21 @@ type Comment struct {
 // Parsed is an Item file as read. Reads are lenient (ADR 0005): a value
 // that is missing or of the wrong type is nil, and the file still reads.
 type Parsed struct {
-	ID, Title, Kind, Status, Author, Assignee, Created, Updated *string
-	Labels                                                      []string
+	Title, Status, Author, Assignee, Created, Updated *string
+	Kind                                              *Kind
+	Labels                                            []string
+
+	// Parent and BlockedBy are the relation wikilinks as written, such as
+	// "[[OTM-1 Title]]". A value that is not a wikilink is left out.
+	Parent    *string
+	BlockedBy []string
 
 	Body     string
 	Comments []Comment
-
-	// Malformed is why the frontmatter could not be read, or nil.
-	Malformed error
-	// MissingMarker is set when the file has no comments marker line, so
-	// the body ends at the last "## Comments" heading, if any.
-	MissingMarker bool
 }
 
-// Parse reads an Item file.
+// Parse reads an Item file. Without a comments marker line, the body ends
+// at the last "## Comments" heading, if any.
 func Parse(b []byte) Parsed {
 	var p Parsed
 	fm, rest, ok := SplitFrontmatter(b)
@@ -264,8 +265,7 @@ func Parse(b []byte) Parsed {
 	} else {
 		p.readFrontmatter(fm)
 	}
-	body, comments, found := splitComments(string(rest))
-	p.MissingMarker = !found
+	body, comments := splitComments(string(rest))
 	p.Body = strings.TrimRight(body, "\r\n")
 	p.Comments = parseComments(comments)
 	return p
@@ -274,7 +274,6 @@ func Parse(b []byte) Parsed {
 func (p *Parsed) readFrontmatter(fm []byte) {
 	var doc yaml.Node
 	if err := yaml.Unmarshal(fm, &doc); err != nil {
-		p.Malformed = err
 		return
 	}
 	if len(doc.Content) == 0 {
@@ -287,12 +286,13 @@ func (p *Parsed) readFrontmatter(fm []byte) {
 	for i := 0; i+1 < len(m.Content); i += 2 {
 		k, v := m.Content[i].Value, m.Content[i+1]
 		switch k {
-		case "id":
-			p.ID = scalar(v)
 		case "title":
 			p.Title = scalar(v)
 		case "kind":
-			p.Kind = scalar(v)
+			if k := scalar(v); k != nil {
+				kind := Kind(*k)
+				p.Kind = &kind
+			}
 		case "status":
 			p.Status = scalar(v)
 		case "author":
@@ -305,6 +305,16 @@ func (p *Parsed) readFrontmatter(fm []byte) {
 			p.Updated = scalar(v)
 		case "labels":
 			p.Labels = scalars(v)
+		case "parent":
+			if l := scalar(v); l != nil && IsLink(*l) {
+				p.Parent = l
+			}
+		case "blocked_by":
+			for _, l := range scalars(v) {
+				if IsLink(l) {
+					p.BlockedBy = append(p.BlockedBy, l)
+				}
+			}
 		}
 	}
 }
@@ -355,9 +365,8 @@ func isFence(line []byte) bool {
 
 // splitComments splits text after the frontmatter at the comments marker
 // into the body and the comments that follow the heading. Without a
-// marker it falls back to the last "## Comments" heading, and found is
-// false.
-func splitComments(text string) (body, comments string, found bool) {
+// marker it falls back to the last "## Comments" heading.
+func splitComments(text string) (body, comments string) {
 	var lastHeading = -1
 	offset := 0
 	for line := range strings.Lines(text) {
@@ -369,18 +378,18 @@ func splitComments(text string) (body, comments string, found bool) {
 				after = strings.TrimPrefix(after, first)
 				after = strings.TrimPrefix(after, "\n")
 			}
-			return text[:offset], after, true
+			return text[:offset], after
 		case isLine(line, CommentsHeading):
 			lastHeading = offset
 		}
 		offset += len(line)
 	}
 	if lastHeading < 0 {
-		return text, "", false
+		return text, ""
 	}
 	rest := text[lastHeading:]
 	_, after, _ := strings.Cut(rest, "\n")
-	return text[:lastHeading], after, false
+	return text[:lastHeading], after
 }
 
 var commentHeading = regexp.MustCompile(`^### (\S+) · (.+?)\s*$`)
@@ -410,6 +419,26 @@ func parseComments(text string) []Comment {
 	}
 	flush()
 	return out
+}
+
+// wikilink is a whole relation value: [[target]], optionally with a
+// #heading and an |alias.
+var wikilink = regexp.MustCompile(`^\[\[([^\[\]|#]+)(?:#[^\[\]|]*)?(?:\|[^\[\]]*)?\]\]$`)
+
+// IsLink reports whether s is a relation wikilink.
+func IsLink(s string) bool { return wikilink.MatchString(s) }
+
+// LinkName is the note name a relation wikilink points at, which Obsidian
+// resolves by basename: the target's last path segment, without ".md".
+// ok is false when link is not a wikilink.
+func LinkName(link string) (name string, ok bool) {
+	m := wikilink.FindStringSubmatch(link)
+	if m == nil {
+		return "", false
+	}
+	target := strings.TrimSpace(m[1])
+	target = target[strings.LastIndexByte(target, '/')+1:]
+	return strings.TrimSuffix(target, ".md"), true
 }
 
 // TruncateText cuts s to at most limit Unicode characters, reporting

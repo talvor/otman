@@ -39,23 +39,17 @@ type viewResult struct {
 }
 
 func (r viewResult) RenderHuman(w io.Writer) error {
-	return viewDisplay{Item: itemDisplay{itemFull: r.Item}}.RenderHuman(w)
+	return newViewDisplay(r.Item, r.Item.ID, true, true).RenderHuman(w)
 }
 
-// itemDisplay is the Item as human and AXI output show it: comments only
-// when asked for, and text possibly cut.
-type itemDisplay struct {
-	itemFull
-	Comments *[]commentJSON `json:"comments,omitempty"`
-}
-
-// viewDisplay is the human and AXI view. When text is cut or comments are
+// viewDisplay is the human and AXI view: Item with its body possibly cut
+// and its comments only when asked for. When text is cut or comments are
 // left out, ReadAll is the command that shows everything.
 type viewDisplay struct {
-	Item            itemDisplay `json:"item"`
-	Truncated       bool        `json:"truncated"`
-	CommentsOmitted int         `json:"comments_omitted,omitempty"`
-	ReadAll         *string     `json:"read_all,omitempty"`
+	Item            itemFull `json:"item"`
+	Truncated       bool     `json:"truncated"`
+	CommentsOmitted int      `json:"comments_omitted,omitempty"`
+	ReadAll         *string  `json:"read_all,omitempty"`
 
 	bodyCut     bool
 	commentsCut []bool
@@ -75,29 +69,35 @@ func (a *app) view(ref string, comments, full bool) error {
 		if err != nil {
 			return ioError(err)
 		}
-		it := newItemFull(f, item.Parse(data), data)
+		files, err := v.ItemFiles(f.Key)
+		if err != nil {
+			return ioError(err)
+		}
+		links := newItemLinks(files)
+		r, err := relatedTo(v, f, files, links)
+		if err != nil {
+			return ioError(err)
+		}
+		it := newItemFull(f, item.Parse(data), data, links, r)
 		if a.out == output.JSON {
 			return a.emit(viewResult{it}, warnings)
 		}
-		readRef, err := commandRef(v, f)
-		if err != nil {
-			return err
-		}
-		return a.emit(newViewDisplay(it, readRef, comments, full), warnings)
+		return a.emit(newViewDisplay(it, commandRef(f, files), comments, full), warnings)
 	})
 }
 
-// newViewDisplay limits the text the display shows.
+// newViewDisplay is it as the display shows it: with comments or without,
+// and with text cut unless full. ref names it in the ReadAll command.
 func newViewDisplay(it itemFull, ref string, comments, full bool) viewDisplay {
-	d := viewDisplay{Item: itemDisplay{itemFull: it}}
+	all := *it.Comments
+	d := viewDisplay{Item: it}
 	if !full {
-		it.Body, d.bodyCut = item.TruncateText(it.Body, textLimit)
-		d.Item.Body = it.Body
+		d.Item.Body, d.bodyCut = item.TruncateText(it.Body, textLimit)
 	}
 	if comments {
-		shown := make([]commentJSON, len(it.Comments))
-		d.commentsCut = make([]bool, len(it.Comments))
-		for i, c := range it.Comments {
+		shown := make([]commentJSON, len(all))
+		d.commentsCut = make([]bool, len(all))
+		for i, c := range all {
 			if !full {
 				c.Body, d.commentsCut[i] = item.TruncateText(c.Body, textLimit)
 			}
@@ -105,7 +105,8 @@ func newViewDisplay(it itemFull, ref string, comments, full bool) viewDisplay {
 		}
 		d.Item.Comments = &shown
 	} else {
-		d.CommentsOmitted = len(it.Comments)
+		d.Item.Comments = nil
+		d.CommentsOmitted = len(all)
 	}
 	d.Truncated = d.bodyCut
 	for _, cut := range d.commentsCut {
@@ -113,7 +114,7 @@ func newViewDisplay(it itemFull, ref string, comments, full bool) viewDisplay {
 	}
 	if d.Truncated || d.CommentsOmitted > 0 {
 		cmd := "otman view " + ref
-		if len(it.Comments) > 0 {
+		if len(all) > 0 {
 			cmd += " --comments"
 		}
 		cmd += " --full"
@@ -130,11 +131,26 @@ func (d viewDisplay) RenderHuman(w io.Writer) error {
 	if it.Assignee != nil {
 		claim = "assigned to " + *it.Assignee
 	}
-	fmt.Fprintf(&b, "%s · %s · %s\n", orDash(it.Kind), orDash(it.Status), claim)
+	kind := "-"
+	if it.Kind != nil {
+		kind = string(*it.Kind)
+	}
+	fmt.Fprintf(&b, "%s · %s · %s\n", kind, orDash(it.Status), claim)
 	if len(it.Labels) > 0 {
 		fmt.Fprintf(&b, "Labels: %s\n", strings.Join(it.Labels, ", "))
 	}
 	fmt.Fprintf(&b, "Author: %s · created %s · updated %s\n", orDash(it.Author), orDash(it.Created), orDash(it.Updated))
+	if it.Parent != nil {
+		fmt.Fprintf(&b, "Parent: %s\n", refList([]refJSON{*it.Parent}))
+	}
+	for _, rel := range []struct {
+		label string
+		refs  []refJSON
+	}{{"Blocked by", it.BlockedBy}, {"Children", it.Children}, {"Blocks", it.Blocks}} {
+		if len(rel.refs) > 0 {
+			fmt.Fprintf(&b, "%s: %s\n", rel.label, refList(rel.refs))
+		}
+	}
 	fmt.Fprintf(&b, "Path: %s\n\n", it.Path)
 	if it.Body == "" {
 		b.WriteString("(no body)\n")
@@ -165,6 +181,20 @@ func (d viewDisplay) RenderHuman(w io.Writer) error {
 	return err
 }
 
+// refList names refs for a human: the ID, or the raw link when it does not
+// resolve.
+func refList(refs []refJSON) string {
+	names := make([]string, len(refs))
+	for i, r := range refs {
+		if r.Resolved {
+			names[i] = *r.ID
+		} else {
+			names[i] = *r.Link + " (unresolved)"
+		}
+	}
+	return strings.Join(names, ", ")
+}
+
 func orDash(s *string) string {
 	if s == nil {
 		return "-"
@@ -188,17 +218,13 @@ func humanCount(n int) string {
 	return s
 }
 
-// commandRef is how a follow-up command should name f: its ID, or its
-// path when the ID is ambiguous.
-func commandRef(v *vault.Vault, f vault.ItemFile) (string, error) {
-	files, err := v.ItemFiles(f.Key)
-	if err != nil {
-		return "", ioError(err)
-	}
+// commandRef is how a follow-up command should name f, one of its
+// Project's Item files: its ID, or its path when the ID is ambiguous.
+func commandRef(f vault.ItemFile, files []vault.ItemFile) string {
 	if len(matchNumber(files, f.Number)) > 1 {
-		return shellQuote(f.Path), nil
+		return shellQuote(f.Path)
 	}
-	return f.ID(), nil
+	return f.ID()
 }
 
 func shellQuote(s string) string {
