@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 
@@ -41,6 +42,26 @@ func TestCreate(t *testing.T) {
 			{args: []string{"create", "--title", "Item file format", "--kind", "spec", "--body", "Line one\n\nLine two", "--actor", "talvor", "--json"}},
 			{args: []string{"create", "--title", "Why: a tracker?", "--kind", "prd", "--body-file", "-", "--assignee", "@me", "--actor", "agent-b"}, stdin: "From stdin.\n"},
 			{args: []string{"create", "--title", "Body from a file", "--body-file", "notes/body.md", "--assignee", "someone", "--json"}},
+		},
+	})
+}
+
+// The actor (--actor > OTM_ACTOR > config) is the Author and what @me
+// means. There is no git or OS identity fallback: with no actor the Author
+// is null and @me fails.
+func TestCreateActor(t *testing.T) {
+	noActor := map[string]string{"USER": "os-user", "LOGNAME": "os-user", "GIT_AUTHOR_NAME": "git-user"}
+	runGolden(t, goldenCase{
+		name:    "item-create-actor",
+		fixture: "basic",
+		files:   withOTM(nil),
+		steps: []step{
+			{args: []string{"create", "--title", "From the flag", "--assignee", "@me", "--actor", "flag-actor"}, env: map[string]string{"OTM_ACTOR": "env-actor"}},
+			{args: []string{"create", "--title", "From the environment", "--assignee", "@me"}, env: map[string]string{"OTM_ACTOR": "env-actor"}},
+			{args: []string{"create", "--title", "No actor", "--assignee", "alice"}, env: noActor},
+			{args: []string{"create", "--title", "No actor for me", "--assignee", "@me"}, env: noActor},
+			{args: []string{"config", "set", "actor", "config-actor"}},
+			{args: []string{"create", "--title", "From config", "--assignee", "@me"}},
 		},
 	})
 }
@@ -159,6 +180,45 @@ func TestViewRefs(t *testing.T) {
 			{args: []string{"view", "Projects/OTM/Issues/../Issues/OTM-1 Handle sync collisions.md"}},
 			{args: []string{"view", "outside.md"}},
 			{args: []string{"view"}},
+		},
+	})
+}
+
+// longText is n numbered lines of 99 Unicode characters each, so a
+// 2,000-character cut falls inside line 21 and counts runes, not bytes.
+func longText(n int) string {
+	var b strings.Builder
+	for i := 1; i <= n; i++ {
+		fmt.Fprintf(&b, "%02d %s\n", i, strings.Repeat("ü", 95))
+	}
+	return b.String()
+}
+
+// Human and AXI view cut the body and each comment to 2,000 characters,
+// leave comments out unless --comments, mark what was hidden and show the
+// command that reads everything. --full lifts the limit; JSON is always
+// complete.
+func TestViewFormats(t *testing.T) {
+	long := "---\nid: OTM-1\ntitle: A long spec\naliases:\n  - A long spec\nkind: spec\nstatus: open\nauthor: talvor\n" +
+		"parent: null\nblocked_by: []\nlabels:\n  - needs-triage\n  - wayfinder:map\nassignee: null\n" +
+		"created: 2026-01-01T10:00:00Z\nupdated: 2026-01-01T11:00:00Z\n---\n" +
+		longText(21) + "\n<!-- otman:comments -->\n## Comments\n\n" +
+		"### 2026-01-01T10:30:00Z · talvor\nShort comment.\n\n" +
+		"### 2026-01-01T11:00:00Z · agent-b\n" + longText(21)
+	runGolden(t, goldenCase{
+		name:    "item-view-formats",
+		fixture: "basic",
+		files:   withOTM(map[string]string{"vault/Projects/OTM/Specs/OTM-1 A long spec.md": long}),
+		steps: []step{
+			{args: []string{"view", "OTM-1"}, tty: true},
+			{args: []string{"view", "OTM-1", "--comments"}, tty: true},
+			{args: []string{"view", "OTM-1", "--comments", "--full"}, tty: true},
+			{args: []string{"view", "OTM-1"}},
+			{args: []string{"view", "OTM-1", "--full"}},
+			{args: []string{"view", "OTM-1", "--json"}},
+			{args: []string{"create", "--title", "Short", "--body", "Just this."}, tty: true},
+			{args: []string{"view", "OTM-2"}, tty: true},
+			{args: []string{"view", "OTM-2", "--comments"}},
 		},
 	})
 }
