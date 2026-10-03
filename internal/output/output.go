@@ -115,8 +115,15 @@ func writeProblem(f Format, w io.Writer, label string, p Problem) error {
 }
 
 func writeJSON(w io.Writer, v any) error {
-	enc := json.NewEncoder(w)
-	enc.SetEscapeHTML(false)
+	enc := newJSONEncoder(w)
 	enc.SetIndent("", "  ")
 	return enc.Encode(v)
+}
+
+// newJSONEncoder is the one JSON encoder setup every format shares: <, >
+// and & stay literal rather than becoming \u003c and friends.
+func newJSONEncoder(w io.Writer) *json.Encoder {
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	return enc
 }
