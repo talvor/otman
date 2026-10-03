@@ -74,8 +74,8 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 	}
 	// An explicit body, even an empty one, is stored as given; only an
 	// omitted body takes the Kind's Template.
-	explicit := cmd.Flags().Changed("body") || cmd.Flags().Changed("body-file")
-	if f.noTemplate && explicit {
+	bodyGiven := cmd.Flags().Changed("body") || cmd.Flags().Changed("body-file")
+	if f.noTemplate && bodyGiven {
 		flag := "--body"
 		if !cmd.Flags().Changed("body") {
 			flag = "--body-file"
@@ -117,7 +117,7 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 		if err := requireProject(v, key.Value, map[string]any{"source": string(key.Source)}); err != nil {
 			return err
 		}
-		if !explicit && !f.noTemplate {
+		if !bodyGiven && !f.noTemplate {
 			if body, err = templateBody(v, key.Value, kind); err != nil {
 				return err
 			}
@@ -192,7 +192,7 @@ func templateBody(v *vault.Vault, key string, kind item.Kind) (string, error) {
 		return "", ioError(err)
 	}
 	if !utf8.ValidString(t.Text) {
-		return "", invalid("invalid_template", "the Template "+t.Path+" is not valid UTF-8",
+		return "", invalid("invalid_template_encoding", "the Template "+t.Path+" is not valid UTF-8",
 			map[string]any{"path": t.Path}, "save the Template as UTF-8 Markdown")
 	}
 	if item.ContainsMarker(t.Text) {

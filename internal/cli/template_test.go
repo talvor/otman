@@ -70,8 +70,8 @@ func TestCreateTemplateOptOut(t *testing.T) {
 }
 
 // The first Template found that holds the comments marker line fails with
-// invalid_template, naming the file, and nothing is written. So does one
-// that is not UTF-8.
+// invalid_template, naming the file, and nothing is written, whatever its
+// line breaks. One that is not UTF-8 fails with invalid_template_encoding.
 func TestCreateInvalidTemplate(t *testing.T) {
 	runGolden(t, goldenCase{
 		name:    "item-create-invalid-template",
@@ -79,6 +79,7 @@ func TestCreateInvalidTemplate(t *testing.T) {
 		files: withOTM(map[string]string{
 			"vault/Projects/OTM/Templates/issue.md": "## Summary\n\n<!-- otman:comments -->\n",
 			"vault/Templates/otman/prd.md":          "## Problem\r\n<!-- otman:comments -->\r\n",
+			"vault/Projects/WEB/Templates/prd.md":   "## Old Mac\r<!-- otman:comments -->\r## Rest\r",
 			"vault/Templates/otman/issue.md":        "## Vault issue, shadowed\n",
 			"vault/Templates/otman/spec.md":         "<!-- otman:comments --> inline is fine\n",
 			"vault/Projects/WEB/WEB.md":             "---\nname: web\nkind: project\n---\n",
@@ -91,6 +92,7 @@ func TestCreateInvalidTemplate(t *testing.T) {
 			{args: []string{"create", "--title", "No template skips it", "--kind", "prd", "--no-template"}},
 			{args: []string{"create", "--title", "Inline marker", "--kind", "spec"}},
 			{args: []string{"create", "--title", "Not UTF-8", "--project", "WEB", "--json"}},
+			{args: []string{"create", "--title", "Lone CR marker", "--kind", "prd", "--project", "WEB", "--json"}},
 		},
 	})
 }

@@ -81,12 +81,29 @@ exit: 2
 {
   "schema_version": 1,
   "error": {
-    "code": "invalid_template",
+    "code": "invalid_template_encoding",
     "message": "the Template Projects/WEB/Templates/issue.md is not valid UTF-8",
     "details": {
       "path": "Projects/WEB/Templates/issue.md"
     },
     "hint": "save the Template as UTF-8 Markdown"
+  }
+}
+
+$ otman create --title Lone CR marker --kind prd --project WEB --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_template",
+    "message": "the Template Projects/WEB/Templates/prd.md contains the reserved line <!-- otman:comments -->",
+    "details": {
+      "marker": "<!-- otman:comments -->",
+      "path": "Projects/WEB/Templates/prd.md"
+    },
+    "hint": "remove that line from the Template; otman uses it to mark where comments begin"
   }
 }
 
@@ -181,6 +198,9 @@ vault/Projects/WEB/
 vault/Projects/WEB/Templates/
 -- vault/Projects/WEB/Templates/issue.md --
 ## Summary ÿ
+-- vault/Projects/WEB/Templates/prd.md --
+## Old Mac<!-- otman:comments -->## Rest
+[no trailing newline]
 -- vault/Projects/WEB/WEB.md --
 ---
 name: web

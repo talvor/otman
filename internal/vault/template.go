@@ -11,8 +11,8 @@ import (
 	"github.com/talvor/otman/internal/item"
 )
 
-// VaultTemplatesDir holds the Vault-wide Template overrides.
-const VaultTemplatesDir = "Templates/otman"
+// vaultTemplatesDir holds the Vault-wide Template overrides.
+const vaultTemplatesDir = "Templates/otman"
 
 //go:embed templates/*.md
 var builtinTemplates embed.FS
@@ -30,7 +30,7 @@ func (v *Vault) Template(key string, kind item.Kind) (Template, error) {
 	name := string(kind) + ".md"
 	for _, p := range []string{
 		path.Join(ProjectsDir, key, TemplatesDir, name),
-		path.Join(VaultTemplatesDir, name),
+		path.Join(vaultTemplatesDir, name),
 	} {
 		b, err := os.ReadFile(filepath.Join(v.Root, filepath.FromSlash(p)))
 		if errors.Is(err, fs.ErrNotExist) {
