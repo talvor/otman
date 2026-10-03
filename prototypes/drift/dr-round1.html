@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en" data-theme="luxury">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drift: Round 1</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :where(.grid, .flex) > * { min-width: 0; }
+  :where(p, h1, h2, h3, li, .badge, label) { overflow-wrap: anywhere; }
+  .opt:has(input:checked) { border-color: var(--color-primary); background: color-mix(in oklab, var(--color-primary) 10%, transparent); }
+</style>
+</head>
+<body class="bg-base-100 text-base-content min-h-screen">
+<main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
+
+<header class="space-y-2">
+  <p class="text-sm uppercase tracking-widest opacity-60">wayfinder · work the map · Hand edits & drift</p>
+  <h1 class="text-3xl font-bold">Drift, Round 1: principles</h1>
+  <p class="opacity-80">This ticket covers what otman does when files are changed outside otman (in Obsidian, git or a file manager) and how it recovers from an interrupted rename. Already settled: duplicate numbers warn and <code>doctor --fix</code> renumbers them; scalar edits proceed despite unrelated broken links, but graph operations and frontier reject an invalid relevant graph; case-only label drift heals on the next write. This round fixes the principles; round 2 applies them to each kind of drift.</p>
+</header>
+
+<form id="round" class="space-y-5" onsubmit="event.preventDefault(); submitAll(event.currentTarget);">
+</form>
+
+<div class="card card-border bg-base-200">
+  <div class="card-body gap-3">
+    <h2 class="card-title text-lg">Anything the round missed?</h2>
+    <div data-lavish-question="extra">
+      <textarea name="extra" class="textarea w-full" rows="3" placeholder="Optional"></textarea>
+    </div>
+    <div class="card-actions items-center justify-between">
+      <span id="status" class="text-sm opacity-70" role="status" aria-live="polite">Nothing queued yet.</span>
+      <button form="round" type="submit" class="btn btn-primary">Submit all answers</button>
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+const Q = [
+  { id: "P1", title: "The overall posture",
+    body: "Each kind of drift needs a rule for reads, for writes and for <code>doctor</code>.",
+    opts: [["tolerant", "<b>Read leniently, write safely, repair explicitly.</b> Reads accept drift and warn. A write never discards content it doesn't understand, and refuses (exit 4, <code>unsafe_write</code>) when writing would lose or guess at hand-edited content. A write may only heal <i>lossless</i> drift in the Item it touches. <code>doctor</code> reports everything; <code>doctor --fix</code> applies only deterministic fixes; fixes that need a choice need an explicit flag", true],
+           ["strict", "Strict: any drift in an Item makes every command on it fail until <code>doctor</code> has fixed it"],
+           ["auto", "Self-healing: every command silently repairs whatever it can"]],
+    why: "Obsidian stays a first-class editor, and no command can surprise someone by rewriting what they typed." },
+  { id: "P2", title: "What is an Item's identity?",
+    body: "The ID appears in three places: the filename prefix (<code>OTM-12 …md</code>), the frontmatter <code>id</code>, and the Project folder (<code>Projects/OTM/</code>). Discovery and links work by filename (ADR 0002), and Obsidian's renames carry links with the file.",
+    opts: [["filename", "The <b>filename prefix</b> is the identity. Frontmatter <code>id</code> is a copy kept for Bases: if it disagrees, warn <code>id_mismatch</code>, and any write or <code>doctor --fix</code> resets it from the filename. A prefix KEY that doesn't match its Project folder is a <code>misplaced_item</code> warning, handled by Moving Items between Projects", true],
+           ["frontmatter", "Frontmatter <code>id</code> is the identity; the filename is derived from it and repaired to match"]],
+    why: "The filename is what links, discovery and Obsidian already agree on. Making the copy follow the original avoids two sources of truth." },
+  { id: "P3", title: "Preserving YAML that otman doesn't own",
+    body: "Users add their own properties in Obsidian (<code>priority</code>, <code>due</code>, plugin keys), and they may reorder keys or add YAML comments.",
+    opts: [["preserve", "Preserve everything otman doesn't own: unknown keys, their values, key order and YAML comments. otman rewrites only the keys it changes, in their existing position; new owned keys are appended. The body is kept byte for byte unless the command edits it", true],
+           ["keys", "Preserve unknown keys and values, but re-serialise the whole frontmatter in canonical order"]],
+    why: "Bases, Dataview and plugins depend on custom properties, and a minimal diff keeps git history and sync conflicts small." },
+  { id: "P4", title: "Recovering from an interrupted retitle or relation rewrite",
+    body: "A retitle renames the file and then rewrites every link to it across the Vault, possibly dozens of files. A crash or Ctrl-C midway leaves some links on the old name. Each single-file write is atomic (temporary file + rename in the same folder).",
+    opts: [["journal", "A roll-forward intent journal at <code>.otman/journal/</code>: record the old and new name and the files to rewrite, then rename, rewrite each file atomically, and delete the journal. Every otman command first finishes any pending journal (under the lock) and warns <code>resumed_operation</code>. <code>doctor</code> reports a journal it can't finish", true],
+           ["doctor", "No journal: <code>doctor</code> later finds links that match no file and offers to repoint them by ID prefix"],
+           ["rollback", "A journal, but roll <i>back</i> to the old name on resume"]],
+    why: "The user asked for the rename, so finishing it is the safe direction. A journal makes recovery automatic and keeps its cost local (the journal is per device, like the lock)." },
+];
+
+const form = document.getElementById("round");
+form.innerHTML = Q.map(q => `
+  <fieldset class="card card-border bg-base-200" data-lavish-question="${q.id}">
+    <div class="card-body gap-3">
+      <legend class="sr-only">${q.id} ${q.title}</legend>
+      <div class="flex items-baseline gap-3">
+        <span class="badge badge-primary badge-outline font-mono">${q.id}</span>
+        <h2 class="card-title text-lg">${q.title}</h2>
+      </div>
+      <p class="opacity-85">${q.body}</p>
+      <div class="grid gap-2">
+        ${q.opts.map(([v, label, rec]) => `
+          <label class="opt flex items-start gap-3 rounded-box border border-base-content/10 p-3 cursor-pointer">
+            <input type="radio" class="radio radio-primary radio-sm mt-0.5" name="${q.id}" value="${v}" data-label="${label.replace(/<[^>]+>/g,'').replace(/"/g,'&quot;')}" ${rec ? "checked" : ""}>
+            <span class="flex-1">${label} ${rec ? '<span class="badge badge-sm badge-soft badge-success ml-1">recommended</span>' : ""}</span>
+          </label>`).join("")}
+      </div>
+      <p class="text-sm opacity-60">➡️ ${q.why}</p>
+      <input type="text" name="${q.id}-note" class="input input-sm w-full" placeholder="Optional note">
+    </div>
+  </fieldset>`).join("");
+
+function submitAll(f) {
+  const fd = new FormData(f);
+  const items = Q.map(q => {
+    const v = fd.get(q.id);
+    const input = f.querySelector(`input[name="${q.id}"][value="${v}"]`);
+    const rec = q.opts.find(o => o[2])[0] === v;
+    return { id: q.id, question: q.title, answer: input ? input.dataset.label : null, accepted_recommendation: rec, note: (fd.get(q.id + "-note") || "").trim() };
+  });
+  const extra = document.querySelector('textarea[name=extra]').value.trim();
+  const lines = items.map(i => `${i.id} ${i.question}: ${i.answer}${i.accepted_recommendation ? " (rec)" : " (CHANGED)"}${i.note ? " | note: " + i.note : ""}`);
+  if (extra) lines.push("Extra: " + extra);
+  const text = "Drift round 1 answers:\n" + lines.join("\n");
+  const status = document.getElementById("status");
+  if (window.lavish?.queuePrompt) {
+    window.lavish.queuePrompt(text + "\n\nAccount for every question ID P1–P4 when updating the design tree.", { tag: "choice", text: "Drift round 1 (P1–P4)", queueKey: "dr-round1", element: f, data: { items, extra } });
+    status.textContent = "Queued. Press Send to Agent to deliver it.";
+  } else {
+    navigator.clipboard?.writeText(text);
+    status.textContent = "Lavish isn't running, so the answers were copied to your clipboard. Paste them into the chat.";
+  }
+}
+</script>
+</body>
+</html>

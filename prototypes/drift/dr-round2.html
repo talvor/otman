@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en" data-theme="luxury">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drift: Round 2</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :where(.grid, .flex) > * { min-width: 0; }
+  :where(p, h1, h2, h3, li, .badge, label) { overflow-wrap: anywhere; }
+  .opt:has(input:checked) { border-color: var(--color-primary); background: color-mix(in oklab, var(--color-primary) 10%, transparent); }
+</style>
+</head>
+<body class="bg-base-100 text-base-content min-h-screen">
+<main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
+
+<header class="space-y-2">
+  <p class="text-sm uppercase tracking-widest opacity-60">wayfinder · work the map · Hand edits & drift</p>
+  <h1 class="text-3xl font-bold">Drift, Round 2: case by case</h1>
+  <p class="opacity-80">Settled: <b>read leniently, write safely, repair explicitly</b> · <b>the filename prefix is the identity</b> (<code>id</code> is a copy) · <b>preserve unknown YAML</b>, key order and comments · <b>roll-forward journal</b> for multi-file rewrites. Each question applies those principles to one kind of drift. Recommendations are pre-selected.</p>
+</header>
+
+<form id="round" class="space-y-5" onsubmit="event.preventDefault(); submitAll(event.currentTarget);">
+</form>
+
+<div class="card card-border bg-base-200">
+  <div class="card-body gap-3">
+    <h2 class="card-title text-lg">Anything the round missed?</h2>
+    <div data-lavish-question="extra">
+      <textarea name="extra" class="textarea w-full" rows="3" placeholder="Optional"></textarea>
+    </div>
+    <div class="card-actions items-center justify-between">
+      <span id="status" class="text-sm opacity-70" role="status" aria-live="polite">Nothing queued yet.</span>
+      <button form="round" type="submit" class="btn btn-primary">Submit all answers</button>
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+const Q = [
+  { id: "Q1", title: "Title vs filename, and Kind vs folder",
+    body: "The filename is a projection of <code>title</code>, and the folder (<code>Issues/PRDs/Specs</code>) is a projection of <code>kind</code>. They drift when someone renames or moves a file in Obsidian, or edits <code>title:</code>/<code>kind:</code> by hand. Either side could be what the user meant. Both repairs are cheap, because links resolve by filename and Obsidian has already updated them for its own renames.",
+    opts: [["infer", "Reads warn <code>title_drift</code>/<code>kind_drift</code> and show the frontmatter value. The per-device db keeps a snapshot of the filename, title, kind and folder otman last wrote. If only one side changed since then, <code>doctor --fix</code> lets that side win (rename + link rewrite, or a frontmatter update). If both changed, or there is no snapshot, it needs <code>--prefer frontmatter|file</code>", true],
+           ["explicit", "Always require <code>--prefer frontmatter|file</code>; no inference"],
+           ["frontmatter", "Frontmatter always wins: <code>--fix</code> renames or moves the file back"]],
+    why: "Renaming in Obsidian is a natural way to retitle, so it shouldn't need a flag every time, and the db already exists on every device." },
+  { id: "Q2", title: "Items outside their Kind folder",
+    body: "For example <code>Projects/OTM/Archive/OTM-3 Old idea.md</code>, or an Item dropped straight into <code>Projects/OTM/</code>.",
+    opts: [["anywhere", "Discovery finds <code>&lt;KEY&gt;-n</code> files anywhere under <code>Projects/&lt;KEY&gt;/</code> except <code>Templates/</code>. A non-standard folder warns <code>unexpected_folder</code>; <code>doctor --fix</code> moves the file into its Kind folder (deterministic)", true],
+           ["kind-only", "Only the three Kind folders are scanned; anything else is invisible"]],
+    why: "Moving a file in Obsidian never makes an Item disappear, and the fix is mechanical." },
+  { id: "Q3", title: "Missing or malformed owned fields",
+    body: "<code>id</code>/<code>title</code>/<code>kind</code> can be derived from the filename and folder. <code>status</code> can't: guessing <code>open</code> could put finished work on the frontier. And YAML that won't parse at all leaves nothing to rely on.",
+    opts: [["rules", "(a) A missing <code>id</code>/<code>title</code>/<code>kind</code> is derived from the file (warn, heal on write). (b) A missing or invalid <code>status</code> warns <code>invalid_status</code>, and the Item is left out of list and frontier with a warning; <code>close</code>/<code>reopen</code> repair it. (c) A malformed value (labels not a list, assignee not a string) is treated as absent on read; only a command that explicitly sets that field may replace it. Other writes keep it. (d) Unparseable frontmatter warns <code>malformed_frontmatter</code>, the Item is excluded, every write refuses with <code>unsafe_write</code>, and <code>doctor</code> reports it without a fix. Missing <code>created</code>/<code>updated</code> → null; <code>updated</code> is set on the next write", true],
+           ["strict", "Any missing or malformed owned field makes the Item an error until <code>doctor</code> or a hand fix"]],
+    why: "Each rule only derives what is certain, never guesses status, and only overwrites a hand-made value when the user asks for that field explicitly." },
+  { id: "Q4", title: "Dangling and ambiguous links",
+    body: "A rename outside Obsidian leaves <code>parent: \"[[OTM-3 Old title]]\"</code> pointing at nothing. Two files with the same name can also make a link ambiguous. The JSON contract already reports these as <code>resolved:false</code>, and graph operations already fail on them.",
+    opts: [["prefix", "<code>doctor</code> reports dangling and ambiguous links in relations and in bodies. <code>--fix</code> repoints a dangling link only when its <code>&lt;KEY&gt;-n</code> prefix matches exactly one Item (deterministic). Everything else is reported for a human to fix", true],
+           ["relations", "The same, but relations only: links in bodies are the user's business"],
+           ["report", "Report only, never repoint"]],
+    why: "The identity rule makes the repair unambiguous: the prefix <i>is</i> the Item. Fixing body links too keeps the Vault's graph healthy." },
+  { id: "Q5", title: "A missing or duplicated comments marker",
+    body: "<code>&lt;!-- otman:comments --&gt;</code> (ADR 0004) was deleted in Obsidian, or pasted in twice.",
+    opts: [["split", "Missing marker: reads fall back to the last <code>## Comments</code> heading and warn <code>missing_comments_marker</code>. <code>comment</code> still appends (appending at the end is always safe) and inserts the marker before that heading. Body <code>edit</code>s refuse with <code>unsafe_write</code>, since the boundary would be a guess. <code>doctor --fix</code> restores the marker when everything after the heading parses as <code>### ts · author</code> comments; otherwise it is reported only. Duplicate markers: <code>unsafe_write</code> for body edits and comments, report only", true],
+           ["trust", "Trust the last heading for everything, including body edits"]],
+    why: "Appending can never lose content, but replacing the body across a guessed boundary could delete comments. That is exactly what P1 forbids." },
+  { id: "Q6", title: "Labels still invalid after lowercasing",
+    body: "For example <code>needs triage</code> or <code>p1!</code>, typed in Obsidian.",
+    opts: [["slug", "Ordinary writes keep them (with a warning). <code>doctor --fix</code> slugifies them deterministically (spaces and runs of invalid characters → <code>-</code>, trimmed, truncated to 64), merges duplicates, and prints old → new", true],
+           ["choice", "<code>doctor</code> reports them; the user fixes them by hand"]],
+    why: "The slug rule is deterministic and reversible by hand, and it usually gives the label the person meant (<code>needs-triage</code>)." },
+  { id: "Q7", title: "What does doctor look like?",
+    body: "It is used by humans, agents and possibly CI.",
+    opts: [["report", "<code>doctor [--fix] [--all-projects]</code>. Each finding is <code>{code, path, message, fix: auto|choice|none}</code>. <code>doctor</code> alone changes nothing and lists what <code>--fix</code> would do. Exit 0 when no findings remain, exit 4 when any do (after <code>--fix</code>: only the ones it couldn't fix)", true],
+           ["always0", "Always exit 0; findings only in the output"]],
+    why: "<code>doctor</code> alone is the dry run, and CI can gate on exit 4 the same way agents already treat inconsistent data." },
+];
+
+const form = document.getElementById("round");
+form.innerHTML = Q.map(q => `
+  <fieldset class="card card-border bg-base-200" data-lavish-question="${q.id}">
+    <div class="card-body gap-3">
+      <legend class="sr-only">${q.id} ${q.title}</legend>
+      <div class="flex items-baseline gap-3">
+        <span class="badge badge-primary badge-outline font-mono">${q.id}</span>
+        <h2 class="card-title text-lg">${q.title}</h2>
+      </div>
+      <p class="opacity-85">${q.body}</p>
+      <div class="grid gap-2">
+        ${q.opts.map(([v, label, rec]) => `
+          <label class="opt flex items-start gap-3 rounded-box border border-base-content/10 p-3 cursor-pointer">
+            <input type="radio" class="radio radio-primary radio-sm mt-0.5" name="${q.id}" value="${v}" data-label="${label.replace(/<[^>]+>/g,'').replace(/"/g,'&quot;')}" ${rec ? "checked" : ""}>
+            <span class="flex-1">${label} ${rec ? '<span class="badge badge-sm badge-soft badge-success ml-1">recommended</span>' : ""}</span>
+          </label>`).join("")}
+      </div>
+      <p class="text-sm opacity-60">➡️ ${q.why}</p>
+      <input type="text" name="${q.id}-note" class="input input-sm w-full" placeholder="Optional note">
+    </div>
+  </fieldset>`).join("");
+
+function submitAll(f) {
+  const fd = new FormData(f);
+  const items = Q.map(q => {
+    const v = fd.get(q.id);
+    const input = f.querySelector(`input[name="${q.id}"][value="${v}"]`);
+    const rec = q.opts.find(o => o[2])[0] === v;
+    return { id: q.id, question: q.title, answer: input ? input.dataset.label : null, accepted_recommendation: rec, note: (fd.get(q.id + "-note") || "").trim() };
+  });
+  const extra = document.querySelector('textarea[name=extra]').value.trim();
+  const lines = items.map(i => `${i.id} ${i.question}: ${i.answer}${i.accepted_recommendation ? " (rec)" : " (CHANGED)"}${i.note ? " | note: " + i.note : ""}`);
+  if (extra) lines.push("Extra: " + extra);
+  const text = "Drift round 2 answers:\n" + lines.join("\n");
+  const status = document.getElementById("status");
+  if (window.lavish?.queuePrompt) {
+    window.lavish.queuePrompt(text + "\n\nAccount for every question ID Q1–Q7 when updating the design tree.", { tag: "choice", text: "Drift round 2 (Q1–Q7)", queueKey: "dr-round2", element: f, data: { items, extra } });
+    status.textContent = "Queued. Press Send to Agent to deliver it.";
+  } else {
+    navigator.clipboard?.writeText(text);
+    status.textContent = "Lavish isn't running, so the answers were copied to your clipboard. Paste them into the chat.";
+  }
+}
+</script>
+</body>
+</html>
