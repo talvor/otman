@@ -1,3 +1,7 @@
+---
+status: superseded by ADR-0003
+---
+
 # SQLite in the vault is canonical for sequences and the project registry
 
 otman keeps a SQLite database at `.otman/otman.db` inside the Vault. It is the source of truth for each Project's numbering sequence and for the project registry, so Item numbers can be allocated under SQLite's transactional locking. Everything else (status, labels, assignee, parent/child, blocking, comments) stays canonical in the markdown files and their frontmatter, so a human can still edit an Item in Obsidian and Bases/Dataview views stay accurate.
