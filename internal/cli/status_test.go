@@ -9,6 +9,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/talvor/otman/internal/item"
 )
 
 // close and reopen set status and updated and report changed. A matching
@@ -97,6 +99,9 @@ func TestRoundTrip(t *testing.T) {
 		err := filepath.WalkDir(src, func(p string, d fs.DirEntry, err error) error {
 			if err != nil || d.IsDir() || !itemName.MatchString(d.Name()) {
 				return err
+			}
+			if _, ok := item.KindOfFolder(filepath.Base(filepath.Dir(p))); !ok {
+				return nil // not an Item, e.g. a template
 			}
 			rel, _ := filepath.Rel(src, p)
 			t.Run(fx.Name()+"/"+d.Name(), func(t *testing.T) { roundTrip(t, src, filepath.ToSlash(rel)) })
