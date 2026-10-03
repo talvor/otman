@@ -1,12 +1,9 @@
 package cli
 
 import (
-	"errors"
 	"fmt"
 	"io"
-	"os"
 	"strings"
-	"unicode"
 	"unicode/utf8"
 
 	"github.com/spf13/cobra"
@@ -65,7 +62,7 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 		return invalid("invalid_arguments", "--title is required and cannot be empty",
 			map[string]any{"flag": "--title"}, "pass the Item's title with --title")
 	}
-	if !utf8.ValidString(title) || strings.IndexFunc(title, func(r rune) bool { return unicode.IsControl(r) && r != '\t' }) >= 0 {
+	if !singleLine(title) {
 		return invalid("invalid_arguments", "--title must be a single line of UTF-8 text",
 			map[string]any{"flag": "--title"}, "")
 	}
@@ -85,7 +82,7 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 			map[string]any{"flags": []string{"--no-template", flag}},
 			"pass a body, or --no-template for an empty one, not both")
 	}
-	body, err := a.readBody(cmd, f.body, f.bodyFile)
+	body, err := a.readText(cmd, "body", f.body, f.bodyFile)
 	if err != nil {
 		return err
 	}
@@ -137,50 +134,6 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 		human := fmt.Sprintf("Created %s · %s\n%s\n", summary.ID, summary.Title, summary.Path)
 		return a.emit(mutationResult{summary, true, human}, warnings)
 	})
-}
-
-// readBody returns the body from --body or --body-file (- is stdin), which
-// conflict. It must be UTF-8 and must not contain the comments marker.
-func (a *app) readBody(cmd *cobra.Command, body, bodyFile string) (string, error) {
-	fl := cmd.Flags()
-	if fl.Changed("body") && fl.Changed("body-file") {
-		return "", conflictingFlags("--body", "--body-file",
-			"pass the body with either --body or --body-file, not both")
-	}
-	source := "--body"
-	if fl.Changed("body-file") {
-		var b []byte
-		var err error
-		if bodyFile == "-" {
-			source = "stdin"
-			if a.opts.Stdin != nil {
-				b, err = io.ReadAll(a.opts.Stdin)
-			}
-		} else {
-			source = bodyFile
-			b, err = os.ReadFile(a.abs(bodyFile))
-		}
-		if err != nil {
-			msg := err.Error()
-			if errors.Is(err, os.ErrNotExist) {
-				msg = "no such file " + bodyFile
-			}
-			return "", invalid("unreadable_body_file", "cannot read --body-file: "+msg,
-				map[string]any{"path": bodyFile}, "pass a readable file, or - for stdin")
-		}
-		body = string(b)
-	}
-	if !utf8.ValidString(body) {
-		return "", invalid("invalid_body", "the body from "+source+" is not valid UTF-8",
-			map[string]any{"source": source}, "pass the body as UTF-8 Markdown")
-	}
-	if item.ContainsMarker(body) {
-		return "", invalid("reserved_marker",
-			"the body from "+source+" contains the reserved line "+item.CommentsMarker,
-			map[string]any{"source": source, "marker": item.CommentsMarker},
-			"remove that line; otman uses it to mark where comments begin")
-	}
-	return body, nil
 }
 
 // templateBody is the body a new Item of Kind kind in Project key starts

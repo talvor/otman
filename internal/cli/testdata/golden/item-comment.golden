@@ -1,0 +1,472 @@
+$ otman comment OTM-1 --body Checked on a second device.
+env: OTM_ACTOR=talvor
+tty: true
+exit: 0
+-- stdout --
+Commented on OTM-1 · Handle sync collisions
+-- stderr --
+
+$ otman comment OTM-1 --body Checked on a second device. --json
+env: OTM_ACTOR=talvor
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-1",
+      "title": "Handle sync collisions",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": "agent-b",
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-1 Handle sync collisions.md",
+      "rev": "b24c3c66417f"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman comment OTM-1 --body-file - --actor agent-b
+exit: 0
+-- stdout --
+item:
+  id: OTM-1
+  title: Handle sync collisions
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: agent-b
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-1 Handle sync collisions.md
+  rev: 81e62f860a8d
+changed: true
+-- stderr --
+
+$ otman comment 1 --body-file comment.md --json
+env: OTM_ACTOR=talvor
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-1",
+      "title": "Handle sync collisions",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": "agent-b",
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-1 Handle sync collisions.md",
+      "rev": "71b8db31af75"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman view OTM-1 --comments
+tty: true
+exit: 0
+-- stdout --
+OTM-1 · Handle sync collisions
+issue · open · assigned to agent-b
+Author: talvor · created 2026-01-01T10:00:00Z · updated 2026-01-02T03:04:05Z
+Path: Projects/OTM/Issues/OTM-1 Handle sync collisions.md
+
+Detect duplicate numbers and report both paths.
+
+## Comments
+
+This body has its own Comments heading; the marker is the boundary.
+
+Comments (6)
+
+### 2026-01-01T10:30:00Z · talvor
+Reproduced with a copied note.
+
+### 2026-01-01T11:00:00Z · agent-b
+Fixed in the scanner.
+
+### A heading inside the comment
+stays part of it.
+
+### 2026-01-02T03:04:05Z · talvor
+Checked on a second device.
+
+### 2026-01-02T03:04:05Z · talvor
+Checked on a second device.
+
+### 2026-01-02T03:04:05Z · agent-b
+## Comments
+
+A comment with its own heading.
+
+### 2026-01-02T03:04:05Z · talvor
+From a file.
+With a CRLF line.
+-- stderr --
+
+$ otman view OTM-1 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-1",
+      "title": "Handle sync collisions",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": "agent-b",
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-1 Handle sync collisions.md",
+      "rev": "71b8db31af75",
+      "author": "talvor",
+      "body": "Detect duplicate numbers and report both paths.\n\n## Comments\n\nThis body has its own Comments heading; the marker is the boundary.",
+      "created": "2026-01-01T10:00:00Z",
+      "updated": "2026-01-02T03:04:05Z",
+      "comments": [
+        {
+          "author": "talvor",
+          "created": "2026-01-01T10:30:00Z",
+          "body": "Reproduced with a copied note."
+        },
+        {
+          "author": "agent-b",
+          "created": "2026-01-01T11:00:00Z",
+          "body": "Fixed in the scanner.\n\n### A heading inside the comment\nstays part of it."
+        },
+        {
+          "author": "talvor",
+          "created": "2026-01-02T03:04:05Z",
+          "body": "Checked on a second device."
+        },
+        {
+          "author": "talvor",
+          "created": "2026-01-02T03:04:05Z",
+          "body": "Checked on a second device."
+        },
+        {
+          "author": "agent-b",
+          "created": "2026-01-02T03:04:05Z",
+          "body": "## Comments\n\nA comment with its own heading."
+        },
+        {
+          "author": "talvor",
+          "created": "2026-01-02T03:04:05Z",
+          "body": "From a file.\nWith a CRLF line."
+        }
+      ],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman create --title Own heading --body Intro.
+
+## Comments
+
+Not a real comment.
+env: OTM_ACTOR=talvor
+exit: 0
+-- stdout --
+item:
+  id: OTM-3
+  title: Own heading
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-3 Own heading.md
+  rev: 7ea77bb9fbb5
+changed: true
+-- stderr --
+
+$ otman comment OTM-3 --body The first real comment.
+env: OTM_ACTOR=talvor
+exit: 0
+-- stdout --
+item:
+  id: OTM-3
+  title: Own heading
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-3 Own heading.md
+  rev: 994b781ddd6f
+changed: true
+-- stderr --
+
+$ otman view OTM-3 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-3",
+      "title": "Own heading",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-3 Own heading.md",
+      "rev": "994b781ddd6f",
+      "author": "talvor",
+      "body": "Intro.\n\n## Comments\n\nNot a real comment.",
+      "created": "2026-01-02T03:04:05Z",
+      "updated": "2026-01-02T03:04:05Z",
+      "comments": [
+        {
+          "author": "talvor",
+          "created": "2026-01-02T03:04:05Z",
+          "body": "The first real comment."
+        }
+      ],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman comment OTM-3 --body ### Plan · v2
+### 2026-01-01T10:00:00+10:00 · agent-b
+### Notes
+Still one comment.
+env: OTM_ACTOR=talvor
+exit: 0
+-- stdout --
+item:
+  id: OTM-3
+  title: Own heading
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-3 Own heading.md
+  rev: cd75de1e132c
+changed: true
+-- stderr --
+
+$ otman view OTM-3 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-3",
+      "title": "Own heading",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-3 Own heading.md",
+      "rev": "cd75de1e132c",
+      "author": "talvor",
+      "body": "Intro.\n\n## Comments\n\nNot a real comment.",
+      "created": "2026-01-02T03:04:05Z",
+      "updated": "2026-01-02T03:04:05Z",
+      "comments": [
+        {
+          "author": "talvor",
+          "created": "2026-01-02T03:04:05Z",
+          "body": "The first real comment."
+        },
+        {
+          "author": "talvor",
+          "created": "2026-01-02T03:04:05Z",
+          "body": "### Plan · v2\n### 2026-01-01T10:00:00+10:00 · agent-b\n### Notes\nStill one comment."
+        }
+      ],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+-- comment.md --
+
+
+From a file.
+With a CRLF line.
+
+
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Handle sync collisions.md --
+---
+id: OTM-1
+title: Handle sync collisions
+aliases:
+  - Handle sync collisions
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: agent-b
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+Detect duplicate numbers and report both paths.
+
+## Comments
+
+This body has its own Comments heading; the marker is the boundary.
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+Reproduced with a copied note.
+
+### 2026-01-01T11:00:00Z · agent-b
+Fixed in the scanner.
+
+### A heading inside the comment
+stays part of it.
+
+### 2026-01-02T03:04:05Z · talvor
+Checked on a second device.
+
+### 2026-01-02T03:04:05Z · talvor
+Checked on a second device.
+
+### 2026-01-02T03:04:05Z · agent-b
+## Comments
+
+A comment with its own heading.
+
+### 2026-01-02T03:04:05Z · talvor
+From a file.
+With a CRLF line.
+-- vault/Projects/OTM/Issues/OTM-3 Own heading.md --
+---
+id: OTM-3
+title: Own heading
+aliases:
+  - Own heading
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+Intro.
+
+## Comments
+
+Not a real comment.
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-02T03:04:05Z · talvor
+The first real comment.
+
+### 2026-01-02T03:04:05Z · talvor
+### Plan · v2
+### 2026-01-01T10:00:00+10:00 · agent-b
+### Notes
+Still one comment.
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/OTM/Specs/
+-- vault/Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md --
+---
+id: OTM-2
+title: 'Item file format: frontmatter and body'
+aliases:
+  - 'Item file format: frontmatter and body'
+kind: spec
+status: closed
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T09:00:00Z
+updated: 2026-01-01T09:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/WEB/
+vault/Projects/WEB/PRDs/
+-- vault/Projects/WEB/PRDs/WEB-1 Landing page.md --
+---
+id: WEB-1
+title: Landing page
+aliases:
+  - Landing page
+kind: prd
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T08:00:00Z
+updated: 2026-01-01T08:00:00Z
+---
+Explain otman in one screen.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/WEB/WEB.md --
+---
+name: otman website
+kind: project
+---

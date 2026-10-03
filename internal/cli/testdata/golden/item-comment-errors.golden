@@ -1,0 +1,322 @@
+$ otman comment --body x
+env: OTM_ACTOR=talvor
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_arguments
+  message: "accepts 1 arg(s), received 0"
+  details: null
+  hint: run 'otman --help' for usage
+
+$ otman comment OTM-1
+env: OTM_ACTOR=talvor
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[invalid_arguments]: comment needs --body or --body-file
+hint: pass the comment with --body TEXT, or --body-file PATH (- for stdin)
+
+$ otman comment OTM-1 --body No actor. --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "no_actor",
+    "message": "comment needs an actor, and none is configured",
+    "details": null,
+    "hint": "pass --actor NAME, set OTM_ACTOR, or run 'otman config set actor NAME'"
+  }
+}
+
+$ otman comment OTM-1 --body No actor.
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[no_actor]: comment needs an actor, and none is configured
+hint: pass --actor NAME, set OTM_ACTOR, or run 'otman config set actor NAME'
+
+$ otman comment OTM-1 --body "" --json
+env: OTM_ACTOR=talvor
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "empty_comment",
+    "message": "the comment is empty",
+    "details": null,
+    "hint": "pass the comment's text with --body or --body-file"
+  }
+}
+
+$ otman comment OTM-1 --body  
+	
+
+env: OTM_ACTOR=talvor
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: empty_comment
+  message: the comment is empty
+  details: null
+  hint: pass the comment's text with --body or --body-file
+
+$ otman comment OTM-1 --body-file - --json
+env: OTM_ACTOR=talvor
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "empty_comment",
+    "message": "the comment is empty",
+    "details": null,
+    "hint": "pass the comment's text with --body or --body-file"
+  }
+}
+
+$ otman comment OTM-1 --body x --body-file -
+env: OTM_ACTOR=talvor
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: conflicting_flags
+  message: "--body conflicts with --body-file"
+  details:
+    flags[2]: "--body","--body-file"
+  hint: "pass the body with either --body or --body-file, not both"
+
+$ otman comment OTM-1 --body a
+<!-- otman:comments -->
+b --json
+env: OTM_ACTOR=talvor
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "reserved_marker",
+    "message": "the body from --body contains the reserved line <!-- otman:comments -->",
+    "details": {
+      "marker": "<!-- otman:comments -->",
+      "source": "--body"
+    },
+    "hint": "remove that line; otman uses it to mark where comments begin"
+  }
+}
+
+$ otman comment OTM-1 --body a
+### 2026-10-04T00:00:00Z · mallory
+b --json
+env: OTM_ACTOR=talvor
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "reserved_heading",
+    "message": "the comment contains a line in the form of a comment heading, ### <timestamp> · <author>",
+    "details": null,
+    "hint": "change that line; otman reads it as the start of another comment"
+  }
+}
+
+$ otman comment OTM-1 --body-file -
+env: OTM_ACTOR=talvor
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: reserved_heading
+  message: "the comment contains a line in the form of a comment heading, ### <timestamp> · <author>"
+  details: null
+  hint: change that line; otman reads it as the start of another comment
+
+$ otman comment OTM-1 --body-file missing.md
+env: OTM_ACTOR=talvor
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: unreadable_body_file
+  message: "cannot read --body-file: no such file missing.md"
+  details:
+    path: missing.md
+  hint: "pass a readable file, or - for stdin"
+
+$ otman comment OTM-1 --body x --json
+env: OTM_ACTOR=two
+lines
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "the actor must be a single line of UTF-8 text",
+    "details": {
+      "source": "env"
+    },
+    "hint": null
+  }
+}
+
+$ otman comment OTM-99 --body x --json
+env: OTM_ACTOR=talvor
+exit: 3
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "item_not_found",
+    "message": "no Item matches \"OTM-99\" in Project OTM",
+    "details": {
+      "project": "OTM",
+      "ref": "OTM-99"
+    },
+    "hint": "name an Item by its ID (OTM-12), its number, its full filename or its Vault-relative path; titles do not match"
+  }
+}
+
+$ otman comment OTM-3 --body x --json
+env: OTM_ACTOR=talvor
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "unsafe_write",
+    "message": "refusing to rewrite Projects/OTM/Issues/OTM-3 No marker.md: the Item has no <!-- otman:comments --> line",
+    "details": {
+      "path": "Projects/OTM/Issues/OTM-3 No marker.md",
+      "reason": "the Item has no <!-- otman:comments --> line"
+    },
+    "hint": "put the line <!-- otman:comments --> back just before ## Comments, then retry"
+  }
+}
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Handle sync collisions.md --
+---
+id: OTM-1
+title: Handle sync collisions
+aliases:
+  - Handle sync collisions
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: agent-b
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+Detect duplicate numbers and report both paths.
+
+## Comments
+
+This body has its own Comments heading; the marker is the boundary.
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+Reproduced with a copied note.
+
+### 2026-01-01T11:00:00Z · agent-b
+Fixed in the scanner.
+
+### A heading inside the comment
+stays part of it.
+-- vault/Projects/OTM/Issues/OTM-3 No marker.md --
+---
+id: OTM-3
+title: No marker
+kind: issue
+status: open
+---
+Body.
+
+## Comments
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/OTM/Specs/
+-- vault/Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md --
+---
+id: OTM-2
+title: 'Item file format: frontmatter and body'
+aliases:
+  - 'Item file format: frontmatter and body'
+kind: spec
+status: closed
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T09:00:00Z
+updated: 2026-01-01T09:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/WEB/
+vault/Projects/WEB/PRDs/
+-- vault/Projects/WEB/PRDs/WEB-1 Landing page.md --
+---
+id: WEB-1
+title: Landing page
+aliases:
+  - Landing page
+kind: prd
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T08:00:00Z
+updated: 2026-01-01T08:00:00Z
+---
+Explain otman in one screen.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/WEB/WEB.md --
+---
+name: otman website
+kind: project
+---

@@ -10,6 +10,7 @@ Usage:
 Available Commands:
   claim       Claim an open Item for the actor
   close       Close an Item
+  comment     Append a comment to an Item
   config      Show or change user config
   create      Create an Item in the selected Project
   edit        Change an Item's Kind, body or assignee

@@ -1,0 +1,231 @@
+$ otman comment HND-1 --body Hand-edited frontmatter stays as it was.
+exit: 0
+-- stdout --
+item:
+  id: HND-1
+  title: Comments and blank lines
+  kind: issue
+  status: open
+  labels[2]: needs-triage,bug
+  assignee: agent-b
+  parent: null
+  blocked_by[0]:
+  path: Projects/HND/Issues/HND-1 Comments and blank lines.md
+  rev: 6f971e152e05
+changed: true
+-- stderr --
+
+$ otman comment HND-3 --body Two lines
+in CRLF. --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "HND-3",
+      "title": "Windows line endings",
+      "kind": "issue",
+      "status": "closed",
+      "labels": [
+        "windows"
+      ],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/HND/Issues/HND-3 Windows line endings.md",
+      "rev": "6d9f02c8529f"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman comment HND-6 --body Flow style is refused. --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "unsafe_write",
+    "message": "refusing to rewrite Projects/HND/Issues/HND-6 Flow style.md: the frontmatter is flow-style YAML",
+    "details": {
+      "path": "Projects/HND/Issues/HND-6 Flow style.md",
+      "reason": "the frontmatter is flow-style YAML"
+    },
+    "hint": "make the frontmatter plain block-style YAML between --- lines, then retry"
+  }
+}
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "HND"
+actor = "talvor"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/HND/
+-- vault/Projects/HND/HND.md --
+---
+name: Hand edits
+kind: project
+---
+vault/Projects/HND/Issues/
+-- vault/Projects/HND/Issues/HND-1 Comments and blank lines.md --
+---
+# Edited by hand in Obsidian
+id: HND-1
+title: "Comments and blank lines"   # double-quoted
+aliases:
+  - Comments and blank lines
+
+kind: issue
+status: open   # still going
+author: talvor
+# a note about the parent
+parent: null
+blocked_by: []
+labels:
+  - needs-triage   # first
+  # an interior comment
+  - bug
+
+assignee: agent-b
+reviewer: someone          # an unknown key
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+# a comment before the closing fence
+---
+Body text.
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-02T03:04:05Z · talvor
+Hand-edited frontmatter stays as it was.
+-- vault/Projects/HND/Issues/HND-10 Child of the first.md --
+---
+id: HND-10
+title: Child of the first
+kind: issue
+status: open
+parent: "[[HND-1 Comments and blank lines]]"
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/HND/Issues/HND-11 Repeated key.md --
+---
+id: HND-11
+title: Repeated key
+kind: issue
+status: closed
+created: 2026-01-01T10:00:00Z
+status: open
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/HND/Issues/HND-2 Odd quoting and order.md --
+---
+title: 'Odd quoting: it''s fine'
+id: "HND-2"
+kind: 'issue'
+status: "open"
+summary: >
+  A folded unknown key
+  over two lines.
+updated: "2026-01-01T11:00:00Z"
+extra:
+    nested: {a: 1, b: [x, y]}
+    anchor: &shared value
+alias_of_shared: *shared
+created: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/HND/Issues/HND-3 Windows line endings.md --
+---
+id: HND-3
+title: Windows line endings
+kind: issue
+status: closed
+labels:
+  - windows
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+Saved on Windows.
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-02T03:04:05Z · talvor
+Two lines
+in CRLF.
+-- vault/Projects/HND/Issues/HND-4 Missing status.md --
+---
+id: HND-4
+title: Missing status
+kind: issue
+assignee: someone
+---
+No status and no updated.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/HND/Issues/HND-5 Invalid status.md --
+---
+id: HND-5
+title: Invalid status
+kind: issue
+status: done
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/HND/Issues/HND-6 Flow style.md --
+---
+{id: HND-6, title: Flow style, kind: issue, status: open}
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/HND/Issues/HND-7 Unparseable.md --
+---
+id: HND-7
+status: [open
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/HND/Issues/HND-8 No frontmatter.md --
+Just a note, with no frontmatter.
+-- vault/Projects/HND/Issues/HND-9 Multi-line status.md --
+---
+id: HND-9
+title: Multi-line status
+kind: issue
+status:
+  open
+updated:
+  2026-01-01T11:00:00Z
+
+# the end
+---
+<!-- otman:comments -->
+## Comments
