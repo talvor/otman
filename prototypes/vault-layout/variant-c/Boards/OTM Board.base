@@ -1,0 +1,23 @@
+filters:
+  and:
+    - project == "OTM"
+    - file.ext == "md"
+views:
+  - type: table
+    name: By status
+    groupBy:
+      property: status
+      direction: ASC
+    order: [file.name, title, kind, labels, parent, blocked_by]
+  - type: table
+    name: Open
+    filters:
+      and:
+        - 'status == "open"'
+    order: [file.name, title, kind, labels, assignee]
+  - type: kanban
+    name: Board (needs 1.14)
+    groupBy:
+      property: status
+      direction: ASC
+    order: [title, kind]

@@ -1,0 +1,13 @@
+views:
+  - type: table
+    name: Children
+    filters:
+      and:
+        - 'parent == this'
+    order: [file.name, title, status]
+  - type: table
+    name: Blocks
+    filters:
+      and:
+        - 'blocked_by.contains(this)'
+    order: [file.name, title, status]
