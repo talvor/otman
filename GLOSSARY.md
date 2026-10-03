@@ -35,3 +35,11 @@ _Avoid_: Re-ID, reassign
 **Tracker template**:
 The `issue-tracker-otman.md` doc that tells the Matt Pocock skills how to perform tracker operations through otman.
 _Avoid_: Adapter, integration, plugin
+
+**Claim**:
+An Item's assignment to the person or agent taking responsibility for it. An Item without an assignee is unclaimed.
+_Avoid_: Lock, lease
+
+**Frontier**:
+The open, unclaimed Items with no open blockers within the selected scope. A parent's Frontier contains its direct children that meet those conditions.
+_Avoid_: Backlog, all open Items
