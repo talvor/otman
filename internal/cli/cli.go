@@ -147,6 +147,10 @@ func (a *app) prescanFormat() output.Format {
 			i = len(args)
 		case arg == "--json":
 			jsonFlag = true
+		case strings.HasPrefix(arg, "--json="):
+			if v, err := strconv.ParseBool(strings.TrimPrefix(arg, "--json=")); err == nil {
+				jsonFlag = v
+			}
 		case arg == "--format" && i+1 < len(args):
 			format, given = args[i+1], true
 			i++

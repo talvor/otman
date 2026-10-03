@@ -110,6 +110,8 @@ func TestFormatFlagErrors(t *testing.T) {
 			{args: []string{"config", "show", "--format", "xml"}},
 			{args: []string{"bogus", "--json"}},
 			{args: []string{"config", "show", "--nope", "--format=json"}},
+			{args: []string{"bogus", "--json=true"}},
+			{args: []string{"bogus", "--json", "--json=false"}, tty: true},
 		},
 	})
 }

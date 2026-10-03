@@ -49,6 +49,28 @@ exit: 2
   }
 }
 
+$ otman bogus --json=true
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "unknown command \"bogus\" for \"otman\"",
+    "details": null,
+    "hint": "run 'otman --help' for usage"
+  }
+}
+
+$ otman bogus --json --json=false
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error: unknown command "bogus" for "otman"
+hint: run 'otman --help' for usage
+
 == tree ==
 config/
 home/
