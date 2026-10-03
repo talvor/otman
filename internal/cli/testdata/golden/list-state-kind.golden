@@ -1,0 +1,364 @@
+$ otman list --state closed
+tty: true
+exit: 0
+-- stdout --
+ID     KIND  STATUS  ASSIGNEE  TITLE
+OTM-2  spec  closed  -         Item file format
+OTM-4  prd   closed  talvor    Status bar copy
+-- stderr --
+
+$ otman list --state all
+tty: true
+exit: 0
+-- stdout --
+ID      KIND   STATUS  ASSIGNEE  TITLE
+OTM-1   issue  open    agent-b   Handle sync collisions
+OTM-2   spec   closed  -         Item file format
+OTM-3   prd    open    -         Why a tracker
+OTM-4   issue  open    talvor    Status bar
+OTM-4   prd    closed  talvor    Status bar copy
+OTM-9   spec   open    -         Paging spec
+OTM-10  issue  open    Talvor    Sync tens after nines
+-- stderr --
+
+$ otman list --state open --json
+env: OTM_PROJECT=WEB
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [
+      {
+        "id": "WEB-1",
+        "title": "Landing page",
+        "kind": "prd",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/WEB/PRDs/WEB-1 Landing page.md",
+        "rev": "a59863cde4ae"
+      }
+    ],
+    "total": 1,
+    "count": 1,
+    "has_more": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman list --kind spec
+tty: true
+exit: 0
+-- stdout --
+ID     KIND  STATUS  ASSIGNEE  TITLE
+OTM-9  spec  open    -         Paging spec
+-- stderr --
+
+$ otman list --kind prd --state all --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [
+      {
+        "id": "OTM-3",
+        "title": "Why a tracker",
+        "kind": "prd",
+        "status": "open",
+        "labels": [
+          "needs-triage"
+        ],
+        "assignee": null,
+        "parent": {
+          "id": "OTM-2",
+          "path": "Projects/OTM/Specs/OTM-2 Item file format.md",
+          "resolved": true
+        },
+        "blocked_by": [
+          {
+            "id": "OTM-1",
+            "path": "Projects/OTM/Issues/OTM-1 Handle sync collisions.md",
+            "resolved": true
+          },
+          {
+            "id": null,
+            "path": null,
+            "resolved": false,
+            "link": "[[OTM-99 Gone]]"
+          }
+        ],
+        "path": "Projects/OTM/PRDs/OTM-3 Why a tracker.md",
+        "rev": "d30216406556"
+      },
+      {
+        "id": "OTM-4",
+        "title": "Status bar copy",
+        "kind": "prd",
+        "status": "closed",
+        "labels": [],
+        "assignee": "talvor",
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/OTM/PRDs/OTM-4 Status bar copy.md",
+        "rev": "d6d8b93477ca"
+      }
+    ],
+    "total": 2,
+    "count": 2,
+    "has_more": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman list --kind spec --state closed --all-projects
+tty: true
+exit: 0
+-- stdout --
+ID     KIND  STATUS  ASSIGNEE  TITLE
+OTM-2  spec  closed  -         Item file format
+-- stderr --
+
+$ otman list --kind prd --state closed --json
+env: OTM_PROJECT=AAA
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [],
+    "total": 0,
+    "count": 0,
+    "has_more": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman list --kind prd --state closed
+env: OTM_PROJECT=AAA
+tty: true
+exit: 0
+-- stdout --
+No Items match
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/AAA/
+-- vault/Projects/AAA/AAA.md --
+---
+name: first
+kind: project
+---
+vault/Projects/AAA/Issues/
+-- vault/Projects/AAA/Issues/AAA-1 Set up the repo.md --
+---
+id: AAA-1
+title: Set up the repo
+kind: issue
+status: open
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Handle sync collisions.md --
+---
+id: OTM-1
+title: Handle sync collisions
+kind: issue
+status: open
+parent: null
+blocked_by: []
+labels: []
+assignee: agent-b
+---
+Detect duplicate numbers and report both paths.
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+A needle only in a comment.
+-- vault/Projects/OTM/Issues/OTM-10 Sync tens after nines.md --
+---
+id: OTM-10
+title: Sync tens after nines
+kind: issue
+status: open
+parent: null
+blocked_by: []
+labels: []
+assignee: Talvor
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-4 Status bar.md --
+---
+id: OTM-4
+title: Status bar
+kind: issue
+status: open
+parent: null
+blocked_by: []
+labels: []
+assignee: talvor
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-5 No status.md --
+---
+id: OTM-5
+title: No status
+kind: issue
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-6 Odd status.md --
+---
+id: OTM-6
+title: Odd status
+kind: issue
+status: wip
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-7 Unreadable.md --
+---
+status: [open
+---
+Sync body.
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/OTM/PRDs/
+-- vault/Projects/OTM/PRDs/OTM-3 Why a tracker.md --
+---
+id: OTM-3
+title: Why a tracker
+kind: prd
+status: open
+parent: "[[OTM-2 Item file format]]"
+blocked_by:
+  - "[[OTM-1 Handle sync collisions]]"
+  - "[[OTM-99 Gone]]"
+labels: [needs-triage]
+assignee: null
+---
+Agents need somewhere to put work. RESYNC on wake.
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/PRDs/OTM-4 Status bar copy.md --
+---
+id: OTM-4
+title: Status bar copy
+kind: prd
+status: closed
+parent: null
+blocked_by: []
+labels: []
+assignee: talvor
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/OTM/Specs/
+-- vault/Projects/OTM/Specs/OTM-2 Item file format.md --
+---
+id: OTM-2
+title: Item file format
+kind: spec
+status: closed
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+---
+Frontmatter, body and comments.
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Specs/OTM-9 Paging spec.md --
+---
+id: OTM-9
+title: Paging spec
+kind: spec
+status: open
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/OTM/Templates/
+-- vault/Projects/OTM/Templates/OTM-50 Sample.md --
+---
+status: open
+---
+not an Item
+vault/Projects/WEB/
+vault/Projects/WEB/Issues/
+-- vault/Projects/WEB/Issues/WEB-2 Fix the logo.md --
+---
+id: WEB-2
+title: Fix the logo
+kind: issue
+status: closed
+parent: null
+blocked_by: []
+labels: []
+assignee: talvor
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/WEB/PRDs/
+-- vault/Projects/WEB/PRDs/WEB-1 Landing page.md --
+---
+id: WEB-1
+title: Landing page
+kind: prd
+status: open
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+---
+Explain otman in one screen.
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/WEB/WEB.md --
+---
+name: otman website
+kind: project
+---

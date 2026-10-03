@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"io"
+	"slices"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
@@ -13,9 +14,14 @@ import (
 )
 
 type listFlags struct {
+	state       string
+	kind        string
 	allProjects bool
 	paging      *paging
 }
+
+// listStates are the values of list --state.
+var listStates = []string{"open", "closed", "all"}
 
 func (a *app) newListCmd() *cobra.Command {
 	var f listFlags
@@ -24,9 +30,12 @@ func (a *app) newListCmd() *cobra.Command {
 		Short: "List the Items of the selected Project (default: open ones)",
 		Args:  cobra.NoArgs,
 	}
-	cmd.Flags().BoolVar(&f.allProjects, "all-projects", false, "list the Items of every Project (conflicts with --project)")
+	fl := cmd.Flags()
+	fl.StringVar(&f.state, "state", "open", "open, closed or all")
+	fl.StringVar(&f.kind, "kind", "", "only Items of this Kind: issue, prd or spec")
+	fl.BoolVar(&f.allProjects, "all-projects", false, "list the Items of every Project (conflicts with --project)")
 	f.paging = addPaging(cmd)
-	cmd.RunE = func(*cobra.Command, []string) error { return a.list(f) }
+	cmd.RunE = func(cmd *cobra.Command, _ []string) error { return a.list(cmd, f) }
 	return cmd
 }
 
@@ -54,7 +63,49 @@ func (r listResult) RenderHuman(w io.Writer) error {
 	return r.renderMore(w)
 }
 
-func (a *app) list(f listFlags) error {
+// itemQuery is what list keeps of the Items in scope.
+type itemQuery struct {
+	state string     // open, closed or all
+	kind  *item.Kind // nil for any Kind
+}
+
+// match reports whether the Item summarised by s is kept. An Item whose
+// status is neither open nor closed is never kept.
+func (q itemQuery) match(s itemSummary) bool {
+	if s.Status == nil || (*s.Status != "open" && *s.Status != "closed") {
+		return false
+	}
+	if q.state != "all" && *s.Status != q.state {
+		return false
+	}
+	if q.kind != nil && (s.Kind == nil || *s.Kind != *q.kind) {
+		return false
+	}
+	return true
+}
+
+// query validates the filter flags.
+func (f listFlags) query(cmd *cobra.Command) (itemQuery, error) {
+	q := itemQuery{state: f.state}
+	if !slices.Contains(listStates, f.state) {
+		return itemQuery{}, invalid("invalid_state", "unknown state "+quoteArg(f.state),
+			map[string]any{"state": f.state, "allowed": listStates}, "use --state open, closed or all")
+	}
+	if cmd.Flags().Changed("kind") {
+		kind, err := parseKind(f.kind)
+		if err != nil {
+			return itemQuery{}, err
+		}
+		q.kind = &kind
+	}
+	return q, nil
+}
+
+func (a *app) list(cmd *cobra.Command, f listFlags) error {
+	q, err := f.query(cmd)
+	if err != nil {
+		return err
+	}
 	if err := f.paging.validate(); err != nil {
 		return err
 	}
@@ -83,7 +134,7 @@ func (a *app) list(f listFlags) error {
 		}
 		all := []itemSummary{}
 		for _, key := range keys {
-			found, err := listProject(v, key)
+			found, err := listProject(v, key, q)
 			if err != nil {
 				return ioError(err)
 			}
@@ -113,9 +164,9 @@ func listScope(v *vault.Vault, sel config.Value) ([]string, []output.Problem, er
 	return keys, ws, nil
 }
 
-// listProject is the summaries of Project key's open Items, sorted by
-// number, then path.
-func listProject(v *vault.Vault, key string) ([]itemSummary, error) {
+// listProject is the summaries of the Items of Project key that q keeps,
+// sorted by number, then path.
+func listProject(v *vault.Vault, key string, q itemQuery) ([]itemSummary, error) {
 	files, err := v.ItemFiles(key)
 	if err != nil {
 		return nil, err
@@ -127,11 +178,9 @@ func listProject(v *vault.Vault, key string) ([]itemSummary, error) {
 		if err != nil {
 			return nil, err
 		}
-		parsed := item.Parse(data)
-		if parsed.Status == nil || *parsed.Status != "open" {
-			continue
+		if s := newItemSummary(f, item.Parse(data), data, links); q.match(s) {
+			found = append(found, s)
 		}
-		found = append(found, newItemSummary(f, parsed, data, links))
 	}
 	return found, nil
 }

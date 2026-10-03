@@ -43,3 +43,24 @@ func TestListAllProjects(t *testing.T) {
 		},
 	})
 }
+
+// --state picks open (the default), closed or all Items; an Item whose
+// status is neither is never listed. --kind picks one Kind, read from the
+// frontmatter or else the folder.
+func TestListStateAndKind(t *testing.T) {
+	runGolden(t, goldenCase{
+		name:    "list-state-kind",
+		fixture: "list",
+		files:   withOTM(nil),
+		steps: []step{
+			{args: []string{"list", "--state", "closed"}, tty: true},
+			{args: []string{"list", "--state", "all"}, tty: true},
+			{args: []string{"list", "--state", "open", "--json"}, env: map[string]string{"OTM_PROJECT": "WEB"}},
+			{args: []string{"list", "--kind", "spec"}, tty: true},
+			{args: []string{"list", "--kind", "prd", "--state", "all", "--json"}},
+			{args: []string{"list", "--kind", "spec", "--state", "closed", "--all-projects"}, tty: true},
+			{args: []string{"list", "--kind", "prd", "--state", "closed", "--json"}, env: map[string]string{"OTM_PROJECT": "AAA"}},
+			{args: []string{"list", "--kind", "prd", "--state", "closed"}, env: map[string]string{"OTM_PROJECT": "AAA"}, tty: true},
+		},
+	})
+}

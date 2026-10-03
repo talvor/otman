@@ -67,10 +67,9 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 		return invalid("invalid_arguments", "--title must be a single line of UTF-8 text",
 			map[string]any{"flag": "--title"}, "")
 	}
-	kind, ok := item.ParseKind(f.kind)
-	if !ok {
-		return invalid("invalid_kind", "unknown Kind "+quoteArg(f.kind),
-			map[string]any{"kind": f.kind, "allowed": item.Kinds}, "use --kind issue, prd or spec")
+	kind, err := parseKind(f.kind)
+	if err != nil {
+		return err
 	}
 	// An explicit body, even an empty one, is stored as given; only an
 	// omitted body takes the Kind's Template.
@@ -136,6 +135,16 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 		summary := newItemSummary(file, item.Parse(data), data, newItemLinks(files))
 		return a.emit(createResult{summary, true}, warnings)
 	})
+}
+
+// parseKind reads the value of --kind.
+func parseKind(s string) (item.Kind, error) {
+	kind, ok := item.ParseKind(s)
+	if !ok {
+		return "", invalid("invalid_kind", "unknown Kind "+quoteArg(s),
+			map[string]any{"kind": s, "allowed": item.Kinds}, "use --kind issue, prd or spec")
+	}
+	return kind, nil
 }
 
 // readBody returns the body from --body or --body-file (- is stdin), which
