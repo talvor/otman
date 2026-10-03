@@ -1,0 +1,290 @@
+$ otman claim OTM-1 --json
+env: OTM_ACTOR=talvor
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "claim_conflict",
+    "message": "cannot claim OTM-1: it is claimed by agent-b, not talvor",
+    "details": {
+      "actor": "talvor",
+      "assignee": "agent-b",
+      "path": "Projects/OTM/Issues/OTM-1 Handle sync collisions.md"
+    },
+    "hint": "pick another Item, or reassign this one deliberately with 'otman edit OTM-1 --assignee @me'"
+  }
+}
+
+$ otman claim OTM-1
+env: OTM_ACTOR=talvor
+tty: true
+exit: 4
+-- stdout --
+-- stderr --
+error[claim_conflict]: cannot claim OTM-1: it is claimed by agent-b, not talvor
+hint: pick another Item, or reassign this one deliberately with 'otman edit OTM-1 --assignee @me'
+
+$ otman release OTM-1 --json
+env: OTM_ACTOR=talvor
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "claim_conflict",
+    "message": "cannot release OTM-1: it is claimed by agent-b, not talvor",
+    "details": {
+      "actor": "talvor",
+      "assignee": "agent-b",
+      "path": "Projects/OTM/Issues/OTM-1 Handle sync collisions.md"
+    },
+    "hint": "leave the release to agent-b, or unassign deliberately with 'otman edit OTM-1 --clear-assignee'"
+  }
+}
+
+$ otman release OTM-1
+env: OTM_ACTOR=talvor
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: claim_conflict
+  message: "cannot release OTM-1: it is claimed by agent-b, not talvor"
+  details:
+    actor: talvor
+    assignee: agent-b
+    path: Projects/OTM/Issues/OTM-1 Handle sync collisions.md
+  hint: "leave the release to agent-b, or unassign deliberately with 'otman edit OTM-1 --clear-assignee'"
+
+$ otman claim OTM-2 --json
+env: OTM_ACTOR=talvor
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "item_not_open",
+    "message": "cannot claim OTM-2: it is closed",
+    "details": {
+      "path": "Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md",
+      "status": "closed"
+    },
+    "hint": "run 'otman reopen OTM-2' first if the work is not done"
+  }
+}
+
+$ otman claim OTM-2
+env: OTM_ACTOR=talvor
+tty: true
+exit: 4
+-- stdout --
+-- stderr --
+error[item_not_open]: cannot claim OTM-2: it is closed
+hint: run 'otman reopen OTM-2' first if the work is not done
+
+$ otman claim OTM-3 --json
+env: OTM_ACTOR=talvor
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "item_not_open",
+    "message": "cannot claim OTM-3: it has no status",
+    "details": {
+      "path": "Projects/OTM/Issues/OTM-3 No status.md",
+      "status": null
+    },
+    "hint": "set status: open in Projects/OTM/Issues/OTM-3 No status.md, then retry"
+  }
+}
+
+$ otman claim WEB-1 --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "no_actor",
+    "message": "claim needs an actor, and none is configured",
+    "details": null,
+    "hint": "pass --actor NAME, set OTM_ACTOR, or run 'otman config set actor NAME'"
+  }
+}
+
+$ otman release WEB-1
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[no_actor]: release needs an actor, and none is configured
+hint: pass --actor NAME, set OTM_ACTOR, or run 'otman config set actor NAME'
+
+$ otman claim WEB-1 --actor ""
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_arguments
+  message: "--actor cannot be empty"
+  details:
+    flag: "--actor"
+  hint: "pass a value, or omit --actor to use OTM_ACTOR or config"
+
+$ otman claim
+env: OTM_ACTOR=talvor
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[invalid_arguments]: accepts 1 arg(s), received 0
+hint: run 'otman --help' for usage
+
+$ otman release OTM-1 OTM-2 --json
+env: OTM_ACTOR=talvor
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "accepts 1 arg(s), received 2",
+    "details": null,
+    "hint": "run 'otman --help' for usage"
+  }
+}
+
+$ otman claim OTM-99 --json
+env: OTM_ACTOR=talvor
+exit: 3
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "item_not_found",
+    "message": "no Item matches \"OTM-99\" in Project OTM",
+    "details": {
+      "project": "OTM",
+      "ref": "OTM-99"
+    },
+    "hint": "name an Item by its ID (OTM-12), its number, its full filename or its Vault-relative path; titles do not match"
+  }
+}
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Handle sync collisions.md --
+---
+id: OTM-1
+title: Handle sync collisions
+aliases:
+  - Handle sync collisions
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: agent-b
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+Detect duplicate numbers and report both paths.
+
+## Comments
+
+This body has its own Comments heading; the marker is the boundary.
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+Reproduced with a copied note.
+
+### 2026-01-01T11:00:00Z · agent-b
+Fixed in the scanner.
+
+### A heading inside the comment
+stays part of it.
+-- vault/Projects/OTM/Issues/OTM-3 No status.md --
+---
+id: OTM-3
+title: No status
+kind: issue
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/OTM/Specs/
+-- vault/Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md --
+---
+id: OTM-2
+title: 'Item file format: frontmatter and body'
+aliases:
+  - 'Item file format: frontmatter and body'
+kind: spec
+status: closed
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T09:00:00Z
+updated: 2026-01-01T09:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/WEB/
+vault/Projects/WEB/PRDs/
+-- vault/Projects/WEB/PRDs/WEB-1 Landing page.md --
+---
+id: WEB-1
+title: Landing page
+aliases:
+  - Landing page
+kind: prd
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T08:00:00Z
+updated: 2026-01-01T08:00:00Z
+---
+Explain otman in one screen.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/WEB/WEB.md --
+---
+name: otman website
+kind: project
+---

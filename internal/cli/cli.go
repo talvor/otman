@@ -124,6 +124,9 @@ func (a *app) newRoot() *cobra.Command {
 	for _, c := range statusCommands {
 		root.AddCommand(a.newStatusCmd(c))
 	}
+	for _, c := range claimCommands {
+		root.AddCommand(a.newClaimCmd(c))
+	}
 	root.AddCommand(a.newConfigCmd())
 	root.AddCommand(a.newProjectCmd())
 	return root

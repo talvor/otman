@@ -1,0 +1,363 @@
+$ otman release HND-1 --json
+env: OTM_ACTOR=agent-b
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "HND-1",
+      "title": "Comments and blank lines",
+      "kind": "issue",
+      "status": "open",
+      "labels": [
+        "needs-triage",
+        "bug"
+      ],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/HND/Issues/HND-1 Comments and blank lines.md",
+      "rev": "f09ffb9be1e6"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman claim HND-2 --json
+env: OTM_ACTOR=agent-b
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "HND-2",
+      "title": "Odd quoting: it's fine",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": "agent-b",
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/HND/Issues/HND-2 Odd quoting and order.md",
+      "rev": "92fe4b598247"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman release HND-3 --json
+env: OTM_ACTOR=agent-b
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "HND-3",
+      "title": "Windows line endings",
+      "kind": "issue",
+      "status": "closed",
+      "labels": [
+        "windows"
+      ],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/HND/Issues/HND-3 Windows line endings.md",
+      "rev": "3e90569a48bf"
+    },
+    "changed": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman claim HND-3 --json
+env: OTM_ACTOR=agent-b
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "item_not_open",
+    "message": "cannot claim HND-3: it is closed",
+    "details": {
+      "path": "Projects/HND/Issues/HND-3 Windows line endings.md",
+      "status": "closed"
+    },
+    "hint": "run 'otman reopen HND-3' first if the work is not done"
+  }
+}
+
+$ otman release HND-4 --json
+env: OTM_ACTOR=agent-b
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "claim_conflict",
+    "message": "cannot release HND-4: it is claimed by someone, not agent-b",
+    "details": {
+      "actor": "agent-b",
+      "assignee": "someone",
+      "path": "Projects/HND/Issues/HND-4 Missing status.md"
+    },
+    "hint": "leave the release to someone, or unassign deliberately with 'otman edit HND-4 --clear-assignee'"
+  }
+}
+
+$ otman claim HND-5 --json
+env: OTM_ACTOR=agent-b
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "item_not_open",
+    "message": "cannot claim HND-5: it is \"done\", not open",
+    "details": {
+      "path": "Projects/HND/Issues/HND-5 Invalid status.md",
+      "status": "done"
+    },
+    "hint": "set status: open in Projects/HND/Issues/HND-5 Invalid status.md, then retry"
+  }
+}
+
+$ otman claim HND-6 --json
+env: OTM_ACTOR=agent-b
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "unsafe_write",
+    "message": "refusing to rewrite Projects/HND/Issues/HND-6 Flow style.md: the frontmatter is flow-style YAML",
+    "details": {
+      "path": "Projects/HND/Issues/HND-6 Flow style.md",
+      "reason": "the frontmatter is flow-style YAML"
+    },
+    "hint": "make the frontmatter plain block-style YAML between --- lines, then retry"
+  }
+}
+
+$ otman release HND-7 --json
+env: OTM_ACTOR=agent-b
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "unsafe_write",
+    "message": "refusing to rewrite Projects/HND/Issues/HND-7 Unparseable.md: the frontmatter is not valid YAML: yaml: line 1: did not find expected ',' or ']'",
+    "details": {
+      "path": "Projects/HND/Issues/HND-7 Unparseable.md",
+      "reason": "the frontmatter is not valid YAML: yaml: line 1: did not find expected ',' or ']'"
+    },
+    "hint": "make the frontmatter plain block-style YAML between --- lines, then retry"
+  }
+}
+
+$ otman claim HND-10 --json
+env: OTM_ACTOR=agent-b
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "HND-10",
+      "title": "Child of the first",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": "agent-b",
+      "parent": {
+        "id": "HND-1",
+        "path": "Projects/HND/Issues/HND-1 Comments and blank lines.md",
+        "resolved": true
+      },
+      "blocked_by": [],
+      "path": "Projects/HND/Issues/HND-10 Child of the first.md",
+      "rev": "1b2d8619420f"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "HND"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/HND/
+-- vault/Projects/HND/HND.md --
+---
+name: Hand edits
+kind: project
+---
+vault/Projects/HND/Issues/
+-- vault/Projects/HND/Issues/HND-1 Comments and blank lines.md --
+---
+# Edited by hand in Obsidian
+id: HND-1
+title: "Comments and blank lines"   # double-quoted
+aliases:
+  - Comments and blank lines
+
+kind: issue
+status: open   # still going
+author: talvor
+# a note about the parent
+parent: null
+blocked_by: []
+labels:
+  - needs-triage   # first
+  # an interior comment
+  - bug
+
+assignee: null
+reviewer: someone          # an unknown key
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+# a comment before the closing fence
+---
+Body text.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/HND/Issues/HND-10 Child of the first.md --
+---
+id: HND-10
+title: Child of the first
+kind: issue
+status: open
+parent: "[[HND-1 Comments and blank lines]]"
+blocked_by: []
+labels: []
+assignee: agent-b
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/HND/Issues/HND-11 Repeated key.md --
+---
+id: HND-11
+title: Repeated key
+kind: issue
+status: closed
+created: 2026-01-01T10:00:00Z
+status: open
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/HND/Issues/HND-2 Odd quoting and order.md --
+---
+title: 'Odd quoting: it''s fine'
+id: "HND-2"
+kind: 'issue'
+status: "open"
+summary: >
+  A folded unknown key
+  over two lines.
+updated: 2026-01-02T03:04:05Z
+extra:
+    nested: {a: 1, b: [x, y]}
+    anchor: &shared value
+alias_of_shared: *shared
+created: 2026-01-01T10:00:00Z
+assignee: agent-b
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/HND/Issues/HND-3 Windows line endings.md --
+---
+id: HND-3
+title: Windows line endings
+kind: issue
+status: closed
+labels:
+  - windows
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+Saved on Windows.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/HND/Issues/HND-4 Missing status.md --
+---
+id: HND-4
+title: Missing status
+kind: issue
+assignee: someone
+---
+No status and no updated.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/HND/Issues/HND-5 Invalid status.md --
+---
+id: HND-5
+title: Invalid status
+kind: issue
+status: done
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/HND/Issues/HND-6 Flow style.md --
+---
+{id: HND-6, title: Flow style, kind: issue, status: open}
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/HND/Issues/HND-7 Unparseable.md --
+---
+id: HND-7
+status: [open
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/HND/Issues/HND-8 No frontmatter.md --
+Just a note, with no frontmatter.
+-- vault/Projects/HND/Issues/HND-9 Multi-line status.md --
+---
+id: HND-9
+title: Multi-line status
+kind: issue
+status:
+  open
+updated:
+  2026-01-01T11:00:00Z
+
+# the end
+---
+<!-- otman:comments -->
+## Comments
