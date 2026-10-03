@@ -61,8 +61,8 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 		return invalid("invalid_arguments", "--title is required and cannot be empty",
 			map[string]any{"flag": "--title"}, "pass the Item's title with --title")
 	}
-	if strings.IndexFunc(title, func(r rune) bool { return unicode.IsControl(r) && r != '\t' }) >= 0 {
-		return invalid("invalid_arguments", "--title must be a single line of text",
+	if !utf8.ValidString(title) || strings.IndexFunc(title, func(r rune) bool { return unicode.IsControl(r) && r != '\t' }) >= 0 {
+		return invalid("invalid_arguments", "--title must be a single line of UTF-8 text",
 			map[string]any{"flag": "--title"}, "")
 	}
 	kind, ok := item.ParseKind(f.kind)
@@ -77,6 +77,10 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 	s, err := a.settings()
 	if err != nil {
 		return err
+	}
+	if s.Actor.IsSet() && !utf8.ValidString(s.Actor.Value) {
+		return invalid("invalid_arguments", "the actor is not valid UTF-8",
+			map[string]any{"source": string(s.Actor.Source)}, "")
 	}
 	var assignee *string
 	if cmd.Flags().Changed("assignee") {
@@ -165,8 +169,8 @@ func (a *app) readBody(cmd *cobra.Command, body, bodyFile string) (string, error
 // configured.
 func nameOrActor(s resolved, flag, value string) (string, error) {
 	value = strings.TrimSpace(value)
-	if value == "" || strings.ContainsAny(value, "\r\n") {
-		return "", invalid("invalid_arguments", flag+" needs a single-line name or @me",
+	if value == "" || strings.ContainsAny(value, "\r\n") || !utf8.ValidString(value) {
+		return "", invalid("invalid_arguments", flag+" needs a single-line UTF-8 name or @me",
 			map[string]any{"flag": flag}, "")
 	}
 	name, err := s.ResolveUser(value)

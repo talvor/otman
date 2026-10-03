@@ -29,7 +29,7 @@ exit: 2
 -- stderr --
 error:
   code: invalid_arguments
-  message: "--title must be a single line of text"
+  message: "--title must be a single line of UTF-8 text"
   details:
     flag: "--title"
   hint: null
@@ -131,10 +131,58 @@ exit: 2
 -- stderr --
 error:
   code: invalid_arguments
-  message: "--assignee needs a single-line name or @me"
+  message: "--assignee needs a single-line UTF-8 name or @me"
   details:
     flag: "--assignee"
   hint: null
+
+$ otman create --title Bad ÿ title --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "--title must be a single line of UTF-8 text",
+    "details": {
+      "flag": "--title"
+    },
+    "hint": null
+  }
+}
+
+$ otman create --title Bad assignee --assignee badÿname --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "--assignee needs a single-line UTF-8 name or @me",
+    "details": {
+      "flag": "--assignee"
+    },
+    "hint": null
+  }
+}
+
+$ otman create --title Bad actor --actor badÿactor --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "the actor is not valid UTF-8",
+    "details": {
+      "source": "flag"
+    },
+    "hint": null
+  }
+}
 
 $ otman create --title Elsewhere --project NOPE --json
 exit: 3
