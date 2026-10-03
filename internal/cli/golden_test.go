@@ -169,6 +169,12 @@ func writeTree(t *testing.T, w *bytes.Buffer, root string) {
 		if err != nil {
 			return err
 		}
+		if bytes.HasPrefix(b, []byte(sqliteHeader)) {
+			// The db's bytes are not stable or readable; that it is a
+			// real SQLite file is what a golden can usefully pin.
+			fmt.Fprintf(w, "-- %s --\n[sqlite database]\n", rel)
+			return nil
+		}
 		fmt.Fprintf(w, "-- %s --\n%s", rel, ensureNewline(string(b)))
 		return nil
 	})
@@ -176,6 +182,8 @@ func writeTree(t *testing.T, w *bytes.Buffer, root string) {
 		t.Fatal(err)
 	}
 }
+
+const sqliteHeader = "SQLite format 3\x00"
 
 func copyTree(t *testing.T, src, dst string) {
 	t.Helper()

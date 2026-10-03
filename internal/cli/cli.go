@@ -31,6 +31,10 @@ type Options struct {
 	Stderr io.Writer
 	Now    func() time.Time
 	IsTTY  bool // whether Stdout is a terminal
+
+	// LockTimeout bounds the wait for .otman/lock; zero means
+	// vault.DefaultLockTimeout. Tests shorten it.
+	LockTimeout time.Duration
 }
 
 // app is the state of one run, shared by every command.
@@ -114,6 +118,7 @@ func (a *app) newRoot() *cobra.Command {
 	root.Flags().BoolVarP(&a.version, "version", "v", false, "version for otman")
 
 	root.AddCommand(a.newConfigCmd())
+	root.AddCommand(a.newProjectCmd())
 	return root
 }
 
@@ -225,16 +230,43 @@ func (a *app) configPath() (string, error) {
 	return p, nil
 }
 
-// settings resolves the effective Vault, Project and actor, and returns the
-// config path it read and any warnings about that file.
-func (a *app) settings() (config.Settings, string, []output.Problem, error) {
+// resolved is the effective configuration for one run.
+type resolved struct {
+	config.Settings
+	ConfigPath  string // the user config file
+	PointerPath string // the nearest repo pointer; "" when there is none
+	Warnings    []output.Problem
+
+	pointerErr error // the repo pointer the Project depends on is unreadable
+}
+
+// project returns the selected Project, failing when it depends on a repo
+// pointer otman cannot read or names a malformed key.
+func (r resolved) project() (config.Value, error) {
+	if r.pointerErr != nil {
+		return config.Value{}, r.pointerErr
+	}
+	if r.Project.IsSet() {
+		if err := checkKey(r.Project.Value); err != nil {
+			err.(*Error).Details["source"] = string(r.Project.Source)
+			return config.Value{}, err
+		}
+	}
+	return r.Project, nil
+}
+
+// settings resolves the effective Vault, Project and actor. The repo
+// pointer is read only when no flag or environment variable already
+// selects the Project, so a broken pointer never blocks an override, and
+// it fails only the commands that use the Project.
+func (a *app) settings() (resolved, error) {
 	path, err := a.configPath()
 	if err != nil {
-		return config.Settings{}, "", nil, err
+		return resolved{}, err
 	}
 	file, err := config.Load(path)
 	if err != nil {
-		return config.Settings{}, "", nil, configLoadError(err)
+		return resolved{}, configLoadError(err)
 	}
 	flags := map[string]string{}
 	pf := a.root.PersistentFlags()
@@ -243,21 +275,42 @@ func (a *app) settings() (config.Settings, string, []output.Problem, error) {
 			flags[k.Name], _ = pf.GetString(k.Name)
 		}
 	}
-	s := config.Resolve(config.Inputs{Flags: flags, Env: a.env, File: file, Abs: a.abs})
-	return s, path, configWarnings(file, path), nil
+	ptrPath, err := config.FindPointer(a.opts.Dir)
+	if err != nil {
+		return resolved{}, ioError(err)
+	}
+	var ptr string
+	var ptrErr error
+	if ptrPath != "" && flags[config.Project.Name] == "" && a.env[config.Project.EnvVar] == "" {
+		if ptr, err = config.ReadPointer(ptrPath); err != nil {
+			ptrErr = pointerError(err, "")
+		}
+	}
+	s := config.Resolve(config.Inputs{Flags: flags, Env: a.env, Pointer: ptr, File: file, Abs: a.abs})
+	return resolved{s, path, ptrPath, configWarnings(file, path), ptrErr}, nil
+}
+
+// pointerError reports a repo pointer otman cannot read.
+func pointerError(err error, hint string) error {
+	var pe *config.ParseError
+	if !errors.As(err, &pe) {
+		return ioError(err)
+	}
+	if hint == "" {
+		hint = "fix " + pe.Path + " to hold project = \"KEY\", or run 'otman project link KEY --force'"
+	}
+	return invalid("invalid_pointer", "cannot read repo pointer: "+pe.Error(),
+		map[string]any{"path": pe.Path}, hint)
 }
 
 // configWarnings flags keys in the config file that otman ignores.
 func configWarnings(f config.File, path string) []output.Problem {
 	var ws []output.Problem
 	for _, k := range f.Unknown {
-		hint := "otman reads only " + strings.Join(config.KeyNames(), ", ") + "; remove or rename it in " + path
-		ws = append(ws, output.Problem{
-			Code:    "unknown_config_key",
-			Message: "ignoring unknown config key " + quoteArg(k),
-			Details: map[string]any{"key": k, "path": path},
-			Hint:    &hint,
-		})
+		ws = append(ws, output.Warning("unknown_config_key",
+			"ignoring unknown config key "+quoteArg(k),
+			map[string]any{"key": k, "path": path},
+			"otman reads only "+strings.Join(config.KeyNames(), ", ")+"; remove or rename it in "+path))
 	}
 	return ws
 }

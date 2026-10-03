@@ -9,7 +9,7 @@ The single Obsidian vault that otman manages; a folder of plain markdown files w
 _Avoid_: Workspace, repository, database
 
 **Project**:
-A named partition of the Vault with its own independent numbering sequence. A Project exists because its folder exists, and it is described by its Project note.
+A named partition of the Vault with its own independent numbering sequence. A Project exists because its folder exists, and it is described by its Project note. Its key, such as `OTM`, is an uppercase letter followed by up to 15 uppercase letters or digits.
 _Avoid_: Board, space, repo
 
 **Project note**:

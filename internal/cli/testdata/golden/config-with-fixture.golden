@@ -18,6 +18,7 @@ env: OTM_PROJECT=OTM
 exit: 0
 -- stdout --
 config_path: $WORK/config/otman/config.toml
+pointer_path: null
 vault:
   value: $WORK/vault
   source: config

@@ -1,0 +1,42 @@
+$ otman project view
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[no_project]: no Project selected
+hint: pass a KEY or --project, set OTM_PROJECT, run 'otman project link KEY', or 'otman config set project KEY'
+
+$ otman project view --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "no_project",
+    "message": "no Project selected",
+    "details": null,
+    "hint": "pass a KEY or --project, set OTM_PROJECT, run 'otman project link KEY', or 'otman config set project KEY'"
+  }
+}
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---

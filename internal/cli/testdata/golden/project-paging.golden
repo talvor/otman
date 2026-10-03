@@ -1,0 +1,182 @@
+$ otman project list --limit 2
+tty: true
+exit: 0
+-- stdout --
+KEY  NAME    PATH
+AAA  first   Projects/AAA
+BBB  second  Projects/BBB
+
+Showing 1-2 of 3; pass --offset 2 for more, or --all
+-- stderr --
+
+$ otman project list --limit 2 --offset 2 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [
+      {
+        "key": "CCC",
+        "name": "third",
+        "path": "Projects/CCC",
+        "note": "Projects/CCC/CCC.md"
+      }
+    ],
+    "total": 3,
+    "count": 1,
+    "has_more": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman project list --offset 5 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [],
+    "total": 3,
+    "count": 0,
+    "has_more": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman project list --limit 9223372036854775807 --offset 1 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [
+      {
+        "key": "BBB",
+        "name": "second",
+        "path": "Projects/BBB",
+        "note": "Projects/BBB/BBB.md"
+      },
+      {
+        "key": "CCC",
+        "name": "third",
+        "path": "Projects/CCC",
+        "note": "Projects/CCC/CCC.md"
+      }
+    ],
+    "total": 3,
+    "count": 2,
+    "has_more": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman project list --all --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [
+      {
+        "key": "AAA",
+        "name": "first",
+        "path": "Projects/AAA",
+        "note": "Projects/AAA/AAA.md"
+      },
+      {
+        "key": "BBB",
+        "name": "second",
+        "path": "Projects/BBB",
+        "note": "Projects/BBB/BBB.md"
+      },
+      {
+        "key": "CCC",
+        "name": "third",
+        "path": "Projects/CCC",
+        "note": "Projects/CCC/CCC.md"
+      }
+    ],
+    "total": 3,
+    "count": 3,
+    "has_more": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman project list --all --limit 1
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: conflicting_flags
+  message: "--all conflicts with --limit"
+  details:
+    flags[2]: "--all","--limit"
+  hint: pass either --all or --limit/--offset
+
+$ otman project list --limit 0
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_arguments
+  message: "--limit must be a positive integer"
+  details:
+    flag: "--limit"
+    value: 0
+  hint: null
+
+$ otman project list --offset -1 --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "--offset must be zero or more",
+    "details": {
+      "flag": "--offset",
+      "value": -1
+    },
+    "hint": null
+  }
+}
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/AAA/
+-- vault/Projects/AAA/AAA.md --
+---
+name: first
+kind: project
+---
+vault/Projects/BBB/
+-- vault/Projects/BBB/BBB.md --
+---
+name: second
+kind: project
+---
+vault/Projects/CCC/
+-- vault/Projects/CCC/CCC.md --
+---
+name: third
+kind: project
+---

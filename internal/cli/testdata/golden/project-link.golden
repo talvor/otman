@@ -1,0 +1,179 @@
+$ otman project link OTM
+tty: true
+exit: 0
+-- stdout --
+Linked $WORK/repo/.otman.toml to Project OTM
+-- stderr --
+
+$ otman project link OTM --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "project": "OTM",
+    "path": "$WORK/repo/.otman.toml",
+    "previous": null,
+    "changed": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman project link WEB --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "pointer_conflict",
+    "message": "$WORK/repo/.otman.toml already points to Project OTM",
+    "details": {
+      "current": "OTM",
+      "path": "$WORK/repo/.otman.toml",
+      "requested": "WEB"
+    },
+    "hint": "pass --force to point it at WEB instead"
+  }
+}
+
+$ otman project link WEB --force
+tty: true
+exit: 0
+-- stdout --
+Linked $WORK/repo/.otman.toml to Project WEB (was OTM)
+-- stderr --
+
+$ otman project link NOPE --force
+exit: 3
+-- stdout --
+-- stderr --
+error:
+  code: project_not_found
+  message: no Project NOPE in the Vault
+  details:
+    key: NOPE
+  hint: "run 'otman project list' to see the Projects, or 'otman project create NOPE --name NAME'"
+
+$ otman project link web
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_project_key
+  message: "invalid Project key \"web\""
+  details:
+    key: web
+  hint: "use an uppercase letter followed by up to 15 uppercase letters or digits, such as OTM"
+
+$ otman project link OTM --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "project": "OTM",
+    "path": "$WORK/plain/sub/.otman.toml",
+    "previous": null,
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman config show --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "config_path": "$WORK/config/otman/config.toml",
+    "pointer_path": "$WORK/repo/.otman.toml",
+    "vault": {
+      "value": "$WORK/vault",
+      "source": "config"
+    },
+    "actor": {
+      "value": null,
+      "source": null
+    },
+    "project": {
+      "value": "WEB",
+      "source": "pointer"
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman config show --vault /from/flag
+tty: true
+exit: 0
+-- stdout --
+KEY      VALUE       SOURCE
+vault    /from/flag  flag
+actor    -           unset
+project  WEB         pointer
+
+config file: $WORK/config/otman/config.toml
+repo pointer: $WORK/repo/.otman.toml
+-- stderr --
+
+$ otman project view --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "project": {
+      "key": "WEB",
+      "name": "otman website",
+      "path": "Projects/WEB",
+      "note": "Projects/WEB/WEB.md"
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+home/
+plain/
+plain/sub/
+-- plain/sub/.keep --
+-- plain/sub/.otman.toml --
+project = "OTM"
+repo/
+repo/.git/
+-- repo/.git/HEAD --
+ref: refs/heads/main
+-- repo/.otman.toml --
+project = "WEB"
+repo/sub/
+repo/sub/dir/
+-- repo/sub/dir/.keep --
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/WEB/
+-- vault/Projects/WEB/WEB.md --
+---
+name: otman website
+kind: project
+---

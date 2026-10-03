@@ -16,6 +16,7 @@ env: OTM_ACTOR=env-actor
 exit: 0
 -- stdout --
 config_path: $WORK/config/otman/config.toml
+pointer_path: null
 vault:
   value: /from/config
   source: config
@@ -45,6 +46,7 @@ tty: true
 exit: 0
 -- stdout --
 config_path: $WORK/config/otman/config.toml
+pointer_path: null
 vault:
   value: /from/config
   source: config
@@ -64,6 +66,7 @@ exit: 0
   "schema_version": 1,
   "data": {
     "config_path": "$WORK/config/otman/config.toml",
+    "pointer_path": null,
     "vault": {
       "value": "/from/config",
       "source": "config"

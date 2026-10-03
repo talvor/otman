@@ -22,6 +22,7 @@ exit: 0
   "schema_version": 1,
   "data": {
     "config_path": "$WORK/home/.config/otman/config.toml",
+    "pointer_path": null,
     "vault": {
       "value": null,
       "source": null

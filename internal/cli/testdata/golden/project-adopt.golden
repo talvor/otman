@@ -1,0 +1,149 @@
+$ otman project list --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [
+      {
+        "key": "BAD",
+        "name": null,
+        "path": "Projects/BAD",
+        "note": "Projects/BAD/BAD.md"
+      },
+      {
+        "key": "OTM",
+        "name": "otman",
+        "path": "Projects/OTM",
+        "note": "Projects/OTM/OTM.md"
+      },
+      {
+        "key": "WEB",
+        "name": null,
+        "path": "Projects/WEB",
+        "note": null
+      }
+    ],
+    "total": 3,
+    "count": 3,
+    "has_more": false
+  },
+  "warnings": [
+    {
+      "code": "ignored_project_folder",
+      "message": "ignoring Projects/notes: its name is not a Project key",
+      "details": {
+        "path": "Projects/notes"
+      },
+      "hint": "rename the folder to a Project key such as OTM (uppercase letters and digits)"
+    },
+    {
+      "code": "malformed_frontmatter",
+      "message": "cannot read the frontmatter of Projects/BAD/BAD.md: yaml: line 1: did not find expected ',' or ']'",
+      "details": {
+        "path": "Projects/BAD/BAD.md"
+      },
+      "hint": "fix the YAML between the --- lines in Projects/BAD/BAD.md"
+    },
+    {
+      "code": "missing_project_note",
+      "message": "Project WEB has no Project note Projects/WEB/WEB.md",
+      "details": {
+        "path": "Projects/WEB/WEB.md",
+        "project": "WEB"
+      },
+      "hint": "create Projects/WEB/WEB.md with frontmatter name: and kind: project"
+    }
+  ]
+}
+-- stderr --
+
+$ otman project list
+tty: true
+exit: 0
+-- stdout --
+KEY  NAME   PATH
+BAD  -      Projects/BAD
+OTM  otman  Projects/OTM
+WEB  -      Projects/WEB
+-- stderr --
+warning[ignored_project_folder]: ignoring Projects/notes: its name is not a Project key
+hint: rename the folder to a Project key such as OTM (uppercase letters and digits)
+warning[malformed_frontmatter]: cannot read the frontmatter of Projects/BAD/BAD.md: yaml: line 1: did not find expected ',' or ']'
+hint: fix the YAML between the --- lines in Projects/BAD/BAD.md
+warning[missing_project_note]: Project WEB has no Project note Projects/WEB/WEB.md
+hint: create Projects/WEB/WEB.md with frontmatter name: and kind: project
+
+$ otman project view WEB --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "project": {
+      "key": "WEB",
+      "name": null,
+      "path": "Projects/WEB",
+      "note": null
+    }
+  },
+  "warnings": [
+    {
+      "code": "missing_project_note",
+      "message": "Project WEB has no Project note Projects/WEB/WEB.md",
+      "details": {
+        "path": "Projects/WEB/WEB.md",
+        "project": "WEB"
+      },
+      "hint": "create Projects/WEB/WEB.md with frontmatter name: and kind: project"
+    }
+  ]
+}
+-- stderr --
+
+$ otman project view OTM --format axi
+exit: 0
+-- stdout --
+project:
+  key: OTM
+  name: otman
+  path: Projects/OTM
+  note: Projects/OTM/OTM.md
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/BAD/
+-- vault/Projects/BAD/BAD.md --
+---
+name: [unterminated
+---
+vault/Projects/OTM/
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+-- vault/Projects/README.md --
+not a Project
+vault/Projects/WEB/
+vault/Projects/WEB/Issues/
+-- vault/Projects/WEB/Issues/WEB-1 Landing page.md --
+---
+id: WEB-1
+---
+vault/Projects/notes/
+-- vault/Projects/notes/ideas.md --
+loose notes
