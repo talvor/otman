@@ -68,7 +68,7 @@ func page[T any](p *paging, all []T) collection[T] {
 		c.Items = append(c.Items, all...)
 		c.offset = 0
 	} else if p.offset < len(all) {
-		end := min(p.offset+p.limit, len(all))
+		end := p.offset + min(p.limit, len(all)-p.offset)
 		c.Items = append(c.Items, all[p.offset:end]...)
 		c.HasMore = end < len(all)
 	}

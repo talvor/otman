@@ -46,6 +46,34 @@ exit: 0
 }
 -- stderr --
 
+$ otman project list --limit 9223372036854775807 --offset 1 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [
+      {
+        "key": "BBB",
+        "name": "second",
+        "path": "Projects/BBB",
+        "note": "Projects/BBB/BBB.md"
+      },
+      {
+        "key": "CCC",
+        "name": "third",
+        "path": "Projects/CCC",
+        "note": "Projects/CCC/CCC.md"
+      }
+    ],
+    "total": 3,
+    "count": 2,
+    "has_more": false
+  },
+  "warnings": []
+}
+-- stderr --
+
 $ otman project list --all --json
 exit: 0
 -- stdout --

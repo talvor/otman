@@ -134,6 +134,7 @@ func TestProjectListPaging(t *testing.T) {
 			{args: []string{"project", "list", "--limit", "2"}, tty: true},
 			{args: []string{"project", "list", "--limit", "2", "--offset", "2", "--json"}},
 			{args: []string{"project", "list", "--offset", "5", "--json"}},
+			{args: []string{"project", "list", "--limit", "9223372036854775807", "--offset", "1", "--json"}},
 			{args: []string{"project", "list", "--all", "--json"}},
 			{args: []string{"project", "list", "--all", "--limit", "1"}},
 			{args: []string{"project", "list", "--limit", "0"}},
