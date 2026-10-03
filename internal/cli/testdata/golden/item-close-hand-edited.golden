@@ -218,6 +218,40 @@ exit: 0
 }
 -- stderr --
 
+$ otman close HND-11 --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "unsafe_write",
+    "message": "refusing to rewrite Projects/HND/Issues/HND-11 Repeated key.md: the frontmatter repeats the key \"status\"",
+    "details": {
+      "path": "Projects/HND/Issues/HND-11 Repeated key.md",
+      "reason": "the frontmatter repeats the key \"status\""
+    },
+    "hint": "make the frontmatter plain block-style YAML between --- lines, then retry"
+  }
+}
+
+$ otman reopen HND-11 --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "unsafe_write",
+    "message": "refusing to rewrite Projects/HND/Issues/HND-11 Repeated key.md: the frontmatter repeats the key \"status\"",
+    "details": {
+      "path": "Projects/HND/Issues/HND-11 Repeated key.md",
+      "reason": "the frontmatter repeats the key \"status\""
+    },
+    "hint": "make the frontmatter plain block-style YAML between --- lines, then retry"
+  }
+}
+
 == tree ==
 config/
 config/otman/
@@ -280,6 +314,18 @@ blocked_by: []
 labels: []
 assignee: null
 created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/HND/Issues/HND-11 Repeated key.md --
+---
+id: HND-11
+title: Repeated key
+kind: issue
+status: closed
+created: 2026-01-01T10:00:00Z
+status: open
 updated: 2026-01-01T11:00:00Z
 ---
 <!-- otman:comments -->

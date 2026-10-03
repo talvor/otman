@@ -74,6 +74,8 @@ func TestCloseHandEdited(t *testing.T) {
 			{args: []string{"close", "HND-7"}},
 			{args: []string{"reopen", "HND-8", "--json"}},
 			{args: []string{"close", "HND-9", "--json"}},
+			{args: []string{"close", "HND-11", "--json"}},
+			{args: []string{"reopen", "HND-11", "--json"}},
 		},
 	})
 }

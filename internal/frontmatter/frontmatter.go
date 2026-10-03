@@ -242,6 +242,9 @@ func parse(fm []byte) (parsed, error) {
 			(len(p.keys) > 0 && starts[k.Line-1] <= p.keys[len(p.keys)-1].offset) {
 			return parsed{}, unsafe("the frontmatter has a key that does not start its own line")
 		}
+		if p.index(k.Value) >= 0 {
+			return parsed{}, unsafe("the frontmatter repeats the key %q", k.Value)
+		}
 		p.keys = append(p.keys, key{name: k.Value, value: v, offset: starts[k.Line-1]})
 	}
 	return p, nil
