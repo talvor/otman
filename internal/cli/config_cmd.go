@@ -96,10 +96,11 @@ func newSetting(v config.Value) setting {
 }
 
 // configShowResult has one field per config key, in display order, after
-// config_path.
+// config_path and pointer_path.
 type configShowResult struct {
-	ConfigPath string
-	Settings   []setting // parallel to config.Keys
+	ConfigPath  string
+	PointerPath *string   // the nearest repo pointer, nil when there is none
+	Settings    []setting // parallel to config.Keys
 }
 
 func (r configShowResult) MarshalJSON() ([]byte, error) {
@@ -107,6 +108,11 @@ func (r configShowResult) MarshalJSON() ([]byte, error) {
 	b.WriteString(`{"config_path":`)
 	p, err := json.Marshal(r.ConfigPath)
 	if err != nil {
+		return nil, err
+	}
+	b.Write(p)
+	b.WriteString(`,"pointer_path":`)
+	if p, err = json.Marshal(r.PointerPath); err != nil {
 		return nil, err
 	}
 	b.Write(p)
@@ -135,18 +141,30 @@ func (r configShowResult) RenderHuman(w io.Writer) error {
 	if err := tw.Flush(); err != nil {
 		return err
 	}
-	_, err := fmt.Fprintf(w, "\nconfig file: %s\n", r.ConfigPath)
-	return err
+	if _, err := fmt.Fprintf(w, "\nconfig file: %s\n", r.ConfigPath); err != nil {
+		return err
+	}
+	if r.PointerPath != nil {
+		_, err := fmt.Fprintf(w, "repo pointer: %s\n", *r.PointerPath)
+		return err
+	}
+	return nil
 }
 
 func (a *app) configShow() error {
-	s, path, warnings, err := a.settings()
+	s, err := a.settings()
 	if err != nil {
 		return err
 	}
-	r := configShowResult{ConfigPath: path}
+	if _, err := s.project(); err != nil {
+		return err
+	}
+	r := configShowResult{ConfigPath: s.ConfigPath}
+	if s.PointerPath != "" {
+		r.PointerPath = &s.PointerPath
+	}
 	for _, k := range config.Keys {
 		r.Settings = append(r.Settings, newSetting(s.Get(k)))
 	}
-	return a.emit(r, warnings)
+	return a.emit(r, s.Warnings)
 }

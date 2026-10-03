@@ -11,6 +11,7 @@ import (
 	"sort"
 
 	"github.com/BurntSushi/toml"
+	"github.com/talvor/otman/internal/fsutil"
 )
 
 // Key is one user config key. The same name is its config file key and its
@@ -67,9 +68,10 @@ func KeyNames() []string {
 type Source string
 
 const (
-	FromFlag   Source = "flag"
-	FromEnv    Source = "env"
-	FromConfig Source = "config"
+	FromFlag    Source = "flag"
+	FromEnv     Source = "env"
+	FromPointer Source = "pointer" // the repo pointer, .otman.toml
+	FromConfig  Source = "config"
 )
 
 // File is the user config file's contents. Following ADR 0005, keys otman
@@ -160,7 +162,10 @@ func Set(path string, k Key, value string) (File, bool, error) {
 	if err != nil {
 		return f, false, err
 	}
-	return f, true, writeAtomic(path, data)
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return f, false, err
+	}
+	return f, true, fsutil.WriteFile(path, data)
 }
 
 // encode writes the known keys first, in display order, then everything
@@ -189,33 +194,6 @@ func encode(doc map[string]any) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func writeAtomic(path string, data []byte) error {
-	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return err
-	}
-	tmp, err := os.CreateTemp(dir, ".config-*.toml")
-	if err != nil {
-		return err
-	}
-	defer os.Remove(tmp.Name())
-	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
-		return err
-	}
-	if err := tmp.Sync(); err != nil {
-		tmp.Close()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	if err := os.Chmod(tmp.Name(), 0o644); err != nil {
-		return err
-	}
-	return os.Rename(tmp.Name(), path)
-}
-
 // Value is an effective setting and where it came from. A zero Value means
 // the setting is not configured anywhere.
 type Value struct {
@@ -238,14 +216,16 @@ func (s *Settings) Get(k Key) Value { return *k.field(s) }
 
 // Inputs are the layers Resolve merges, highest precedence first.
 type Inputs struct {
-	Flags map[string]string // explicitly passed flags, by key name
-	Env   map[string]string
-	File  File
-	Abs   func(string) string // makes a path key's value absolute; nil leaves it
+	Flags   map[string]string // explicitly passed flags, by key name
+	Env     map[string]string
+	Pointer string // the repo pointer's Project key; "" when there is none
+	File    File
+	Abs     func(string) string // makes a path key's value absolute; nil leaves it
 }
 
 // Resolve applies precedence for every key: flag > OTM_* environment >
-// user config. Empty values count as unset.
+// user config, with the repo pointer between environment and config for
+// the Project. Empty values count as unset.
 func Resolve(in Inputs) Settings {
 	var s Settings
 	for _, k := range Keys {
@@ -255,6 +235,8 @@ func Resolve(in Inputs) Settings {
 			*v = Value{in.Flags[k.Name], FromFlag}
 		case in.Env[k.EnvVar] != "":
 			*v = Value{in.Env[k.EnvVar], FromEnv}
+		case k.Name == Project.Name && in.Pointer != "":
+			*v = Value{in.Pointer, FromPointer}
 		case in.File.Get(k) != "":
 			*v = Value{in.File.Get(k), FromConfig}
 		}

@@ -1,0 +1,62 @@
+$ otman project list --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [
+      {
+        "key": "OTM",
+        "name": "otman",
+        "path": "Projects/OTM",
+        "note": "Projects/OTM/OTM.md"
+      }
+    ],
+    "total": 1,
+    "count": 1,
+    "has_more": false
+  },
+  "warnings": [
+    {
+      "code": "db_rebuilt",
+      "message": "rebuilt the per-device db from the markdown: quick_check failed: file is not a database (26)",
+      "details": {
+        "path": "$WORK/vault/.otman/otman.db",
+        "reason": "quick_check failed: file is not a database (26)"
+      },
+      "hint": "nothing to do; the db is a per-device cache rebuilt from the markdown"
+    }
+  ]
+}
+-- stderr --
+
+$ otman project list
+exit: 0
+-- stdout --
+items[1]{key,name,path,note}:
+  OTM,otman,Projects/OTM,Projects/OTM/OTM.md
+total: 1
+count: 1
+has_more: false
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---

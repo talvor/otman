@@ -1,0 +1,106 @@
+$ otman config show --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_pointer",
+    "message": "cannot read repo pointer: $WORK/repo/.otman.toml: toml: line 1 (last key \"project\"): unexpected EOF; expected value",
+    "details": {
+      "path": "$WORK/repo/.otman.toml"
+    },
+    "hint": "fix $WORK/repo/.otman.toml to hold project = \"KEY\", or run 'otman project link KEY --force'"
+  }
+}
+
+$ otman project view
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_pointer
+  message: "cannot read repo pointer: $WORK/other/.otman.toml: project must be a non-empty string"
+  details:
+    path: $WORK/other/.otman.toml
+  hint: "fix $WORK/other/.otman.toml to hold project = \"KEY\", or run 'otman project link KEY --force'"
+
+$ otman project view --json
+env: OTM_PROJECT=OTM
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "project": {
+      "key": "OTM",
+      "name": "otman",
+      "path": "Projects/OTM",
+      "note": "Projects/OTM/OTM.md"
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman project link OTM
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_pointer
+  message: "cannot read repo pointer: $WORK/repo/.otman.toml: toml: line 1 (last key \"project\"): unexpected EOF; expected value"
+  details:
+    path: $WORK/repo/.otman.toml
+  hint: "fix $WORK/repo/.otman.toml, or pass --force to replace it"
+
+$ otman project link OTM --force --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "project": "OTM",
+    "path": "$WORK/repo/.otman.toml",
+    "previous": null,
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+home/
+other/
+other/.git/
+-- other/.git/HEAD --
+ref: refs/heads/main
+-- other/.otman.toml --
+name = "OTM"
+other/sub/
+other/sub/dir/
+-- other/sub/dir/.keep --
+repo/
+repo/.git/
+-- repo/.git/HEAD --
+ref: refs/heads/main
+-- repo/.otman.toml --
+project = "OTM"
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---

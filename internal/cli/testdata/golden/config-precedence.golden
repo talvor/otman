@@ -5,6 +5,7 @@ exit: 0
   "schema_version": 1,
   "data": {
     "config_path": "$WORK/config/otman/config.toml",
+    "pointer_path": null,
     "vault": {
       "value": "/from/config",
       "source": "config"
@@ -30,6 +31,7 @@ exit: 0
   "schema_version": 1,
   "data": {
     "config_path": "$WORK/config/otman/config.toml",
+    "pointer_path": null,
     "vault": {
       "value": "/from/env",
       "source": "env"
@@ -55,6 +57,7 @@ exit: 0
   "schema_version": 1,
   "data": {
     "config_path": "$WORK/config/otman/config.toml",
+    "pointer_path": null,
     "vault": {
       "value": "/from/flag",
       "source": "flag"
@@ -80,6 +83,7 @@ exit: 0
   "schema_version": 1,
   "data": {
     "config_path": "$WORK/config/otman/config.toml",
+    "pointer_path": null,
     "vault": {
       "value": "/from/config",
       "source": "config"

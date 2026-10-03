@@ -1,0 +1,297 @@
+$ otman project create OTM --name otman
+tty: true
+exit: 0
+-- stdout --
+Created Project OTM (otman) in Projects/OTM
+-- stderr --
+
+$ otman project create OTM --name other --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "project_exists",
+    "message": "Project OTM already exists at Projects/OTM",
+    "details": {
+      "key": "OTM",
+      "path": "Projects/OTM"
+    },
+    "hint": "choose another key; otman never overwrites a Project"
+  }
+}
+
+$ otman project create web --name website
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_project_key
+  message: "invalid Project key \"web\""
+  details:
+    key: web
+  hint: "use an uppercase letter followed by up to 15 uppercase letters or digits, such as OTM"
+
+$ otman project create WEB
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[invalid_arguments]: --name is required and cannot be empty
+hint: pass the Project's display name with --name
+
+$ otman project create WEB --name two
+lines
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_arguments
+  message: "--name must be a single line"
+  details:
+    flag: "--name"
+  hint: null
+
+$ otman project create WEB --name Web site: v2 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "project": {
+      "key": "WEB",
+      "name": "Web site: v2",
+      "path": "Projects/WEB",
+      "note": "Projects/WEB/WEB.md"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman project list
+tty: true
+exit: 0
+-- stdout --
+KEY  NAME          PATH
+OTM  otman         Projects/OTM
+WEB  Web site: v2  Projects/WEB
+-- stderr --
+
+$ otman project list
+exit: 0
+-- stdout --
+items[2]{key,name,path,note}:
+  OTM,otman,Projects/OTM,Projects/OTM/OTM.md
+  WEB,"Web site: v2",Projects/WEB,Projects/WEB/WEB.md
+total: 2
+count: 2
+has_more: false
+-- stderr --
+
+$ otman project list --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [
+      {
+        "key": "OTM",
+        "name": "otman",
+        "path": "Projects/OTM",
+        "note": "Projects/OTM/OTM.md"
+      },
+      {
+        "key": "WEB",
+        "name": "Web site: v2",
+        "path": "Projects/WEB",
+        "note": "Projects/WEB/WEB.md"
+      }
+    ],
+    "total": 2,
+    "count": 2,
+    "has_more": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman project view OTM
+tty: true
+exit: 0
+-- stdout --
+key   OTM
+name  otman
+path  Projects/OTM
+note  Projects/OTM/OTM.md
+-- stderr --
+
+$ otman project view WEB
+exit: 0
+-- stdout --
+project:
+  key: WEB
+  name: "Web site: v2"
+  path: Projects/WEB
+  note: Projects/WEB/WEB.md
+-- stderr --
+
+$ otman project view WEB --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "project": {
+      "key": "WEB",
+      "name": "Web site: v2",
+      "path": "Projects/WEB",
+      "note": "Projects/WEB/WEB.md"
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman project view NOPE --json
+exit: 3
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "project_not_found",
+    "message": "no Project NOPE in the Vault",
+    "details": {
+      "key": "NOPE"
+    },
+    "hint": "run 'otman project list' to see the Projects, or 'otman project create NOPE --name NAME'"
+  }
+}
+
+$ otman project view nope
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_project_key
+  message: "invalid Project key \"nope\""
+  details:
+    key: nope
+  hint: "use an uppercase letter followed by up to 15 uppercase letters or digits, such as OTM"
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+-- vault/Projects/OTM/OTM Board.base --
+filters:
+  and:
+    - file.inFolder("Projects/OTM")
+    - file.ext == "md"
+    - 'kind != "project"'
+    - not:
+        - file.inFolder("Projects/OTM/Templates")
+views:
+  - type: table
+    name: Board
+    groupBy:
+      property: status
+      direction: ASC
+    order:
+      - file.name
+      - kind
+      - labels
+      - assignee
+      - parent
+      - blocked_by
+-- vault/Projects/OTM/OTM Triage.base --
+filters:
+  and:
+    - file.inFolder("Projects/OTM")
+    - file.ext == "md"
+    - 'kind != "project"'
+    - not:
+        - file.inFolder("Projects/OTM/Templates")
+views:
+  - type: table
+    name: Triage
+    filters:
+      and:
+        - 'status == "open"'
+    groupBy:
+      property: labels
+      direction: ASC
+    order:
+      - file.name
+      - kind
+      - labels
+      - assignee
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/WEB/
+-- vault/Projects/WEB/WEB Board.base --
+filters:
+  and:
+    - file.inFolder("Projects/WEB")
+    - file.ext == "md"
+    - 'kind != "project"'
+    - not:
+        - file.inFolder("Projects/WEB/Templates")
+views:
+  - type: table
+    name: Board
+    groupBy:
+      property: status
+      direction: ASC
+    order:
+      - file.name
+      - kind
+      - labels
+      - assignee
+      - parent
+      - blocked_by
+-- vault/Projects/WEB/WEB Triage.base --
+filters:
+  and:
+    - file.inFolder("Projects/WEB")
+    - file.ext == "md"
+    - 'kind != "project"'
+    - not:
+        - file.inFolder("Projects/WEB/Templates")
+views:
+  - type: table
+    name: Triage
+    filters:
+      and:
+        - 'status == "open"'
+    groupBy:
+      property: labels
+      direction: ASC
+    order:
+      - file.name
+      - kind
+      - labels
+      - assignee
+-- vault/Projects/WEB/WEB.md --
+---
+name: 'Web site: v2'
+kind: project
+---

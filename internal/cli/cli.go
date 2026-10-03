@@ -114,6 +114,7 @@ func (a *app) newRoot() *cobra.Command {
 	root.Flags().BoolVarP(&a.version, "version", "v", false, "version for otman")
 
 	root.AddCommand(a.newConfigCmd())
+	root.AddCommand(a.newProjectCmd())
 	return root
 }
 
@@ -225,16 +226,34 @@ func (a *app) configPath() (string, error) {
 	return p, nil
 }
 
-// settings resolves the effective Vault, Project and actor, and returns the
-// config path it read and any warnings about that file.
-func (a *app) settings() (config.Settings, string, []output.Problem, error) {
+// resolved is the effective configuration for one run.
+type resolved struct {
+	config.Settings
+	ConfigPath  string // the user config file
+	PointerPath string // the nearest repo pointer; "" when there is none
+	Warnings    []output.Problem
+
+	pointerErr error // the repo pointer the Project depends on is unreadable
+}
+
+// project returns the selected Project, failing when it depends on a repo
+// pointer otman cannot read.
+func (r resolved) project() (config.Value, error) {
+	return r.Project, r.pointerErr
+}
+
+// settings resolves the effective Vault, Project and actor. The repo
+// pointer is read only when no flag or environment variable already
+// selects the Project, so a broken pointer never blocks an override, and
+// it fails only the commands that use the Project.
+func (a *app) settings() (resolved, error) {
 	path, err := a.configPath()
 	if err != nil {
-		return config.Settings{}, "", nil, err
+		return resolved{}, err
 	}
 	file, err := config.Load(path)
 	if err != nil {
-		return config.Settings{}, "", nil, configLoadError(err)
+		return resolved{}, configLoadError(err)
 	}
 	flags := map[string]string{}
 	pf := a.root.PersistentFlags()
@@ -243,8 +262,32 @@ func (a *app) settings() (config.Settings, string, []output.Problem, error) {
 			flags[k.Name], _ = pf.GetString(k.Name)
 		}
 	}
-	s := config.Resolve(config.Inputs{Flags: flags, Env: a.env, File: file, Abs: a.abs})
-	return s, path, configWarnings(file, path), nil
+	ptrPath, err := config.FindPointer(a.opts.Dir)
+	if err != nil {
+		return resolved{}, ioError(err)
+	}
+	var ptr string
+	var ptrErr error
+	if ptrPath != "" && flags[config.Project.Name] == "" && a.env[config.Project.EnvVar] == "" {
+		if ptr, err = config.ReadPointer(ptrPath); err != nil {
+			ptrErr = pointerError(err, "")
+		}
+	}
+	s := config.Resolve(config.Inputs{Flags: flags, Env: a.env, Pointer: ptr, File: file, Abs: a.abs})
+	return resolved{s, path, ptrPath, configWarnings(file, path), ptrErr}, nil
+}
+
+// pointerError reports a repo pointer otman cannot read.
+func pointerError(err error, hint string) error {
+	var pe *config.ParseError
+	if !errors.As(err, &pe) {
+		return ioError(err)
+	}
+	if hint == "" {
+		hint = "fix " + pe.Path + " to hold project = \"KEY\", or run 'otman project link KEY --force'"
+	}
+	return invalid("invalid_pointer", "cannot read repo pointer: "+pe.Error(),
+		map[string]any{"path": pe.Path}, hint)
 }
 
 // configWarnings flags keys in the config file that otman ignores.

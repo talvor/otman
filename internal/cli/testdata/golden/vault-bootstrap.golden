@@ -1,0 +1,72 @@
+$ otman project list --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "no_vault",
+    "message": "no Vault configured",
+    "details": null,
+    "hint": "run 'otman config set vault PATH', or pass --vault or set OTM_VAULT"
+  }
+}
+
+$ otman project list --vault $WORK/missing --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "vault_not_found",
+    "message": "Vault directory $WORK/missing does not exist",
+    "details": {
+      "path": "$WORK/missing",
+      "source": "flag"
+    },
+    "hint": "create the directory, or point otman at your Vault with 'otman config set vault PATH'"
+  }
+}
+
+$ otman project list --vault $WORK/home/.bashrc
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[vault_not_directory]: Vault path $WORK/home/.bashrc is not a directory
+hint: point otman at your Vault directory with 'otman config set vault PATH'
+
+$ otman project list --vault $WORK/vault
+tty: true
+exit: 0
+-- stdout --
+No Projects in the Vault
+-- stderr --
+
+$ otman project list --vault $WORK/vault --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [],
+    "total": 0,
+    "count": 0,
+    "has_more": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+home/
+-- home/.bashrc --
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]

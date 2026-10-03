@@ -10,6 +10,7 @@ Usage:
 Available Commands:
   config      Show or change user config
   help        Help about any command
+  project     Create, list, view and link Projects
 
 Flags:
       --actor string     actor name (overrides OTM_ACTOR and config)

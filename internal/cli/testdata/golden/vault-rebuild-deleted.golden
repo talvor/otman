@@ -1,0 +1,42 @@
+$ otman project list --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [
+      {
+        "key": "OTM",
+        "name": "otman",
+        "path": "Projects/OTM",
+        "note": "Projects/OTM/OTM.md"
+      }
+    ],
+    "total": 1,
+    "count": 1,
+    "has_more": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---

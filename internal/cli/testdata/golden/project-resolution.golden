@@ -1,0 +1,192 @@
+$ otman config show --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "config_path": "$WORK/config/otman/config.toml",
+    "pointer_path": "$WORK/repo/.otman.toml",
+    "vault": {
+      "value": "$WORK/vault",
+      "source": "config"
+    },
+    "actor": {
+      "value": null,
+      "source": null
+    },
+    "project": {
+      "value": "WEB",
+      "source": "pointer"
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman project view --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "project": {
+      "key": "WEB",
+      "name": "otman website",
+      "path": "Projects/WEB",
+      "note": "Projects/WEB/WEB.md"
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman project view --json
+env: OTM_PROJECT=OTM
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "project": {
+      "key": "OTM",
+      "name": "otman",
+      "path": "Projects/OTM",
+      "note": "Projects/OTM/OTM.md"
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman project view --json --project WEB
+env: OTM_PROJECT=OTM
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "project": {
+      "key": "WEB",
+      "name": "otman website",
+      "path": "Projects/WEB",
+      "note": "Projects/WEB/WEB.md"
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman config show --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "config_path": "$WORK/config/otman/config.toml",
+    "pointer_path": null,
+    "vault": {
+      "value": "$WORK/vault",
+      "source": "config"
+    },
+    "actor": {
+      "value": null,
+      "source": null
+    },
+    "project": {
+      "value": "OTM",
+      "source": "config"
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman project view --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "project": {
+      "key": "OTM",
+      "name": "otman",
+      "path": "Projects/OTM",
+      "note": "Projects/OTM/OTM.md"
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman project view --json --project NOPE
+exit: 3
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "project_not_found",
+    "message": "no Project NOPE in the Vault",
+    "details": {
+      "key": "NOPE",
+      "source": "flag"
+    },
+    "hint": "run 'otman project list' to see the Projects, or 'otman project create NOPE --name NAME'"
+  }
+}
+
+$ otman project view
+env: OTM_PROJECT=lower
+exit: 3
+-- stdout --
+-- stderr --
+error:
+  code: project_not_found
+  message: no Project lower in the Vault
+  details:
+    key: lower
+    source: env
+  hint: "run 'otman project list' to see the Projects, or 'otman project create lower --name NAME'"
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+outer/
+-- outer/.otman.toml --
+project = "WEB"
+outer/inner/
+outer/inner/.git/
+-- outer/inner/.git/HEAD --
+ref: refs/heads/main
+repo/
+repo/.git/
+-- repo/.git/HEAD --
+ref: refs/heads/main
+-- repo/.otman.toml --
+project = "WEB"
+repo/sub/
+-- repo/sub/.keep --
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/WEB/
+-- vault/Projects/WEB/WEB.md --
+---
+name: otman website
+kind: project
+---
