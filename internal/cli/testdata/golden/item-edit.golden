@@ -1,0 +1,379 @@
+$ otman edit OTM-1 --kind spec
+tty: true
+exit: 0
+-- stdout --
+Edited OTM-1 · Handle sync collisions
+Projects/OTM/Specs/OTM-1 Handle sync collisions.md
+-- stderr --
+
+$ otman edit OTM-1 --kind spec --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-1",
+      "title": "Handle sync collisions",
+      "kind": "spec",
+      "status": "open",
+      "labels": [],
+      "assignee": "agent-b",
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Specs/OTM-1 Handle sync collisions.md",
+      "rev": "ca21435e2726"
+    },
+    "changed": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman edit OTM-1 --body A new body.
+
+With two paragraphs. --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-1",
+      "title": "Handle sync collisions",
+      "kind": "spec",
+      "status": "open",
+      "labels": [],
+      "assignee": "agent-b",
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Specs/OTM-1 Handle sync collisions.md",
+      "rev": "d48dd525a0e5"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman edit OTM-1 --body A new body.
+
+With two paragraphs.
+tty: true
+exit: 0
+-- stdout --
+OTM-1 · Handle sync collisions is unchanged
+-- stderr --
+
+$ otman edit OTM-1 --body-file body.md
+exit: 0
+-- stdout --
+item:
+  id: OTM-1
+  title: Handle sync collisions
+  kind: spec
+  status: open
+  labels[0]:
+  assignee: agent-b
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Specs/OTM-1 Handle sync collisions.md
+  rev: 352c6e042859
+changed: true
+-- stderr --
+
+$ otman edit OTM-1 --body-file - --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-1",
+      "title": "Handle sync collisions",
+      "kind": "spec",
+      "status": "open",
+      "labels": [],
+      "assignee": "agent-b",
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Specs/OTM-1 Handle sync collisions.md",
+      "rev": "f17defdeb309"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman edit OTM-1 --clear-body --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-1",
+      "title": "Handle sync collisions",
+      "kind": "spec",
+      "status": "open",
+      "labels": [],
+      "assignee": "agent-b",
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Specs/OTM-1 Handle sync collisions.md",
+      "rev": "87e203b227c5"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman edit OTM-1 --clear-body --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-1",
+      "title": "Handle sync collisions",
+      "kind": "spec",
+      "status": "open",
+      "labels": [],
+      "assignee": "agent-b",
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Specs/OTM-1 Handle sync collisions.md",
+      "rev": "87e203b227c5"
+    },
+    "changed": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman edit OTM-1 --assignee @me --json
+env: OTM_ACTOR=talvor
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-1",
+      "title": "Handle sync collisions",
+      "kind": "spec",
+      "status": "open",
+      "labels": [],
+      "assignee": "talvor",
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Specs/OTM-1 Handle sync collisions.md",
+      "rev": "153881e25668"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman edit OTM-1 --assignee talvor
+exit: 0
+-- stdout --
+item:
+  id: OTM-1
+  title: Handle sync collisions
+  kind: spec
+  status: open
+  labels[0]:
+  assignee: talvor
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Specs/OTM-1 Handle sync collisions.md
+  rev: "153881e25668"
+changed: false
+-- stderr --
+
+$ otman edit OTM-1 --clear-assignee --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-1",
+      "title": "Handle sync collisions",
+      "kind": "spec",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Specs/OTM-1 Handle sync collisions.md",
+      "rev": "c17236c81286"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman edit OTM-2 --assignee agent-c --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-2",
+      "title": "Item file format: frontmatter and body",
+      "kind": "spec",
+      "status": "closed",
+      "labels": [],
+      "assignee": "agent-c",
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md",
+      "rev": "36760410ff81"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman edit OTM-2 --clear-assignee
+tty: true
+exit: 0
+-- stdout --
+Edited OTM-2 · Item file format: frontmatter and body
+Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md
+-- stderr --
+
+$ otman edit WEB-1 --kind issue --body Moved and rewritten. --assignee agent-a --if-rev 500e0146a3ff --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "WEB-1",
+      "title": "Landing page",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": "agent-a",
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/WEB/Issues/WEB-1 Landing page.md",
+      "rev": "b4ccda14fc88"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+-- body.md --
+Body from a file.
+Second line.
+
+
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/OTM/Specs/
+-- vault/Projects/OTM/Specs/OTM-1 Handle sync collisions.md --
+---
+id: OTM-1
+title: Handle sync collisions
+aliases:
+  - Handle sync collisions
+kind: spec
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+Reproduced with a copied note.
+
+### 2026-01-01T11:00:00Z · agent-b
+Fixed in the scanner.
+
+### A heading inside the comment
+stays part of it.
+-- vault/Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md --
+---
+id: OTM-2
+title: 'Item file format: frontmatter and body'
+aliases:
+  - 'Item file format: frontmatter and body'
+kind: spec
+status: closed
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T09:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/WEB/
+vault/Projects/WEB/Issues/
+-- vault/Projects/WEB/Issues/WEB-1 Landing page.md --
+---
+id: WEB-1
+title: Landing page
+aliases:
+  - Landing page
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: agent-a
+created: 2026-01-01T08:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+Moved and rewritten.
+
+<!-- otman:comments -->
+## Comments
+vault/Projects/WEB/PRDs/
+-- vault/Projects/WEB/WEB.md --
+---
+name: otman website
+kind: project
+---

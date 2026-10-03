@@ -74,14 +74,25 @@ func (a *app) setStatus(c statusCommand, ref string) error {
 }
 
 // writeError reports a failed rewrite of Item file f: unsafe_write when
-// otman refused to splice it, an I/O error otherwise.
+// otman refused to splice it or to guess where its body ends,
+// move_target_exists when a move would replace another file, an I/O
+// error otherwise.
 func writeError(f vault.ItemFile, err error) error {
 	var unsafe *frontmatter.UnsafeError
-	if !errors.As(err, &unsafe) {
+	var exists *vault.TargetExistsError
+	switch {
+	case errors.As(err, &unsafe):
+		return unsafeWrite(f.Path, unsafe.Reason,
+			"make the frontmatter plain block-style YAML between --- lines, then retry")
+	case errors.Is(err, item.ErrNoMarker):
+		return unsafeWrite(f.Path, err.Error(), "put the line "+item.CommentsMarker+
+			" back just before "+item.CommentsHeading+", then retry")
+	case errors.As(err, &exists):
+		return &Error{Exit: ExitConflict, Code: "move_target_exists",
+			Message: "cannot move " + f.Path + ": " + exists.Error(),
+			Details: map[string]any{"path": f.Path, "target": exists.Target},
+			Hint:    "move or rename the file in the way, then retry"}
+	default:
 		return ioError(err)
 	}
-	return &Error{Exit: ExitConflict, Code: "unsafe_write",
-		Message: "refusing to rewrite " + f.Path + ": " + unsafe.Reason,
-		Details: map[string]any{"path": f.Path, "reason": unsafe.Reason},
-		Hint:    "make the frontmatter plain block-style YAML between --- lines, then retry"}
 }
