@@ -1,0 +1,296 @@
+$ otman view DUP-1
+tty: true
+exit: 4
+-- stdout --
+-- stderr --
+error[ambiguous_reference]: DUP-1 matches 2 Items: Projects/DUP/Issues/DUP-1 First take.md, Projects/DUP/Issues/DUP-1 Second take.md
+hint: name one by its Vault-relative path, or run 'otman doctor --fix' to renumber the duplicate
+
+$ otman view 1 --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "ambiguous_reference",
+    "message": "1 matches 2 Items: Projects/DUP/Issues/DUP-1 First take.md, Projects/DUP/Issues/DUP-1 Second take.md",
+    "details": {
+      "paths": [
+        "Projects/DUP/Issues/DUP-1 First take.md",
+        "Projects/DUP/Issues/DUP-1 Second take.md"
+      ],
+      "ref": "1"
+    },
+    "hint": "name one by its Vault-relative path, or run 'otman doctor --fix' to renumber the duplicate"
+  }
+}
+
+$ otman edit DUP-2 --add-label bug
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: ambiguous_reference
+  message: "DUP-2 matches 2 Items: Projects/DUP/Issues/DUP-2 Tie a.md, Projects/DUP/Specs/DUP-2 Tie b.md"
+  details:
+    paths[2]: Projects/DUP/Issues/DUP-2 Tie a.md,Projects/DUP/Specs/DUP-2 Tie b.md
+    ref: DUP-2
+  hint: "name one by its Vault-relative path, or run 'otman doctor --fix' to renumber the duplicate"
+
+$ otman block DUP-5 --by DUP-1
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: ambiguous_reference
+  message: "DUP-1 matches 2 Items: Projects/DUP/Issues/DUP-1 First take.md, Projects/DUP/Issues/DUP-1 Second take.md"
+  details:
+    paths[2]: Projects/DUP/Issues/DUP-1 First take.md,Projects/DUP/Issues/DUP-1 Second take.md
+    ref: DUP-1
+  hint: "name one by its Vault-relative path, or run 'otman doctor --fix' to renumber the duplicate"
+
+$ otman view DUP-1 First take.md --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "DUP-1",
+      "title": "First take",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/DUP/Issues/DUP-1 First take.md",
+      "rev": "e3aca2a300f1",
+      "author": null,
+      "body": "Made on the laptop, later.",
+      "created": "2026-01-01T10:00:00Z",
+      "updated": "2026-01-01T10:00:00Z",
+      "comments": [],
+      "children": [
+        {
+          "id": "DUP-3",
+          "path": "Projects/DUP/Issues/DUP-3 Links.md",
+          "resolved": true
+        }
+      ],
+      "blocks": []
+    }
+  },
+  "warnings": [
+    {
+      "code": "duplicate_number",
+      "message": "DUP-1 is the number of 2 Items: Projects/DUP/Issues/DUP-1 First take.md, Projects/DUP/Issues/DUP-1 Second take.md",
+      "details": {
+        "id": "DUP-1",
+        "paths": [
+          "Projects/DUP/Issues/DUP-1 First take.md",
+          "Projects/DUP/Issues/DUP-1 Second take.md"
+        ]
+      },
+      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+    },
+    {
+      "code": "duplicate_number",
+      "message": "DUP-2 is the number of 2 Items: Projects/DUP/Issues/DUP-2 Tie a.md, Projects/DUP/Specs/DUP-2 Tie b.md",
+      "details": {
+        "id": "DUP-2",
+        "paths": [
+          "Projects/DUP/Issues/DUP-2 Tie a.md",
+          "Projects/DUP/Specs/DUP-2 Tie b.md"
+        ]
+      },
+      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+    }
+  ]
+}
+-- stderr --
+
+$ otman view Projects/DUP/Specs/DUP-2 Tie b.md
+exit: 0
+-- stdout --
+item:
+  id: DUP-2
+  title: Tie b
+  kind: spec
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/DUP/Specs/DUP-2 Tie b.md
+  rev: "0967e6341926"
+  author: null
+  body: ""
+  created: "2026-01-01T10:00:00Z"
+  updated: "2026-01-01T10:00:00Z"
+  children[0]:
+  blocks[1]{id,path,resolved}:
+    DUP-3,Projects/DUP/Issues/DUP-3 Links.md,true
+truncated: false
+-- stderr --
+warning:
+  code: duplicate_number
+  message: "DUP-1 is the number of 2 Items: Projects/DUP/Issues/DUP-1 First take.md, Projects/DUP/Issues/DUP-1 Second take.md"
+  details:
+    id: DUP-1
+    paths[2]: Projects/DUP/Issues/DUP-1 First take.md,Projects/DUP/Issues/DUP-1 Second take.md
+  hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
+warning:
+  code: duplicate_number
+  message: "DUP-2 is the number of 2 Items: Projects/DUP/Issues/DUP-2 Tie a.md, Projects/DUP/Specs/DUP-2 Tie b.md"
+  details:
+    id: DUP-2
+    paths[2]: Projects/DUP/Issues/DUP-2 Tie a.md,Projects/DUP/Specs/DUP-2 Tie b.md
+  hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
+
+$ otman claim DUP-1 Second take.md
+exit: 0
+-- stdout --
+item:
+  id: DUP-1
+  title: Second take
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: talvor
+  parent: null
+  blocked_by[0]:
+  path: Projects/DUP/Issues/DUP-1 Second take.md
+  rev: 6f7c1f4116e2
+changed: true
+-- stderr --
+warning:
+  code: duplicate_number
+  message: "DUP-1 is the number of 2 Items: Projects/DUP/Issues/DUP-1 First take.md, Projects/DUP/Issues/DUP-1 Second take.md"
+  details:
+    id: DUP-1
+    paths[2]: Projects/DUP/Issues/DUP-1 First take.md,Projects/DUP/Issues/DUP-1 Second take.md
+  hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
+warning:
+  code: duplicate_number
+  message: "DUP-2 is the number of 2 Items: Projects/DUP/Issues/DUP-2 Tie a.md, Projects/DUP/Specs/DUP-2 Tie b.md"
+  details:
+    id: DUP-2
+    paths[2]: Projects/DUP/Issues/DUP-2 Tie a.md,Projects/DUP/Specs/DUP-2 Tie b.md
+  hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "DUP"
+actor = "talvor"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Notes/
+-- vault/Notes/Daily.md --
+Daily note: see [[DUP-2 Tie b#Heading]] and [[DUP-2 Tie a]].
+vault/Projects/
+vault/Projects/DUP/
+-- vault/Projects/DUP/DUP.md --
+---
+name: Duplicates
+kind: project
+---
+vault/Projects/DUP/Issues/
+-- vault/Projects/DUP/Issues/DUP-1 First take.md --
+---
+id: DUP-1
+title: First take
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+Made on the laptop, later.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DUP/Issues/DUP-1 Second take.md --
+---
+id: DUP-1
+title: Second take
+kind: issue
+status: open
+labels: []
+assignee: talvor
+created: 2026-01-01T09:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+Made on the desktop, earlier.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DUP/Issues/DUP-2 Tie a.md --
+---
+id: DUP-2
+title: Tie a
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DUP/Issues/DUP-3 Links.md --
+---
+id: DUP-3
+title: Links
+kind: issue
+status: open
+parent: "[[DUP-1 First take]]"
+blocked_by:
+  - "[[DUP-2 Tie b]]"
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+Follows [[DUP-1 First take|the first take]] and [[DUP-1 Second take]].
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DUP/Issues/DUP-5 Later.md --
+---
+id: DUP-5
+title: Later
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/DUP/Specs/
+-- vault/Projects/DUP/Specs/DUP-2 Tie b.md --
+---
+id: DUP-2
+title: Tie b
+kind: spec
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments

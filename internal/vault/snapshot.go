@@ -106,16 +106,15 @@ func (v *Vault) recordSnapshot(from, to string, prev, data []byte) error {
 	})
 }
 
-// itemPath reads the Vault-relative path p as an Item file's: under
-// Projects/<KEY>/, outside Templates/, with the <KEY>-<n> prefix.
+// itemPath reads the Vault-relative path p as an Item file's: under a
+// Project folder Projects/<FOLDER>/, outside its Templates/, with a
+// <KEY>-<n> prefix. The prefix names the Item's Project, which a misplaced
+// file's folder does not.
 func itemPath(p string) (key string, n int, ok bool) {
 	parts := strings.Split(p, "/")
 	if len(parts) < 3 || parts[0] != ProjectsDir || !ValidKey(parts[1]) || parts[2] == TemplatesDir {
 		return "", 0, false
 	}
 	key, n, _, ok = item.ParseFilename(parts[len(parts)-1])
-	if !ok || key != parts[1] {
-		return "", 0, false
-	}
-	return key, n, true
+	return key, n, ok
 }

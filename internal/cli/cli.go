@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/talvor/otman/internal/config"
 	"github.com/talvor/otman/internal/output"
+	"github.com/talvor/otman/internal/vault"
 )
 
 // Version is the otman version, overridden at build time with
@@ -53,6 +54,9 @@ type app struct {
 	root           *cobra.Command
 	formatResolved bool // flags were parsed and the format validated
 	out            output.Format
+
+	// vault is the Vault withVault holds open, or nil.
+	vault *vault.Vault
 }
 
 // Run executes one otman command and returns its exit code.
@@ -237,8 +241,17 @@ func (a *app) prescanFormat() output.Format {
 	return f
 }
 
-// emit writes a successful result in the selected format.
+// emit writes a successful result in the selected format. Under
+// withVault, it warns about the duplicate numbers of each Project whose
+// Items the command read.
 func (a *app) emit(data output.HumanRenderer, warnings []output.Problem) error {
+	if a.vault != nil {
+		dups, err := duplicateWarnings(a.vault)
+		if err != nil {
+			return ioError(err)
+		}
+		warnings = append(warnings, dups...)
+	}
 	if err := output.Success(a.out, a.opts.Stdout, a.opts.Stderr, data, warnings); err != nil {
 		return ioError(err)
 	}

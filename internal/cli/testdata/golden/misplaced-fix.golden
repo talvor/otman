@@ -1,0 +1,234 @@
+$ otman doctor --all-projects
+tty: true
+exit: 4
+-- stdout --
+misplaced_item Projects/AWY/Issues/ZZZ-1 Unknown.md: ZZZ-1 is in Projects/AWY/Issues, a folder of Project AWY, but there is no Project ZZZ (fix: none)
+misplaced_item Projects/AWY/Issues/HOM-1 Wandered off.md: HOM-1 is in Projects/AWY/Issues, a folder of Project AWY, so it is read as an Item of Project HOM (fix: auto)
+duplicate_number Projects/AWY/Specs/HOM-2 Collides.md: HOM-2 is also the number of Projects/HOM/Specs/HOM-2 Stays.md, which keeps it as the Item created earlier (fix: auto)
+misplaced_item Projects/AWY/Specs/HOM-2 Collides.md: HOM-2 is in Projects/AWY/Specs, a folder of Project AWY, so it is read as an Item of Project HOM (fix: auto)
+misplaced_item Projects/AWY/Issues/HOM-3 Same name.md: HOM-3 is in Projects/AWY/Issues, a folder of Project AWY, so it is read as an Item of Project HOM (fix: auto)
+duplicate_number Projects/HOM/Issues/HOM-3 Same name.md: HOM-3 is also the number of Projects/AWY/Issues/HOM-3 Same name.md, which keeps it as the Item created earlier (fix: auto)
+missing_key Projects/AWY/Issues/HOM-7 No kind.md: HOM-7 has no kind, so it reads as "issue" from its folder (fix: auto)
+misplaced_item Projects/AWY/Issues/HOM-7 No kind.md: HOM-7 is in Projects/AWY/Issues, a folder of Project AWY, so it is read as an Item of Project HOM (fix: auto)
+-- stderr --
+
+$ otman doctor --project AWY --json
+exit: 4
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "findings": [
+      {
+        "code": "misplaced_item",
+        "path": "Projects/AWY/Issues/ZZZ-1 Unknown.md",
+        "message": "ZZZ-1 is in Projects/AWY/Issues, a folder of Project AWY, but there is no Project ZZZ",
+        "fix": "none"
+      }
+    ],
+    "fixed": []
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman doctor --all-projects --fix
+tty: true
+exit: 4
+-- stdout --
+fixed duplicate_number Projects/AWY/Specs/HOM-2 Collides.md: HOM-2 → HOM-8
+fixed duplicate_number Projects/HOM/Issues/HOM-3 Same name.md: HOM-3 → HOM-9
+fixed misplaced_item Projects/AWY/Issues/HOM-1 Wandered off.md: "Projects/AWY/Issues" → "Projects/HOM/Issues"
+fixed misplaced_item Projects/AWY/Issues/HOM-3 Same name.md: "Projects/AWY/Issues" → "Projects/HOM/Issues"
+fixed missing_key Projects/AWY/Issues/HOM-7 No kind.md: (missing) → "issue"
+fixed misplaced_item Projects/AWY/Issues/HOM-7 No kind.md: "Projects/AWY/Issues" → "Projects/HOM/Issues"
+fixed misplaced_item Projects/AWY/Specs/HOM-8 Collides.md: "Projects/AWY/Specs" → "Projects/HOM/Specs"
+misplaced_item Projects/AWY/Issues/ZZZ-1 Unknown.md: ZZZ-1 is in Projects/AWY/Issues, a folder of Project AWY, but there is no Project ZZZ (fix: none)
+-- stderr --
+
+$ otman doctor --all-projects --json
+exit: 4
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "findings": [
+      {
+        "code": "misplaced_item",
+        "path": "Projects/AWY/Issues/ZZZ-1 Unknown.md",
+        "message": "ZZZ-1 is in Projects/AWY/Issues, a folder of Project AWY, but there is no Project ZZZ",
+        "fix": "none"
+      }
+    ],
+    "fixed": []
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "HOM"
+actor = "talvor"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/AWY/
+-- vault/Projects/AWY/AWY.md --
+---
+name: Away
+kind: project
+---
+vault/Projects/AWY/Issues/
+-- vault/Projects/AWY/Issues/AWY-1 Native.md --
+---
+id: AWY-1
+title: Native
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+Found [[Projects/HOM/Issues/HOM-1 Wandered off]] in our folder.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/AWY/Issues/ZZZ-1 Unknown.md --
+---
+id: ZZZ-1
+title: Unknown
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/AWY/Specs/
+vault/Projects/HOM/
+-- vault/Projects/HOM/HOM.md --
+---
+name: Home
+kind: project
+---
+vault/Projects/HOM/Issues/
+-- vault/Projects/HOM/Issues/HOM-1 Wandered off.md --
+---
+id: HOM-1
+title: Wandered off
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+Moved here by hand.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/HOM/Issues/HOM-3 Same name.md --
+---
+id: HOM-3
+title: Same name
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T08:00:00Z
+updated: 2026-01-01T08:00:00Z
+---
+The earlier one.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/HOM/Issues/HOM-4 Links home.md --
+---
+id: HOM-4
+title: Links home
+kind: issue
+status: open
+parent: "[[HOM-1 Wandered off]]"
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+See [[HOM-8 Collides]].
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/HOM/Issues/HOM-7 No kind.md --
+---
+id: HOM-7
+title: No kind
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+kind: issue
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/HOM/Issues/HOM-9 Same name.md --
+---
+id: HOM-9
+title: Same name
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+The later one.
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-02T03:04:05Z · talvor
+Renumbered from HOM-3 by otman doctor
+vault/Projects/HOM/Specs/
+-- vault/Projects/HOM/Specs/HOM-2 Stays.md --
+---
+id: HOM-2
+title: Stays
+kind: spec
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T09:00:00Z
+updated: 2026-01-01T09:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/HOM/Specs/HOM-8 Collides.md --
+---
+id: HOM-8
+title: Collides
+kind: spec
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-02T03:04:05Z · talvor
+Renumbered from HOM-2 by otman doctor

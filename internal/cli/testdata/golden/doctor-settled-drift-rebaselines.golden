@@ -14,6 +14,13 @@ item:
   rev: 723538a02e86
 changed: true
 -- stderr --
+warning:
+  code: duplicate_number
+  message: "DOC-16 is the number of 2 Items: Projects/DOC/Issues/DOC-16 Clean.md, Projects/DOC/Notes/DOC-16 Clean.md"
+  details:
+    id: DOC-16
+    paths[2]: Projects/DOC/Issues/DOC-16 Clean.md,Projects/DOC/Notes/DOC-16 Clean.md
+  hint: name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ write "vault/Projects/DOC/Issues/DOC-17 Alpha.md"
 
@@ -33,7 +40,20 @@ exit: 0
       }
     ]
   },
-  "warnings": []
+  "warnings": [
+    {
+      "code": "duplicate_number",
+      "message": "DOC-16 is the number of 2 Items: Projects/DOC/Issues/DOC-16 Clean.md, Projects/DOC/Notes/DOC-16 Clean.md",
+      "details": {
+        "id": "DOC-16",
+        "paths": [
+          "Projects/DOC/Issues/DOC-16 Clean.md",
+          "Projects/DOC/Notes/DOC-16 Clean.md"
+        ]
+      },
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+    }
+  ]
 }
 -- stderr --
 
@@ -57,7 +77,20 @@ exit: 0
       }
     ]
   },
-  "warnings": []
+  "warnings": [
+    {
+      "code": "duplicate_number",
+      "message": "DOC-16 is the number of 2 Items: Projects/DOC/Issues/DOC-16 Clean.md, Projects/DOC/Notes/DOC-16 Clean.md",
+      "details": {
+        "id": "DOC-16",
+        "paths": [
+          "Projects/DOC/Issues/DOC-16 Clean.md",
+          "Projects/DOC/Notes/DOC-16 Clean.md"
+        ]
+      },
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+    }
+  ]
 }
 -- stderr --
 
@@ -77,6 +110,13 @@ item:
   rev: 9fb6d6c80e7d
 changed: true
 -- stderr --
+warning:
+  code: duplicate_number
+  message: "DOC-16 is the number of 2 Items: Projects/DOC/Issues/DOC-16 Clean.md, Projects/DOC/Notes/DOC-16 Clean.md"
+  details:
+    id: DOC-16
+    paths[2]: Projects/DOC/Issues/DOC-16 Clean.md,Projects/DOC/Notes/DOC-16 Clean.md
+  hint: name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ rm "vault/Projects/DOC/Issues/DOC-18 Beta.md"
 
@@ -98,7 +138,20 @@ exit: 0
       }
     ]
   },
-  "warnings": []
+  "warnings": [
+    {
+      "code": "duplicate_number",
+      "message": "DOC-16 is the number of 2 Items: Projects/DOC/Issues/DOC-16 Clean.md, Projects/DOC/Notes/DOC-16 Clean.md",
+      "details": {
+        "id": "DOC-16",
+        "paths": [
+          "Projects/DOC/Issues/DOC-16 Clean.md",
+          "Projects/DOC/Notes/DOC-16 Clean.md"
+        ]
+      },
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+    }
+  ]
 }
 -- stderr --
 
@@ -120,7 +173,20 @@ exit: 0
       }
     ]
   },
-  "warnings": []
+  "warnings": [
+    {
+      "code": "duplicate_number",
+      "message": "DOC-16 is the number of 2 Items: Projects/DOC/Issues/DOC-16 Clean.md, Projects/DOC/Notes/DOC-16 Clean.md",
+      "details": {
+        "id": "DOC-16",
+        "paths": [
+          "Projects/DOC/Issues/DOC-16 Clean.md",
+          "Projects/DOC/Notes/DOC-16 Clean.md"
+        ]
+      },
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+    }
+  ]
 }
 -- stderr --
 
@@ -140,6 +206,13 @@ item:
   rev: 8b5ad7767f8d
 changed: true
 -- stderr --
+warning:
+  code: duplicate_number
+  message: "DOC-16 is the number of 2 Items: Projects/DOC/Issues/DOC-16 Clean.md, Projects/DOC/Notes/DOC-16 Clean.md"
+  details:
+    id: DOC-16
+    paths[2]: Projects/DOC/Issues/DOC-16 Clean.md,Projects/DOC/Notes/DOC-16 Clean.md
+  hint: name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ write "vault/Projects/DOC/Issues/DOC-19 Gamma.md"
 
@@ -159,7 +232,20 @@ exit: 0
       }
     ]
   },
-  "warnings": []
+  "warnings": [
+    {
+      "code": "duplicate_number",
+      "message": "DOC-16 is the number of 2 Items: Projects/DOC/Issues/DOC-16 Clean.md, Projects/DOC/Notes/DOC-16 Clean.md",
+      "details": {
+        "id": "DOC-16",
+        "paths": [
+          "Projects/DOC/Issues/DOC-16 Clean.md",
+          "Projects/DOC/Notes/DOC-16 Clean.md"
+        ]
+      },
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+    }
+  ]
 }
 -- stderr --
 
@@ -183,7 +269,20 @@ exit: 0
       }
     ]
   },
-  "warnings": []
+  "warnings": [
+    {
+      "code": "duplicate_number",
+      "message": "DOC-16 is the number of 2 Items: Projects/DOC/Issues/DOC-16 Clean.md, Projects/DOC/Notes/DOC-16 Clean.md",
+      "details": {
+        "id": "DOC-16",
+        "paths": [
+          "Projects/DOC/Issues/DOC-16 Clean.md",
+          "Projects/DOC/Notes/DOC-16 Clean.md"
+        ]
+      },
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+    }
+  ]
 }
 -- stderr --
 

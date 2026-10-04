@@ -1,0 +1,4 @@
+---
+name: Away
+kind: project
+---

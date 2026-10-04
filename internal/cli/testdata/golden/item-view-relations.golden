@@ -139,6 +139,18 @@ exit: 0
         "value": "7"
       },
       "hint": "write blocked_by in Projects/OTM/Specs/OTM-10 Relations hub.md as quoted wikilinks, such as blocked_by: [\"[[OTM-1 Title]]\"]"
+    },
+    {
+      "code": "duplicate_number",
+      "message": "OTM-3 is the number of 2 Items: Projects/OTM/Issues/OTM-3 Twin.md, Projects/OTM/PRDs/OTM-3 Twin.md",
+      "details": {
+        "id": "OTM-3",
+        "paths": [
+          "Projects/OTM/Issues/OTM-3 Twin.md",
+          "Projects/OTM/PRDs/OTM-3 Twin.md"
+        ]
+      },
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }
@@ -171,6 +183,8 @@ warning[malformed_relation]: a blocked_by entry of OTM-10 is "OTM-2", not a wiki
 hint: write blocked_by in Projects/OTM/Specs/OTM-10 Relations hub.md as quoted wikilinks, such as blocked_by: ["[[OTM-1 Title]]"]
 warning[malformed_relation]: a blocked_by entry of OTM-10 is "7", not a wikilink, so it is ignored
 hint: write blocked_by in Projects/OTM/Specs/OTM-10 Relations hub.md as quoted wikilinks, such as blocked_by: ["[[OTM-1 Title]]"]
+warning[duplicate_number]: OTM-3 is the number of 2 Items: Projects/OTM/Issues/OTM-3 Twin.md, Projects/OTM/PRDs/OTM-3 Twin.md
+hint: name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ otman view OTM-10
 exit: 0
@@ -270,6 +284,13 @@ warning:
     path: Projects/OTM/Specs/OTM-10 Relations hub.md
     value: "7"
   hint: "write blocked_by in Projects/OTM/Specs/OTM-10 Relations hub.md as quoted wikilinks, such as blocked_by: [\"[[OTM-1 Title]]\"]"
+warning:
+  code: duplicate_number
+  message: "OTM-3 is the number of 2 Items: Projects/OTM/Issues/OTM-3 Twin.md, Projects/OTM/PRDs/OTM-3 Twin.md"
+  details:
+    id: OTM-3
+    paths[2]: Projects/OTM/Issues/OTM-3 Twin.md,Projects/OTM/PRDs/OTM-3 Twin.md
+  hint: name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ otman view OTM-11 --json
 exit: 0
@@ -307,7 +328,20 @@ exit: 0
       "blocks": []
     }
   },
-  "warnings": []
+  "warnings": [
+    {
+      "code": "duplicate_number",
+      "message": "OTM-3 is the number of 2 Items: Projects/OTM/Issues/OTM-3 Twin.md, Projects/OTM/PRDs/OTM-3 Twin.md",
+      "details": {
+        "id": "OTM-3",
+        "paths": [
+          "Projects/OTM/Issues/OTM-3 Twin.md",
+          "Projects/OTM/PRDs/OTM-3 Twin.md"
+        ]
+      },
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+    }
+  ]
 }
 -- stderr --
 
@@ -354,7 +388,20 @@ exit: 0
       "blocks": []
     }
   },
-  "warnings": []
+  "warnings": [
+    {
+      "code": "duplicate_number",
+      "message": "OTM-3 is the number of 2 Items: Projects/OTM/Issues/OTM-3 Twin.md, Projects/OTM/PRDs/OTM-3 Twin.md",
+      "details": {
+        "id": "OTM-3",
+        "paths": [
+          "Projects/OTM/Issues/OTM-3 Twin.md",
+          "Projects/OTM/PRDs/OTM-3 Twin.md"
+        ]
+      },
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+    }
+  ]
 }
 -- stderr --
 
@@ -406,6 +453,18 @@ exit: 0
         "value": "[[OTM-10 Relations hub]]"
       },
       "hint": "write blocked_by in Projects/OTM/Issues/OTM-13 Malformed relations.md as quoted wikilinks, such as blocked_by: [\"[[OTM-1 Title]]\"]"
+    },
+    {
+      "code": "duplicate_number",
+      "message": "OTM-3 is the number of 2 Items: Projects/OTM/Issues/OTM-3 Twin.md, Projects/OTM/PRDs/OTM-3 Twin.md",
+      "details": {
+        "id": "OTM-3",
+        "paths": [
+          "Projects/OTM/Issues/OTM-3 Twin.md",
+          "Projects/OTM/PRDs/OTM-3 Twin.md"
+        ]
+      },
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }
@@ -448,6 +507,18 @@ exit: 0
         "value": null
       },
       "hint": "write parent in Projects/OTM/Issues/OTM-14 Unquoted link.md as quoted wikilinks, such as parent: \"[[OTM-1 Title]]\""
+    },
+    {
+      "code": "duplicate_number",
+      "message": "OTM-3 is the number of 2 Items: Projects/OTM/Issues/OTM-3 Twin.md, Projects/OTM/PRDs/OTM-3 Twin.md",
+      "details": {
+        "id": "OTM-3",
+        "paths": [
+          "Projects/OTM/Issues/OTM-3 Twin.md",
+          "Projects/OTM/PRDs/OTM-3 Twin.md"
+        ]
+      },
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }
@@ -487,6 +558,18 @@ exit: 0
         "path": "Projects/OTM/Issues/OTM-15 Unreadable.md"
       },
       "hint": "fix the YAML between the --- lines in Projects/OTM/Issues/OTM-15 Unreadable.md"
+    },
+    {
+      "code": "duplicate_number",
+      "message": "OTM-3 is the number of 2 Items: Projects/OTM/Issues/OTM-3 Twin.md, Projects/OTM/PRDs/OTM-3 Twin.md",
+      "details": {
+        "id": "OTM-3",
+        "paths": [
+          "Projects/OTM/Issues/OTM-3 Twin.md",
+          "Projects/OTM/PRDs/OTM-3 Twin.md"
+        ]
+      },
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }

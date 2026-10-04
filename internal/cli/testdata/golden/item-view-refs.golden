@@ -35,7 +35,20 @@ exit: 0
       "blocks": []
     }
   },
-  "warnings": []
+  "warnings": [
+    {
+      "code": "duplicate_number",
+      "message": "OTM-3 is the number of 2 Items: Projects/OTM/Issues/OTM-3 First copy.md, Projects/OTM/Issues/OTM-3 Second copy.md",
+      "details": {
+        "id": "OTM-3",
+        "paths": [
+          "Projects/OTM/Issues/OTM-3 First copy.md",
+          "Projects/OTM/Issues/OTM-3 Second copy.md"
+        ]
+      },
+      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+    }
+  ]
 }
 -- stderr --
 
@@ -65,7 +78,20 @@ exit: 0
       "blocks": []
     }
   },
-  "warnings": []
+  "warnings": [
+    {
+      "code": "duplicate_number",
+      "message": "OTM-3 is the number of 2 Items: Projects/OTM/Issues/OTM-3 First copy.md, Projects/OTM/Issues/OTM-3 Second copy.md",
+      "details": {
+        "id": "OTM-3",
+        "paths": [
+          "Projects/OTM/Issues/OTM-3 First copy.md",
+          "Projects/OTM/Issues/OTM-3 Second copy.md"
+        ]
+      },
+      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+    }
+  ]
 }
 -- stderr --
 
@@ -95,7 +121,20 @@ exit: 0
       "blocks": []
     }
   },
-  "warnings": []
+  "warnings": [
+    {
+      "code": "duplicate_number",
+      "message": "OTM-3 is the number of 2 Items: Projects/OTM/Issues/OTM-3 First copy.md, Projects/OTM/Issues/OTM-3 Second copy.md",
+      "details": {
+        "id": "OTM-3",
+        "paths": [
+          "Projects/OTM/Issues/OTM-3 First copy.md",
+          "Projects/OTM/Issues/OTM-3 Second copy.md"
+        ]
+      },
+      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+    }
+  ]
 }
 -- stderr --
 
@@ -121,6 +160,8 @@ Path: Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md
 
 (no body)
 -- stderr --
+warning[duplicate_number]: OTM-3 is the number of 2 Items: Projects/OTM/Issues/OTM-3 First copy.md, Projects/OTM/Issues/OTM-3 Second copy.md
+hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ otman view WEB-1 --json
 exit: 0
@@ -306,7 +347,20 @@ exit: 0
       "blocks": []
     }
   },
-  "warnings": []
+  "warnings": [
+    {
+      "code": "duplicate_number",
+      "message": "OTM-3 is the number of 2 Items: Projects/OTM/Issues/OTM-3 First copy.md, Projects/OTM/Issues/OTM-3 Second copy.md",
+      "details": {
+        "id": "OTM-3",
+        "paths": [
+          "Projects/OTM/Issues/OTM-3 First copy.md",
+          "Projects/OTM/Issues/OTM-3 Second copy.md"
+        ]
+      },
+      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+    }
+  ]
 }
 -- stderr --
 

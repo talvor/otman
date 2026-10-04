@@ -74,6 +74,18 @@ exit: 0
         "value": "REL-2"
       },
       "hint": "write blocked_by in Projects/REL/Issues/REL-20 Dangling.md as quoted wikilinks, such as blocked_by: [\"[[REL-1 Title]]\"]"
+    },
+    {
+      "code": "duplicate_number",
+      "message": "REL-7 is the number of 2 Items: Projects/REL/Issues/REL-7 Twin.md, Projects/REL/Specs/REL-7 Twin.md",
+      "details": {
+        "id": "REL-7",
+        "paths": [
+          "Projects/REL/Issues/REL-7 Twin.md",
+          "Projects/REL/Specs/REL-7 Twin.md"
+        ]
+      },
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }
@@ -91,6 +103,8 @@ warning[dangling_link]: REL-20 blocked_by link [[REL-99 Gone]] matches no Item i
 hint: fix or remove the link in Projects/REL/Issues/REL-20 Dangling.md
 warning[malformed_relation]: a blocked_by entry of REL-20 is "REL-2", not a wikilink, so it is ignored
 hint: write blocked_by in Projects/REL/Issues/REL-20 Dangling.md as quoted wikilinks, such as blocked_by: ["[[REL-1 Title]]"]
+warning[duplicate_number]: REL-7 is the number of 2 Items: Projects/REL/Issues/REL-7 Twin.md, Projects/REL/Specs/REL-7 Twin.md
+hint: name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ otman parent set REL-6 REL-20 --json
 exit: 4
@@ -300,6 +314,18 @@ exit: 0
         "value": "REL-2"
       },
       "hint": "write blocked_by in Projects/REL/Issues/REL-20 Dangling.md as quoted wikilinks, such as blocked_by: [\"[[REL-1 Title]]\"]"
+    },
+    {
+      "code": "duplicate_number",
+      "message": "REL-7 is the number of 2 Items: Projects/REL/Issues/REL-7 Twin.md, Projects/REL/Specs/REL-7 Twin.md",
+      "details": {
+        "id": "REL-7",
+        "paths": [
+          "Projects/REL/Issues/REL-7 Twin.md",
+          "Projects/REL/Specs/REL-7 Twin.md"
+        ]
+      },
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }
@@ -317,6 +343,8 @@ warning[dangling_link]: REL-20 blocked_by link [[REL-99 Gone]] matches no Item i
 hint: fix or remove the link in Projects/REL/Issues/REL-20 Dangling.md
 warning[malformed_relation]: a blocked_by entry of REL-20 is "REL-2", not a wikilink, so it is ignored
 hint: write blocked_by in Projects/REL/Issues/REL-20 Dangling.md as quoted wikilinks, such as blocked_by: ["[[REL-1 Title]]"]
+warning[duplicate_number]: REL-7 is the number of 2 Items: Projects/REL/Issues/REL-7 Twin.md, Projects/REL/Specs/REL-7 Twin.md
+hint: name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ otman parent set REL-20 REL-1
 exit: 0
@@ -362,6 +390,13 @@ warning:
     path: Projects/REL/Issues/REL-20 Dangling.md
     value: REL-2
   hint: "write blocked_by in Projects/REL/Issues/REL-20 Dangling.md as quoted wikilinks, such as blocked_by: [\"[[REL-1 Title]]\"]"
+warning:
+  code: duplicate_number
+  message: "REL-7 is the number of 2 Items: Projects/REL/Issues/REL-7 Twin.md, Projects/REL/Specs/REL-7 Twin.md"
+  details:
+    id: REL-7
+    paths[2]: Projects/REL/Issues/REL-7 Twin.md,Projects/REL/Specs/REL-7 Twin.md
+  hint: name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ otman parent clear REL-22 --json
 exit: 0
@@ -394,6 +429,18 @@ exit: 0
         "value": "[[REL-2 Wikilink scanner]]"
       },
       "hint": "write blocked_by in Projects/REL/Issues/REL-22 Malformed.md as quoted wikilinks, such as blocked_by: [\"[[REL-1 Title]]\"]"
+    },
+    {
+      "code": "duplicate_number",
+      "message": "REL-7 is the number of 2 Items: Projects/REL/Issues/REL-7 Twin.md, Projects/REL/Specs/REL-7 Twin.md",
+      "details": {
+        "id": "REL-7",
+        "paths": [
+          "Projects/REL/Issues/REL-7 Twin.md",
+          "Projects/REL/Specs/REL-7 Twin.md"
+        ]
+      },
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }
@@ -424,6 +471,8 @@ REL-22 · Malformed is not blocked by REL-2
 -- stderr --
 warning[malformed_relation]: the blocked_by of REL-22 is "[[REL-2 Wikilink scanner]]", not a list of wikilinks, so it is ignored
 hint: write blocked_by in Projects/REL/Issues/REL-22 Malformed.md as quoted wikilinks, such as blocked_by: ["[[REL-1 Title]]"]
+warning[duplicate_number]: REL-7 is the number of 2 Items: Projects/REL/Issues/REL-7 Twin.md, Projects/REL/Specs/REL-7 Twin.md
+hint: name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ otman view REL-25
 tty: true
@@ -438,6 +487,8 @@ Path: Projects/REL/Issues/REL-25 Null entry.md
 -- stderr --
 warning[malformed_relation]: a blocked_by entry of REL-25 is "~", not a wikilink, so it is ignored
 hint: write blocked_by in Projects/REL/Issues/REL-25 Null entry.md as quoted wikilinks, such as blocked_by: ["[[REL-1 Title]]"]
+warning[duplicate_number]: REL-7 is the number of 2 Items: Projects/REL/Issues/REL-7 Twin.md, Projects/REL/Specs/REL-7 Twin.md
+hint: name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ otman parent set REL-23 REL-1 --json
 exit: 4

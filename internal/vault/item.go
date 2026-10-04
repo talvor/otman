@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"slices"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/talvor/otman/internal/fsutil"
@@ -34,11 +35,12 @@ func (f ItemFile) ID() string { return fmt.Sprintf("%s-%d", f.Key, f.Number) }
 // Name is the file name.
 func (f ItemFile) Name() string { return path.Base(f.Path) }
 
-// folderKind is the Kind whose folder, directly under the Project's
-// folder, holds the file, and false when the file is anywhere else.
+// folderKind is the Kind whose folder, directly under the folder of the
+// Project that holds the file, holds it, and false when the file is
+// anywhere else. A misplaced file's folder is another Project's.
 func (f ItemFile) folderKind() (item.Kind, bool) {
 	dir, folder := path.Split(path.Dir(f.Path))
-	if dir != path.Join(ProjectsDir, f.Key)+"/" {
+	if dir != path.Join(ProjectsDir, f.FolderKey())+"/" {
 		return "", false
 	}
 	return item.KindOfFolder(folder)
@@ -54,29 +56,111 @@ func (f ItemFile) Derived() item.Derived {
 	return d
 }
 
-// ItemFiles lists Project key's Item files: the files anywhere under
-// Projects/<KEY>/, except Templates/, whose names carry the <KEY>-<n>
-// prefix. They are sorted by number, then path.
+// FolderKey is the key of the Project whose folder holds the file. It
+// differs from Key when the file is misplaced: filed by hand under another
+// Project's folder.
+func (f ItemFile) FolderKey() string { return strings.Split(f.Path, "/")[1] }
+
+// Misplaced reports whether the file is in another Project's folder than
+// the one its prefix names.
+func (f ItemFile) Misplaced() bool { return f.FolderKey() != f.Key }
+
+// ItemFiles lists Project key's Item files: the files whose names carry
+// the <KEY>-<n> prefix anywhere under Projects/, except in Templates/. A
+// file filed under another Project's folder is read under the Project its
+// prefix names (see Misplaced). They are sorted by number, then path.
+// The Vault remembers each Project it lists (see Scanned).
 func (v *Vault) ItemFiles(key string) ([]ItemFile, error) {
-	dir := filepath.Join(v.Root, ProjectsDir, key)
+	if v.scanned == nil {
+		v.scanned = map[string]bool{}
+	}
+	v.scanned[key] = true
+	return v.scanProject(key)
+}
+
+// Scanned is the keys of the Projects whose Item files the Vault has listed
+// since it was opened, sorted.
+func (v *Vault) Scanned() []string {
+	keys := make([]string, 0, len(v.scanned))
+	for k := range v.scanned {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+// scanProject is ItemFiles without remembering key, for the Vault's own
+// scans, such as reconciling the high-water mark.
+func (v *Vault) scanProject(key string) ([]ItemFile, error) {
+	all, err := v.scanItems()
+	if err != nil {
+		return nil, err
+	}
 	var files []ItemFile
-	err := filepath.WalkDir(dir, func(p string, d fs.DirEntry, err error) error {
+	for _, f := range all {
+		if f.Key == key {
+			files = append(files, f)
+		}
+	}
+	return files, nil
+}
+
+// StrayFiles lists the files under Project key's folder whose names carry
+// the prefix of a Project the Vault does not have, such as ZZZ-1 when
+// there is no Projects/ZZZ/. They are no Project's Items. They are sorted
+// by path.
+func (v *Vault) StrayFiles(key string) ([]ItemFile, error) {
+	all, err := v.scanItems()
+	if err != nil {
+		return nil, err
+	}
+	var files []ItemFile
+	for _, f := range all {
+		if f.FolderKey() != key || f.Key == key {
+			continue
+		}
+		if ok, err := v.hasProject(f.Key); err != nil {
+			return nil, err
+		} else if !ok {
+			files = append(files, f)
+		}
+	}
+	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
+	return files, nil
+}
+
+// scanItems lists every file under a Project folder, outside its
+// Templates/, whose name carries a <KEY>-<n> prefix, whatever Project the
+// prefix names, sorted by number, then path. Folders under Projects/ whose
+// names are not Project keys are skipped. The listing is kept until the
+// Vault changes the files under Projects/.
+func (v *Vault) scanItems() ([]ItemFile, error) {
+	if v.items != nil {
+		return v.items, nil
+	}
+	root := filepath.Join(v.Root, ProjectsDir)
+	var files []ItemFile
+	err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
-			if p == dir && errors.Is(err, fs.ErrNotExist) {
+			if p == root && errors.Is(err, fs.ErrNotExist) {
 				return fs.SkipAll
 			}
 			return err
 		}
 		rel, _ := filepath.Rel(v.Root, p)
 		rel = filepath.ToSlash(rel)
+		parts := strings.Split(rel, "/")
 		if d.IsDir() {
-			if rel == path.Join(ProjectsDir, key, TemplatesDir) {
+			if len(parts) == 2 && !ValidKey(parts[1]) || len(parts) == 3 && parts[2] == TemplatesDir {
 				return fs.SkipDir
 			}
 			return nil
 		}
-		if k, n, _, ok := item.ParseFilename(d.Name()); ok && k == key {
-			files = append(files, ItemFile{Key: key, Number: n, Path: rel})
+		if len(parts) < 3 {
+			return nil
+		}
+		if k, n, _, ok := item.ParseFilename(d.Name()); ok {
+			files = append(files, ItemFile{Key: k, Number: n, Path: rel})
 		}
 		return nil
 	})
@@ -89,6 +173,10 @@ func (v *Vault) ItemFiles(key string) ([]ItemFile, error) {
 		}
 		return files[i].Path < files[j].Path
 	})
+	if files == nil {
+		files = []ItemFile{}
+	}
+	v.items = files
 	return files, nil
 }
 
@@ -121,20 +209,7 @@ type NewItem struct {
 // number is never issued again even if the write fails. The caller holds
 // the Vault lock, which serialises the scan, the allocation and the write.
 func (v *Vault) CreateItem(key string, n NewItem) (ItemFile, []byte, error) {
-	files, err := v.ItemFiles(key)
-	if err != nil {
-		return ItemFile{}, nil, err
-	}
-	var number int
-	err = inImmediateTx(v.db, func(tx *sql.Tx) error {
-		var hw int
-		err := tx.QueryRow(`SELECT high_water FROM projects WHERE key = ?`, key).Scan(&hw)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return err
-		}
-		number = max(hw, highestNumber(files)) + 1
-		return raiseHighWater(tx, key, number)
-	})
+	number, err := v.Allocate(key)
 	if err != nil {
 		return ItemFile{}, nil, err
 	}
@@ -151,6 +226,7 @@ func (v *Vault) CreateItem(key string, n NewItem) (ItemFile, []byte, error) {
 	}
 	project := filepath.Join(v.Root, ProjectsDir, key)
 	folder := filepath.Join(project, n.Kind.Folder())
+	v.items = nil
 	if err := os.MkdirAll(folder, 0o755); err != nil {
 		return ItemFile{}, nil, err
 	}
@@ -171,6 +247,29 @@ func (v *Vault) CreateItem(key string, n NewItem) (ItemFile, []byte, error) {
 	return f, data, v.recordSnapshot(f.Path, f.Path, nil, data)
 }
 
+// Allocate issues the next number of Project key: max(high-water mark,
+// highest number on disk) + 1. The high-water mark is raised to it at
+// once, so the number is never issued again, even if what it was issued
+// for fails. The caller holds the Vault lock, which serialises the scan,
+// the allocation and the write that uses it.
+func (v *Vault) Allocate(key string) (int, error) {
+	files, err := v.scanProject(key)
+	if err != nil {
+		return 0, err
+	}
+	var number int
+	err = inImmediateTx(v.db, func(tx *sql.Tx) error {
+		var hw int
+		err := tx.QueryRow(`SELECT high_water FROM projects WHERE key = ?`, key).Scan(&hw)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return err
+		}
+		number = max(hw, highestNumber(files)) + 1
+		return raiseHighWater(tx, key, number)
+	})
+	return number, err
+}
+
 // ReadItemFile returns the bytes of an Item file.
 func (v *Vault) ReadItemFile(f ItemFile) ([]byte, error) {
 	return os.ReadFile(v.abs(f.Path))
@@ -189,6 +288,7 @@ func (v *Vault) writeFile(p string, data []byte) error {
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
+	v.items = nil
 	if err := fsutil.WriteFile(v.abs(p), data); err != nil {
 		return err
 	}
@@ -199,8 +299,9 @@ func (v *Vault) writeFile(p string, data []byte) error {
 func (v *Vault) abs(p string) string { return filepath.Join(v.Root, filepath.FromSlash(p)) }
 
 // ItemAt returns the Item file at the Vault-relative path p, and false
-// when p is not an Item file: outside Projects/<KEY>/, in Templates/,
-// without the <KEY>-<n> prefix, or missing.
+// when p is not an Item file: outside a Project folder, in Templates/,
+// without the <KEY>-<n> prefix, misplaced under a prefix no Project has,
+// or missing.
 func (v *Vault) ItemAt(p string) (ItemFile, bool, error) {
 	p = filepath.ToSlash(p)
 	if path.IsAbs(p) || p != path.Clean(p) {
@@ -209,6 +310,13 @@ func (v *Vault) ItemAt(p string) (ItemFile, bool, error) {
 	key, n, ok := itemPath(p)
 	if !ok {
 		return ItemFile{}, false, nil
+	}
+	if f := (ItemFile{Key: key, Number: n, Path: p}); f.Misplaced() {
+		// A misplaced file is an Item of the Project its prefix names,
+		// and of none when there is no such Project.
+		if ok, err := v.hasProject(key); err != nil || !ok {
+			return ItemFile{}, false, err
+		}
 	}
 	fi, err := os.Stat(v.abs(p))
 	if errors.Is(err, os.ErrNotExist) {

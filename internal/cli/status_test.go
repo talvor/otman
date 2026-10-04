@@ -97,6 +97,12 @@ func TestRoundTrip(t *testing.T) {
 	eachFixtureItem(t, roundTrip)
 }
 
+// dirExists reports whether p is a directory.
+func dirExists(p string) bool {
+	fi, err := os.Stat(p)
+	return err == nil && fi.IsDir()
+}
+
 // eachFixtureItem runs test as a subtest for every Item of every fixture
 // Vault, passing the fixture's directory and the Item's path within it.
 func eachFixtureItem(t *testing.T, test func(t *testing.T, fixture, rel string)) {
@@ -112,6 +118,9 @@ func eachFixtureItem(t *testing.T, test func(t *testing.T, fixture, rel string))
 			}
 			if _, ok := item.KindOfFolder(filepath.Base(filepath.Dir(p))); !ok {
 				return nil // not an Item, e.g. a template
+			}
+			if key, _, _, _ := item.ParseFilename(d.Name()); !dirExists(filepath.Join(src, "Projects", key)) {
+				return nil // not an Item: no Project has its prefix
 			}
 			rel, _ := filepath.Rel(src, p)
 			t.Run(fx.Name()+"/"+d.Name(), func(t *testing.T) { test(t, src, filepath.ToSlash(rel)) })
