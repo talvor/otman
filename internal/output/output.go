@@ -1,6 +1,7 @@
 // Package output renders otman's typed results and failures in the three
 // output formats: JSON (the stable, versioned contract), AXI (compact TOON for
-// agents and pipes) and human (tabwriter tables for terminals).
+// agents and pipes; a Document prints as it is) and human (tabwriter tables
+// for terminals).
 package output
 
 import (

@@ -2,14 +2,10 @@ package cli
 
 import (
 	"io"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/talvor/otman/docs"
 )
-
-// keyPlaceholder stands for the Project key in docs.TrackerTemplate.
-const keyPlaceholder = "{{KEY}}"
 
 func (a *app) newTrackerTemplateCmd() *cobra.Command {
 	return &cobra.Command{
@@ -47,6 +43,6 @@ func (a *app) trackerTemplate() error {
 	if err != nil {
 		return err
 	}
-	r := trackerTemplateResult{sel.Value, strings.ReplaceAll(docs.TrackerTemplate, keyPlaceholder, sel.Value)}
+	r := trackerTemplateResult{sel.Value, docs.TrackerTemplate(sel.Value)}
 	return a.emit(r, s.Warnings)
 }
