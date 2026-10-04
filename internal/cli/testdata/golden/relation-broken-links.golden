@@ -1,0 +1,650 @@
+$ otman view REL-20 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "REL-20",
+      "title": "Dangling",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": {
+        "id": null,
+        "path": null,
+        "resolved": false,
+        "link": "[[REL-98 Missing parent]]"
+      },
+      "blocked_by": [
+        {
+          "id": null,
+          "path": null,
+          "resolved": false,
+          "link": "[[REL-99 Gone]]"
+        },
+        {
+          "id": "REL-5",
+          "path": "Projects/REL/Issues/REL-5 Old groundwork.md",
+          "resolved": true
+        }
+      ],
+      "path": "Projects/REL/Issues/REL-20 Dangling.md",
+      "rev": "f2d6a14137d4",
+      "author": null,
+      "body": "",
+      "created": null,
+      "updated": null,
+      "comments": [],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": [
+    {
+      "code": "dangling_link",
+      "message": "REL-20 parent link [[REL-98 Missing parent]] matches no Item in Project REL",
+      "details": {
+        "id": "REL-20",
+        "key": "parent",
+        "link": "[[REL-98 Missing parent]]",
+        "path": "Projects/REL/Issues/REL-20 Dangling.md"
+      },
+      "hint": "fix or remove the link in Projects/REL/Issues/REL-20 Dangling.md"
+    },
+    {
+      "code": "dangling_link",
+      "message": "REL-20 blocked_by link [[REL-99 Gone]] matches no Item in Project REL",
+      "details": {
+        "id": "REL-20",
+        "key": "blocked_by",
+        "link": "[[REL-99 Gone]]",
+        "path": "Projects/REL/Issues/REL-20 Dangling.md"
+      },
+      "hint": "fix or remove the link in Projects/REL/Issues/REL-20 Dangling.md"
+    },
+    {
+      "code": "malformed_relation",
+      "message": "a blocked_by entry of REL-20 is \"REL-2\", not a wikilink, so it is ignored",
+      "details": {
+        "id": "REL-20",
+        "key": "blocked_by",
+        "path": "Projects/REL/Issues/REL-20 Dangling.md",
+        "value": "REL-2"
+      },
+      "hint": "write blocked_by in Projects/REL/Issues/REL-20 Dangling.md as quoted wikilinks, such as blocked_by: [\"[[REL-1 Title]]\"]"
+    }
+  ]
+}
+-- stderr --
+
+$ otman close REL-20
+tty: true
+exit: 0
+-- stdout --
+Closed REL-20 · Dangling
+-- stderr --
+warning[dangling_link]: REL-20 parent link [[REL-98 Missing parent]] matches no Item in Project REL
+hint: fix or remove the link in Projects/REL/Issues/REL-20 Dangling.md
+warning[dangling_link]: REL-20 blocked_by link [[REL-99 Gone]] matches no Item in Project REL
+hint: fix or remove the link in Projects/REL/Issues/REL-20 Dangling.md
+warning[malformed_relation]: a blocked_by entry of REL-20 is "REL-2", not a wikilink, so it is ignored
+hint: write blocked_by in Projects/REL/Issues/REL-20 Dangling.md as quoted wikilinks, such as blocked_by: ["[[REL-1 Title]]"]
+
+$ otman parent set REL-6 REL-20 --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "dangling_link",
+    "message": "REL-20 parent link [[REL-98 Missing parent]] matches no Item in Project REL",
+    "details": {
+      "id": "REL-20",
+      "key": "parent",
+      "link": "[[REL-98 Missing parent]]",
+      "path": "Projects/REL/Issues/REL-20 Dangling.md"
+    },
+    "hint": "fix or remove the link in Projects/REL/Issues/REL-20 Dangling.md, then retry"
+  }
+}
+
+$ otman block REL-6 --by REL-21 --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "ambiguous_link",
+    "message": "REL-21 blocked_by link [[REL-7 Twin]] matches 2 Items: Projects/REL/Issues/REL-7 Twin.md, Projects/REL/Specs/REL-7 Twin.md",
+    "details": {
+      "id": "REL-21",
+      "key": "blocked_by",
+      "link": "[[REL-7 Twin]]",
+      "path": "Projects/REL/Issues/REL-21 Ambiguous.md",
+      "paths": [
+        "Projects/REL/Issues/REL-7 Twin.md",
+        "Projects/REL/Specs/REL-7 Twin.md"
+      ]
+    },
+    "hint": "fix or remove the link in Projects/REL/Issues/REL-21 Ambiguous.md, or name one Item by its path, such as [[Projects/REL/Issues/REL-7 Twin]], then retry"
+  }
+}
+
+$ otman block REL-6 --by REL-22
+tty: true
+exit: 4
+-- stdout --
+-- stderr --
+error[malformed_relation]: the blocked_by of REL-22 is "[[REL-2 Wikilink scanner]]", not a list of wikilinks, so it is ignored
+hint: write blocked_by in Projects/REL/Issues/REL-22 Malformed.md as quoted wikilinks, such as blocked_by: ["[[REL-1 Title]]"], then retry
+
+$ otman parent set REL-6 REL-24 --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "malformed_frontmatter",
+    "message": "cannot read the relations of REL-23: yaml: line 1: did not find expected ',' or ']'",
+    "details": {
+      "id": "REL-23",
+      "path": "Projects/REL/Issues/REL-23 Unreadable.md"
+    },
+    "hint": "fix the YAML between the --- lines in Projects/REL/Issues/REL-23 Unreadable.md, then retry"
+  }
+}
+
+$ otman unblock REL-21 --by Projects/REL/Specs/REL-7 Twin.md --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "ambiguous_link",
+    "message": "REL-21 blocked_by link [[REL-7 Twin]] matches 2 Items: Projects/REL/Issues/REL-7 Twin.md, Projects/REL/Specs/REL-7 Twin.md",
+    "details": {
+      "id": "REL-21",
+      "key": "blocked_by",
+      "link": "[[REL-7 Twin]]",
+      "path": "Projects/REL/Issues/REL-21 Ambiguous.md",
+      "paths": [
+        "Projects/REL/Issues/REL-7 Twin.md",
+        "Projects/REL/Specs/REL-7 Twin.md"
+      ]
+    },
+    "hint": "fix or remove the link in Projects/REL/Issues/REL-21 Ambiguous.md, or name one Item by its path, such as [[Projects/REL/Issues/REL-7 Twin]], then retry"
+  }
+}
+
+$ otman block REL-6 --by REL-7 --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "ambiguous_reference",
+    "message": "REL-7 matches 2 Items: Projects/REL/Issues/REL-7 Twin.md, Projects/REL/Specs/REL-7 Twin.md",
+    "details": {
+      "paths": [
+        "Projects/REL/Issues/REL-7 Twin.md",
+        "Projects/REL/Specs/REL-7 Twin.md"
+      ],
+      "ref": "REL-7"
+    },
+    "hint": "name one by its Vault-relative path, or run 'otman doctor --fix' to renumber the duplicate"
+  }
+}
+
+$ otman list --blocked-by Projects/REL/Issues/REL-7 Twin.md --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "ambiguous_link",
+    "message": "REL-21 blocked_by link [[REL-7 Twin]] matches 2 Items: Projects/REL/Issues/REL-7 Twin.md, Projects/REL/Specs/REL-7 Twin.md",
+    "details": {
+      "id": "REL-21",
+      "key": "blocked_by",
+      "link": "[[REL-7 Twin]]",
+      "path": "Projects/REL/Issues/REL-21 Ambiguous.md",
+      "paths": [
+        "Projects/REL/Issues/REL-7 Twin.md",
+        "Projects/REL/Specs/REL-7 Twin.md"
+      ]
+    },
+    "hint": "fix or remove the link in Projects/REL/Issues/REL-21 Ambiguous.md, or name one Item by its path, such as [[Projects/REL/Issues/REL-7 Twin]], then retry"
+  }
+}
+
+$ otman block REL-20 --by REL-6 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "REL-20",
+      "title": "Dangling",
+      "kind": "issue",
+      "status": "closed",
+      "labels": [],
+      "assignee": null,
+      "parent": {
+        "id": null,
+        "path": null,
+        "resolved": false,
+        "link": "[[REL-98 Missing parent]]"
+      },
+      "blocked_by": [
+        {
+          "id": null,
+          "path": null,
+          "resolved": false,
+          "link": "[[REL-99 Gone]]"
+        },
+        {
+          "id": "REL-5",
+          "path": "Projects/REL/Issues/REL-5 Old groundwork.md",
+          "resolved": true
+        },
+        {
+          "id": "REL-6",
+          "path": "Projects/REL/Issues/REL-6 Loose end.md",
+          "resolved": true
+        }
+      ],
+      "path": "Projects/REL/Issues/REL-20 Dangling.md",
+      "rev": "03f76eeb2b7c"
+    },
+    "changed": true
+  },
+  "warnings": [
+    {
+      "code": "dangling_link",
+      "message": "REL-20 parent link [[REL-98 Missing parent]] matches no Item in Project REL",
+      "details": {
+        "id": "REL-20",
+        "key": "parent",
+        "link": "[[REL-98 Missing parent]]",
+        "path": "Projects/REL/Issues/REL-20 Dangling.md"
+      },
+      "hint": "fix or remove the link in Projects/REL/Issues/REL-20 Dangling.md"
+    },
+    {
+      "code": "dangling_link",
+      "message": "REL-20 blocked_by link [[REL-99 Gone]] matches no Item in Project REL",
+      "details": {
+        "id": "REL-20",
+        "key": "blocked_by",
+        "link": "[[REL-99 Gone]]",
+        "path": "Projects/REL/Issues/REL-20 Dangling.md"
+      },
+      "hint": "fix or remove the link in Projects/REL/Issues/REL-20 Dangling.md"
+    },
+    {
+      "code": "malformed_relation",
+      "message": "a blocked_by entry of REL-20 is \"REL-2\", not a wikilink, so it is ignored",
+      "details": {
+        "id": "REL-20",
+        "key": "blocked_by",
+        "path": "Projects/REL/Issues/REL-20 Dangling.md",
+        "value": "REL-2"
+      },
+      "hint": "write blocked_by in Projects/REL/Issues/REL-20 Dangling.md as quoted wikilinks, such as blocked_by: [\"[[REL-1 Title]]\"]"
+    }
+  ]
+}
+-- stderr --
+
+$ otman unblock REL-20 --by REL-5
+tty: true
+exit: 0
+-- stdout --
+REL-20 · Dangling is no longer blocked by REL-5
+-- stderr --
+warning[dangling_link]: REL-20 parent link [[REL-98 Missing parent]] matches no Item in Project REL
+hint: fix or remove the link in Projects/REL/Issues/REL-20 Dangling.md
+warning[dangling_link]: REL-20 blocked_by link [[REL-99 Gone]] matches no Item in Project REL
+hint: fix or remove the link in Projects/REL/Issues/REL-20 Dangling.md
+warning[malformed_relation]: a blocked_by entry of REL-20 is "REL-2", not a wikilink, so it is ignored
+hint: write blocked_by in Projects/REL/Issues/REL-20 Dangling.md as quoted wikilinks, such as blocked_by: ["[[REL-1 Title]]"]
+
+$ otman parent set REL-20 REL-1
+exit: 0
+-- stdout --
+item:
+  id: REL-20
+  title: Dangling
+  kind: issue
+  status: closed
+  labels[0]:
+  assignee: null
+  parent:
+    id: REL-1
+    path: Projects/REL/Specs/REL-1 Relations spec.md
+    resolved: true
+  blocked_by[2]:
+    - id: null
+      path: null
+      resolved: false
+      link: "[[REL-99 Gone]]"
+    - id: REL-6
+      path: Projects/REL/Issues/REL-6 Loose end.md
+      resolved: true
+  path: Projects/REL/Issues/REL-20 Dangling.md
+  rev: 8bff07b180ed
+changed: true
+-- stderr --
+warning:
+  code: dangling_link
+  message: "REL-20 blocked_by link [[REL-99 Gone]] matches no Item in Project REL"
+  details:
+    id: REL-20
+    key: blocked_by
+    link: "[[REL-99 Gone]]"
+    path: Projects/REL/Issues/REL-20 Dangling.md
+  hint: fix or remove the link in Projects/REL/Issues/REL-20 Dangling.md
+warning:
+  code: malformed_relation
+  message: "a blocked_by entry of REL-20 is \"REL-2\", not a wikilink, so it is ignored"
+  details:
+    id: REL-20
+    key: blocked_by
+    path: Projects/REL/Issues/REL-20 Dangling.md
+    value: REL-2
+  hint: "write blocked_by in Projects/REL/Issues/REL-20 Dangling.md as quoted wikilinks, such as blocked_by: [\"[[REL-1 Title]]\"]"
+
+$ otman parent clear REL-22 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "REL-22",
+      "title": "Malformed",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/REL/Issues/REL-22 Malformed.md",
+      "rev": "8c6775a8156e"
+    },
+    "changed": false
+  },
+  "warnings": [
+    {
+      "code": "malformed_relation",
+      "message": "the blocked_by of REL-22 is \"[[REL-2 Wikilink scanner]]\", not a list of wikilinks, so it is ignored",
+      "details": {
+        "id": "REL-22",
+        "key": "blocked_by",
+        "path": "Projects/REL/Issues/REL-22 Malformed.md",
+        "value": "[[REL-2 Wikilink scanner]]"
+      },
+      "hint": "write blocked_by in Projects/REL/Issues/REL-22 Malformed.md as quoted wikilinks, such as blocked_by: [\"[[REL-1 Title]]\"]"
+    }
+  ]
+}
+-- stderr --
+
+$ otman parent set REL-23 REL-1 --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "unsafe_write",
+    "message": "refusing to rewrite Projects/REL/Issues/REL-23 Unreadable.md: the frontmatter is not valid YAML: yaml: line 1: did not find expected ',' or ']'",
+    "details": {
+      "path": "Projects/REL/Issues/REL-23 Unreadable.md",
+      "reason": "the frontmatter is not valid YAML: yaml: line 1: did not find expected ',' or ']'"
+    },
+    "hint": "make the frontmatter plain block-style YAML between --- lines, then retry"
+  }
+}
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "REL"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTH/
+vault/Projects/OTH/Issues/
+-- vault/Projects/OTH/Issues/OTH-1 Elsewhere.md --
+---
+id: OTH-1
+title: Elsewhere
+aliases:
+  - Elsewhere
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTH/OTH.md --
+---
+name: Other
+kind: project
+---
+vault/Projects/REL/
+vault/Projects/REL/Issues/
+-- vault/Projects/REL/Issues/REL-2 Wikilink scanner.md --
+---
+id: REL-2
+title: Wikilink scanner
+aliases:
+  - Wikilink scanner
+kind: issue
+status: open
+author: talvor
+parent: "[[REL-1 Relations spec]]"
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-20 Dangling.md --
+---
+id: REL-20
+title: Dangling
+kind: issue
+status: closed
+parent: "[[REL-1 Relations spec]]"
+blocked_by:
+  - "[[REL-99 Gone]]"
+  - REL-2
+  - "[[REL-6 Loose end]]"
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-21 Ambiguous.md --
+---
+id: REL-21
+title: Ambiguous
+kind: issue
+status: open
+parent: null
+blocked_by: ["[[REL-7 Twin]]"]
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-22 Malformed.md --
+---
+id: REL-22
+title: Malformed
+kind: issue
+status: open
+parent: null
+blocked_by: "[[REL-2 Wikilink scanner]]"
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-23 Unreadable.md --
+---
+parent: [unclosed
+---
+-- vault/Projects/REL/Issues/REL-24 Child of the unreadable.md --
+---
+id: REL-24
+title: Child of the unreadable
+kind: issue
+status: open
+parent: "[[REL-23 Unreadable]]"
+blocked_by: []
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-3 Parent commands.md --
+---
+id: REL-3
+title: Parent commands
+aliases:
+  - Parent commands
+kind: issue
+status: open
+author: talvor
+parent: "[[REL-1 Relations spec]]"
+blocked_by:
+  - "[[REL-2 Wikilink scanner]]"
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-4 Block commands.md --
+---
+id: REL-4
+title: Block commands
+aliases:
+  - Block commands
+kind: issue
+status: open
+author: talvor
+parent: "[[REL-1 Relations spec]]"
+blocked_by:
+  - "[[REL-3 Parent commands]]"
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-5 Old groundwork.md --
+---
+id: REL-5
+title: Old groundwork
+aliases:
+  - Old groundwork
+kind: issue
+status: closed
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-6 Loose end.md --
+---
+id: REL-6
+title: Loose end
+aliases:
+  - Loose end
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-7 Twin.md --
+---
+id: REL-7
+title: Twin
+kind: issue
+status: open
+parent: null
+blocked_by: []
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/REL.md --
+---
+name: Relations
+kind: project
+---
+vault/Projects/REL/Specs/
+-- vault/Projects/REL/Specs/REL-1 Relations spec.md --
+---
+id: REL-1
+title: Relations spec
+aliases:
+  - Relations spec
+kind: spec
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Specs/REL-7 Twin.md --
+---
+id: REL-7
+title: Twin
+kind: issue
+status: open
+parent: null
+blocked_by: []
+---
+<!-- otman:comments -->
+## Comments

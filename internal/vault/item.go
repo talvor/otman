@@ -89,7 +89,10 @@ type NewItem struct {
 	Author   *string
 	Assignee *string
 	Labels   []string
-	Now      time.Time
+	// Parent and BlockedBy are relation wikilinks; nil for none.
+	Parent    *string
+	BlockedBy []string
+	Now       time.Time
 }
 
 // CreateItem files a new open Item in Project key, which must exist. Its
@@ -121,7 +124,7 @@ func (v *Vault) CreateItem(key string, n NewItem) (ItemFile, []byte, error) {
 	data, err := item.Render(item.Fields{
 		ID: f.ID(), Title: n.Title, Kind: n.Kind, Status: item.Open,
 		Author: n.Author, Assignee: n.Assignee, Labels: n.Labels,
-		Created: now, Updated: now,
+		Parent: n.Parent, BlockedBy: n.BlockedBy, Created: now, Updated: now,
 	}, n.Body)
 	if err != nil {
 		return ItemFile{}, nil, err

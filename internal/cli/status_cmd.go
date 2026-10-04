@@ -88,11 +88,11 @@ func (a *app) setStatus(cmd *cobra.Command, c statusCommand, ref, commentText, c
 				return ioError(err)
 			}
 		}
-		files, err := v.ItemFiles(f.Key)
+		summary, ws, err := summarize(v, f, data)
 		if err != nil {
-			return ioError(err)
+			return err
 		}
-		summary := newItemSummary(f, item.Parse(data), data, newItemLinks(files))
+		warnings = append(warnings, ws...)
 		already := before.Status != nil && *before.Status == c.status
 		var human string
 		switch {

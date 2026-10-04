@@ -8,6 +8,7 @@ Usage:
   otman [command]
 
 Available Commands:
+  block       Record that BLOCKER blocks an Item
   claim       Claim an open Item for the actor
   close       Close an Item
   comment     Append a comment to an Item
@@ -17,9 +18,11 @@ Available Commands:
   help        Help about any command
   label       Show the Labels in use
   list        List the Items of the selected Project (default: open ones)
+  parent      Set or clear an Item's parent
   project     Create, list, view and link Projects
   release     Release the actor's Claim on an Item
   reopen      Reopen a closed Item
+  unblock     Remove the record that BLOCKER blocks an Item
   view        Show an Item by ID, number, full filename or Vault-relative path
 
 Flags:

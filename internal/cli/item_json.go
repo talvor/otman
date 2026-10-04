@@ -2,10 +2,10 @@ package cli
 
 import (
 	"path"
-	"strings"
 
 	"github.com/talvor/otman/internal/item"
 	"github.com/talvor/otman/internal/vault"
+	"github.com/talvor/otman/internal/wikilink"
 )
 
 // refJSON is a reference to another Item: {id, path, resolved:true}, or
@@ -23,27 +23,43 @@ func resolvedRef(f vault.ItemFile) refJSON {
 }
 
 // itemLinks resolves relation wikilinks within one Project the way
-// Obsidian does: by basename, ignoring case. It maps each lowercased file
-// name, without ".md", to the Item files that carry it.
-type itemLinks map[string][]vault.ItemFile
+// Obsidian does (see wikilink.Index): by basename, ignoring case, or by
+// path suffix for a path-qualified link.
+type itemLinks struct {
+	index  *wikilink.Index
+	byPath map[string]vault.ItemFile
+}
 
 func newItemLinks(files []vault.ItemFile) itemLinks {
-	links := itemLinks{}
-	for _, f := range files {
-		name := strings.ToLower(strings.TrimSuffix(f.Name(), ".md"))
-		links[name] = append(links[name], f)
+	l := itemLinks{byPath: make(map[string]vault.ItemFile, len(files))}
+	paths := make([]string, len(files))
+	for i, f := range files {
+		paths[i] = f.Path
+		l.byPath[f.Path] = f
 	}
-	return links
+	l.index = wikilink.NewIndex(paths)
+	return l
+}
+
+// candidates are the Item files link matches: one for a resolved link,
+// none for a dangling one or a value that is not a wikilink, several for
+// an ambiguous one.
+func (l itemLinks) candidates(link string) []vault.ItemFile {
+	wl, ok := wikilink.Parse(link)
+	if !ok {
+		return nil
+	}
+	var out []vault.ItemFile
+	for _, p := range l.index.Resolve(wl.Target) {
+		out = append(out, l.byPath[p])
+	}
+	return out
 }
 
 // target is the one Item link names, and false when it names none or
 // more than one.
 func (l itemLinks) target(link string) (vault.ItemFile, bool) {
-	name, ok := item.LinkName(link)
-	if !ok {
-		return vault.ItemFile{}, false
-	}
-	found := l[strings.ToLower(name)]
+	found := l.candidates(link)
 	if len(found) != 1 {
 		return vault.ItemFile{}, false
 	}

@@ -24,6 +24,8 @@ type listFlags struct {
 	withoutLabels []string
 	unlabeled     bool
 	allProjects   bool
+	parent        string
+	blockedBy     string
 	paging        *paging
 }
 
@@ -33,7 +35,7 @@ var listStates = []string{item.Open, item.Closed, "all"}
 func (a *app) newListCmd() *cobra.Command {
 	var f listFlags
 	cmd := &cobra.Command{
-		Use:   "list [--state open|closed|all] [--kind K] [--label L]... [--without-label L]... [--unlabeled] [--assignee NAME|@me | --unassigned] [--search TEXT] [--all-projects] [--limit N] [--offset N] [--all]",
+		Use:   "list [--state open|closed|all] [--kind K] [--label L]... [--without-label L]... [--unlabeled] [--assignee NAME|@me | --unassigned] [--parent REF] [--blocked-by REF] [--search TEXT] [--all-projects] [--limit N] [--offset N] [--all]",
 		Short: "List the Items of the selected Project (default: open ones)",
 		Args:  cobra.NoArgs,
 	}
@@ -45,6 +47,8 @@ func (a *app) newListCmd() *cobra.Command {
 	fl.BoolVar(&f.unlabeled, "unlabeled", false, "only Items with no Labels (conflicts with --label)")
 	fl.StringVar(&f.assignee, "assignee", "", "only Items assigned to NAME, or to the actor with @me")
 	fl.BoolVar(&f.unassigned, "unassigned", false, "only Items with no assignee (conflicts with --assignee)")
+	fl.StringVar(&f.parent, "parent", "", "only the direct children of REF, in REF's Project")
+	fl.StringVar(&f.blockedBy, "blocked-by", "", "only the Items REF blocks, in REF's Project")
 	fl.StringVar(&f.search, "search", "", "only Items whose title or body contains TEXT, ignoring case")
 	fl.BoolVar(&f.allProjects, "all-projects", false, "list the Items of every Project (conflicts with --project)")
 	f.paging = addPaging(cmd)
@@ -91,6 +95,9 @@ type itemQuery struct {
 	// Labels.
 	labels, withoutLabels []string
 	unlabeled             bool
+	// parent keeps only the direct children of an Item, and blockedBy
+	// only the Items it blocks; nil for no such filter.
+	parent, blockedBy *vault.ItemFile
 }
 
 // match reports whether the Item summarised by s, with body, passes every
@@ -155,6 +162,12 @@ func (f listFlags) query(cmd *cobra.Command) (itemQuery, error) {
 	if q.withoutLabels, err = parseLabels("--without-label", f.withoutLabels); err != nil {
 		return itemQuery{}, err
 	}
+	for _, flag := range []string{"parent", "blocked-by"} {
+		if v, _ := cmd.Flags().GetString(flag); cmd.Flags().Changed(flag) && v == "" {
+			return itemQuery{}, invalid("invalid_arguments", "--"+flag+" cannot be empty",
+				map[string]any{"flag": "--" + flag}, "pass an Item, or omit --"+flag)
+		}
+	}
 	if cmd.Flags().Changed("search") && f.search == "" {
 		return itemQuery{}, invalid("invalid_arguments", "--search cannot be empty",
 			map[string]any{"flag": "--search"}, "pass the text to search for, or omit --search")
@@ -186,13 +199,20 @@ func (a *app) list(cmd *cobra.Command, f listFlags) error {
 		}
 		q.assignee = &name
 	}
+	selectors := f.parent != "" || f.blockedBy != ""
 	var sel config.Value
-	if !f.allProjects {
+	if !f.allProjects && !selectors {
 		if sel, err = selectedProject(s, "--all-projects"); err != nil {
 			return err
 		}
 	}
 	return a.withVault(s, func(v *vault.Vault, warnings []output.Problem) error {
+		if selectors {
+			// A relation selector names the Project to list.
+			if sel, err = q.resolveSelectors(s, v, f); err != nil {
+				return err
+			}
+		}
 		keys, ws, err := listScope(v, sel)
 		if err != nil {
 			return err
@@ -202,7 +222,7 @@ func (a *app) list(cmd *cobra.Command, f listFlags) error {
 		for _, key := range keys {
 			found, pws, err := listProject(v, key, q, inUse)
 			if err != nil {
-				return ioError(err)
+				return err
 			}
 			all = append(all, found...)
 			ws = append(ws, pws...)
@@ -211,6 +231,55 @@ func (a *app) list(cmd *cobra.Command, f listFlags) error {
 		ws = append(ws, unknownLabelWarnings("--without-label", q.withoutLabels, inUse)...)
 		return a.emit(listResult{page(f.paging, all)}, append(warnings, ws...))
 	})
+}
+
+// resolveSelectors resolves --parent and --blocked-by into q and returns
+// the Project they set as the scope. Relations stay within one Project,
+// so selectors in two Projects conflict.
+func (q *itemQuery) resolveSelectors(s resolved, v *vault.Vault, f listFlags) (config.Value, error) {
+	var sel config.Value
+	var first string
+	for _, x := range []struct {
+		flag, ref string
+		into      **vault.ItemFile
+	}{{"--parent", f.parent, &q.parent}, {"--blocked-by", f.blockedBy, &q.blockedBy}} {
+		if x.ref == "" {
+			continue
+		}
+		t, err := resolveRef(s, v, x.ref)
+		if err != nil {
+			return config.Value{}, err
+		}
+		if sel.IsSet() && sel.Value != t.Key {
+			return config.Value{}, invalid("project_mismatch",
+				first+" is in Project "+sel.Value+", but "+x.flag+" "+x.ref+" is in Project "+t.Key,
+				map[string]any{"flags": []string{"--parent", "--blocked-by"}, "projects": []string{sel.Value, t.Key}},
+				"name Items of one Project; relations stay within a Project")
+		}
+		*x.into = &t
+		sel = config.Value{Value: t.Key, Source: config.FromFlag}
+		first = x.flag + " " + x.ref
+	}
+	return sel, nil
+}
+
+// related reports whether the Item file f, parsed as p, passes --parent
+// and --blocked-by. A relation link ambiguous between the selector and
+// other Items fails rather than give a partial answer.
+func (q itemQuery) related(f vault.ItemFile, p item.Parsed, links itemLinks) (bool, error) {
+	for _, x := range []struct {
+		key    string
+		target *vault.ItemFile
+	}{{"parent", q.parent}, {"blocked_by", q.blockedBy}} {
+		if x.target == nil {
+			continue
+		}
+		found, err := matchingLinks(f, x.key, relationLinks(p, x.key), links, *x.target)
+		if err != nil || len(found) == 0 {
+			return false, err
+		}
+	}
+	return true, nil
 }
 
 // listScope is the keys of the Projects a list spans, in key order: the
@@ -242,7 +311,7 @@ func listScope(v *vault.Vault, sel config.Value) ([]string, []output.Problem, er
 func listProject(v *vault.Vault, key string, q itemQuery, inUse labelSet) ([]itemSummary, []output.Problem, error) {
 	files, err := v.ItemFiles(key)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, ioError(err)
 	}
 	links := newItemLinks(files)
 	var found []itemSummary
@@ -250,7 +319,7 @@ func listProject(v *vault.Vault, key string, q itemQuery, inUse labelSet) ([]ite
 	for _, f := range files {
 		data, err := v.ReadItemFile(f)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, ioError(err)
 		}
 		p := item.Parse(data)
 		if p.FrontmatterErr != nil {
@@ -260,6 +329,11 @@ func listProject(v *vault.Vault, key string, q itemQuery, inUse labelSet) ([]ite
 		inUse.add(p.Labels)
 		s := newItemSummary(f, p, data, links)
 		if !q.match(s, p.Body) {
+			continue
+		}
+		if ok, err := q.related(f, p, links); err != nil {
+			return nil, nil, err
+		} else if !ok {
 			continue
 		}
 		if q.state == "all" || (s.Status != nil && *s.Status == q.state) {
