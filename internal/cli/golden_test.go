@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -29,6 +30,9 @@ type step struct {
 	dir string
 	// rm lists files to delete before the step, relative to $WORK.
 	rm []string
+	// write maps files to write before the step, relative to $WORK, as a
+	// hand edit made outside otman would.
+	write map[string]string
 	// fault is the run's fault injector, such as crashAt(n).
 	fault func(step int) error
 }
@@ -73,6 +77,10 @@ func runGolden(t *testing.T, gc goldenCase) {
 				t.Fatal(err)
 			}
 			fmt.Fprintf(&transcript, "$ rm %q\n\n", p)
+		}
+		for _, p := range sortedKeys(s.write) {
+			writeFile(t, filepath.Join(work, p), strings.ReplaceAll(s.write[p], "$WORK", work))
+			fmt.Fprintf(&transcript, "$ write %q\n\n", p)
 		}
 		env := []string{
 			"XDG_CONFIG_HOME=" + filepath.Join(work, "config"),
@@ -135,6 +143,15 @@ func runGolden(t *testing.T, gc goldenCase) {
 	if got != string(want) {
 		t.Errorf("golden mismatch for %s\n--- want\n%s\n--- got\n%s", path, want, got)
 	}
+}
+
+func sortedKeys(m map[string]string) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	slices.Sort(keys)
+	return keys
 }
 
 func sortedEnv(env map[string]string) string {

@@ -42,6 +42,26 @@ func (v *Vault) Snapshot(key string, n int) (Snapshot, bool, error) {
 	return s, true, nil
 }
 
+// SetSnapshot replaces the snapshot of Item <key>-<n> with s, or removes it
+// when s is nil. doctor uses it to keep the snapshot of Drift it leaves
+// unrepaired, so that a later run can still tell which side changed.
+func (v *Vault) SetSnapshot(key string, n int, s *Snapshot) error {
+	return inImmediateTx(v.db, func(tx *sql.Tx) error {
+		if s == nil {
+			_, err := tx.Exec(`DELETE FROM snapshots WHERE key = ? AND number = ?`, key, n)
+			return err
+		}
+		var kind *string
+		if s.Kind != nil {
+			k := string(*s.Kind)
+			kind = &k
+		}
+		_, err := tx.Exec(`INSERT OR REPLACE INTO snapshots (key, number, filename, title, kind, folder)
+			VALUES (?, ?, ?, ?, ?, ?)`, key, n, s.Filename, s.Title, kind, s.Folder)
+		return err
+	})
+}
+
 // recordSnapshot stores what otman just wrote at the Vault-relative path
 // p, data, as the snapshot of the Item p names. Every write of an Item
 // file goes through it; a file that is not an Item file is ignored.

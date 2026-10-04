@@ -1,0 +1,359 @@
+$ otman doctor --fix --prefer frontmatter
+tty: true
+exit: 4
+-- stdout --
+fixed title_drift Projects/DOC/Issues/DOC-1 Old name.md: "DOC-1 Old name.md" → "DOC-1 New name.md"
+fixed kind_drift Projects/DOC/Issues/DOC-2 Kind drift.md: "Projects/DOC/Issues" → "Projects/DOC/Specs"
+fixed unexpected_folder Projects/DOC/Notes/DOC-3 Outside a Kind folder.md: "Projects/DOC/Notes" → "Projects/DOC/PRDs"
+fixed id_mismatch Projects/DOC/Issues/DOC-4 Wrong id.md: "DOC-9" → "DOC-4"
+fixed missing_key Projects/DOC/Issues/DOC-5 Missing keys.md: (missing) → "DOC-5"
+fixed missing_key Projects/DOC/Issues/DOC-5 Missing keys.md: (missing) → "Missing keys"
+fixed missing_key Projects/DOC/Issues/DOC-5 Missing keys.md: (missing) → "issue"
+fixed invalid_label Projects/DOC/Issues/DOC-6 Labels.md: "Needs Triage!" → "needs-triage"
+fixed duplicate_label Projects/DOC/Issues/DOC-6 Labels.md: "BUG", "bug" → "bug"
+fixed missing_comments_marker Projects/DOC/Issues/DOC-7 Marker gone.md: (no marker) → restored before ## Comments
+fixed dangling_link Projects/DOC/Issues/DOC-12 Dangling links.md: "[[DOC-3 Moved elsewhere]]" → "[[DOC-3 Outside a Kind folder]]"
+missing_comments_marker Projects/DOC/Issues/DOC-8 Stray text.md: DOC-8 has no <!-- otman:comments --> line, so its comments are read from the last ## Comments heading (fix: none)
+malformed_frontmatter Projects/DOC/Issues/DOC-9 Flow style.md: cannot read the frontmatter of Projects/DOC/Issues/DOC-9 Flow style.md: the frontmatter is flow-style YAML (fix: none)
+invalid_status Projects/DOC/Issues/DOC-10 Bad status.md: DOC-10 has status "maybe", not open or closed (fix: none)
+duplicate_comments_markers Projects/DOC/Issues/DOC-11 Two markers.md: DOC-11 has 2 <!-- otman:comments --> lines, so its comments are read from the first (fix: none)
+dangling_link Projects/DOC/Issues/DOC-12 Dangling links.md: DOC-12 blocked_by link [[Nothing matches]] matches no Item in Project DOC (fix: none)
+malformed_value Projects/DOC/Issues/DOC-13 Malformed assignee.md: the assignee value of DOC-13 is a list or mapping, not a name, so it reads as absent (fix: none)
+ambiguous_link Projects/DOC/Issues/DOC-14 Ambiguous parent.md: DOC-14 parent link [[DOC-16 Clean]] matches 2 Items: Projects/DOC/Issues/DOC-16 Clean.md, Projects/DOC/Notes/DOC-16 Clean.md (fix: none)
+unexpected_folder Projects/DOC/Notes/DOC-16 Clean.md: DOC-16 is in Projects/DOC/Notes, not in a Kind folder of Project DOC (fix: none)
+-- stderr --
+
+$ otman doctor --json
+exit: 4
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "findings": [
+      {
+        "code": "missing_comments_marker",
+        "path": "Projects/DOC/Issues/DOC-8 Stray text.md",
+        "message": "DOC-8 has no <!-- otman:comments --> line, so its comments are read from the last ## Comments heading",
+        "fix": "none"
+      },
+      {
+        "code": "malformed_frontmatter",
+        "path": "Projects/DOC/Issues/DOC-9 Flow style.md",
+        "message": "cannot read the frontmatter of Projects/DOC/Issues/DOC-9 Flow style.md: the frontmatter is flow-style YAML",
+        "fix": "none"
+      },
+      {
+        "code": "invalid_status",
+        "path": "Projects/DOC/Issues/DOC-10 Bad status.md",
+        "message": "DOC-10 has status \"maybe\", not open or closed",
+        "fix": "none"
+      },
+      {
+        "code": "duplicate_comments_markers",
+        "path": "Projects/DOC/Issues/DOC-11 Two markers.md",
+        "message": "DOC-11 has 2 <!-- otman:comments --> lines, so its comments are read from the first",
+        "fix": "none"
+      },
+      {
+        "code": "dangling_link",
+        "path": "Projects/DOC/Issues/DOC-12 Dangling links.md",
+        "message": "DOC-12 blocked_by link [[Nothing matches]] matches no Item in Project DOC",
+        "fix": "none"
+      },
+      {
+        "code": "malformed_value",
+        "path": "Projects/DOC/Issues/DOC-13 Malformed assignee.md",
+        "message": "the assignee value of DOC-13 is a list or mapping, not a name, so it reads as absent",
+        "fix": "none"
+      },
+      {
+        "code": "ambiguous_link",
+        "path": "Projects/DOC/Issues/DOC-14 Ambiguous parent.md",
+        "message": "DOC-14 parent link [[DOC-16 Clean]] matches 2 Items: Projects/DOC/Issues/DOC-16 Clean.md, Projects/DOC/Notes/DOC-16 Clean.md",
+        "fix": "none"
+      },
+      {
+        "code": "unexpected_folder",
+        "path": "Projects/DOC/Notes/DOC-16 Clean.md",
+        "message": "DOC-16 is in Projects/DOC/Notes, not in a Kind folder of Project DOC",
+        "fix": "none"
+      }
+    ],
+    "fixed": []
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "DOC"
+actor = "talvor"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/DOC/
+-- vault/Projects/DOC/DOC.md --
+---
+name: Doctor
+kind: project
+---
+vault/Projects/DOC/Issues/
+-- vault/Projects/DOC/Issues/DOC-1 New name.md --
+---
+id: DOC-1
+title: New name
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-10 Bad status.md --
+---
+id: DOC-10
+title: Bad status
+kind: issue
+status: maybe
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-11 Two markers.md --
+---
+id: DOC-11
+title: Two markers
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-12 Dangling links.md --
+---
+id: DOC-12
+title: Dangling links
+kind: issue
+status: open
+parent: "[[DOC-3 Outside a Kind folder]]"
+blocked_by:
+  - "[[Nothing matches]]"
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-13 Malformed assignee.md --
+---
+id: DOC-13
+title: Malformed assignee
+kind: issue
+status: open
+labels: []
+assignee: [alice]
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-14 Ambiguous parent.md --
+---
+id: DOC-14
+title: Ambiguous parent
+kind: issue
+status: open
+parent: "[[DOC-16 Clean]]"
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-16 Clean.md --
+---
+id: DOC-16
+title: Clean
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+Nothing wrong here.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-4 Wrong id.md --
+---
+id: DOC-4
+title: Wrong id
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+The id was pasted from another Item.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-5 Missing keys.md --
+---
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+id: DOC-5
+title: Missing keys
+kind: issue
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-6 Labels.md --
+---
+id: DOC-6
+title: Labels
+kind: issue
+status: open
+labels:
+  - needs-triage
+  - bug
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-7 Marker gone.md --
+---
+id: DOC-7
+title: Marker gone
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+The body ends here.
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+A comment, whose marker line was deleted in Obsidian.
+-- vault/Projects/DOC/Issues/DOC-8 Stray text.md --
+---
+id: DOC-8
+title: Stray text
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+The body ends here.
+
+## Comments
+
+Stray text, which is not a comment.
+-- vault/Projects/DOC/Issues/DOC-9 Flow style.md --
+---
+{id: DOC-9, title: Flow style, kind: issue, status: open}
+---
+The frontmatter is flow style.
+
+<!-- otman:comments -->
+## Comments
+vault/Projects/DOC/Notes/
+-- vault/Projects/DOC/Notes/DOC-16 Clean.md --
+---
+id: DOC-16
+title: Clean
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+A copy of DOC-16, made by hand.
+
+<!-- otman:comments -->
+## Comments
+vault/Projects/DOC/PRDs/
+-- vault/Projects/DOC/PRDs/DOC-3 Outside a Kind folder.md --
+---
+id: DOC-3
+title: Outside a Kind folder
+kind: prd
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+Moved into Notes/ by hand.
+
+<!-- otman:comments -->
+## Comments
+vault/Projects/DOC/Specs/
+-- vault/Projects/DOC/Specs/DOC-2 Kind drift.md --
+---
+id: DOC-2
+title: Kind drift
+kind: spec
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/OTH/
+vault/Projects/OTH/Issues/
+-- vault/Projects/OTH/Issues/OTH-1 Mismatch.md --
+---
+id: OTH-2
+title: Mismatch
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTH/OTH.md --
+---
+name: Other
+kind: project
+---

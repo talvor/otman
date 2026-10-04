@@ -718,6 +718,28 @@ func RetargetLinks(file []byte, retarget func(target string) (string, bool)) ([]
 		}
 		return retarget(l.Target)
 	}
+	edits := retargetRelations(file, link)
+	out := file
+	if len(edits) > 0 {
+		var err error
+		if out, err = frontmatter.Splice(file, edits); err != nil {
+			return nil, err
+		}
+	}
+	_, rest, _ := frontmatter.Split(out)
+	text := wikilink.Rewrite(string(rest), link)
+	if text == string(rest) {
+		return out, nil
+	}
+	head := len(out) - len(rest)
+	return append(out[:head:head], text...), nil
+}
+
+// retargetRelations are the edits that retarget the relation wikilinks of
+// file's frontmatter, parent and the entries of blocked_by, for which link
+// returns a new target. A value that is not a wikilink, or that link leaves
+// alone, is not edited.
+func retargetRelations(file []byte, link func(wikilink.Link) (string, bool)) []frontmatter.Edit {
 	relation := func(n *yaml.Node) (*yaml.Node, bool) {
 		s := scalar(n)
 		if s == nil {
@@ -752,20 +774,7 @@ func RetargetLinks(file []byte, retarget func(target string) (string, bool)) ([]
 			edits = append(edits, frontmatter.Edit{Key: "blocked_by", Value: &out})
 		}
 	}
-	out := file
-	if len(edits) > 0 {
-		var err error
-		if out, err = frontmatter.Splice(file, edits); err != nil {
-			return nil, err
-		}
-	}
-	_, rest, _ := frontmatter.Split(out)
-	text := wikilink.Rewrite(string(rest), link)
-	if text == string(rest) {
-		return out, nil
-	}
-	head := len(out) - len(rest)
-	return append(out[:head:head], text...), nil
+	return edits
 }
 
 // Derived is what an Item file's name and folder say about it, which a

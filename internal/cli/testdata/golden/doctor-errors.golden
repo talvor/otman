@@ -1,0 +1,328 @@
+$ otman doctor --prefer sideways
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_prefer
+  message: "unknown --prefer \"sideways\""
+  details:
+    allowed[2]: frontmatter,file
+    flag: "--prefer"
+    value: sideways
+  hint: use --prefer frontmatter or file
+
+$ otman doctor --prefer ""
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_prefer
+  message: "unknown --prefer \"\""
+  details:
+    allowed[2]: frontmatter,file
+    flag: "--prefer"
+    value: ""
+  hint: use --prefer frontmatter or file
+
+$ otman doctor DOC-1 --all-projects
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: conflicting_flags
+  message: "--all-projects conflicts with a REF"
+  details:
+    flags[2]: "--all-projects",a REF
+  hint: "pass either a REF or --all-projects, not both"
+
+$ otman doctor --all-projects --project DOC
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: conflicting_flags
+  message: "--all-projects conflicts with --project"
+  details:
+    flags[2]: "--all-projects","--project"
+  hint: "pass either --all-projects or --project, not both"
+
+$ otman doctor NOPE-1
+exit: 3
+-- stdout --
+-- stderr --
+error:
+  code: project_not_found
+  message: no Project NOPE in the Vault
+  details:
+    key: NOPE
+  hint: "run 'otman project list' to see the Projects, or 'otman project create NOPE --name NAME'"
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "DOC"
+actor = "talvor"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/DOC/
+-- vault/Projects/DOC/DOC.md --
+---
+name: Doctor
+kind: project
+---
+vault/Projects/DOC/Issues/
+-- vault/Projects/DOC/Issues/DOC-1 Old name.md --
+---
+id: DOC-1
+title: New name
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-10 Bad status.md --
+---
+id: DOC-10
+title: Bad status
+kind: issue
+status: maybe
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-11 Two markers.md --
+---
+id: DOC-11
+title: Two markers
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-12 Dangling links.md --
+---
+id: DOC-12
+title: Dangling links
+kind: issue
+status: open
+parent: "[[DOC-3 Moved elsewhere]]"
+blocked_by:
+  - "[[Nothing matches]]"
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-13 Malformed assignee.md --
+---
+id: DOC-13
+title: Malformed assignee
+kind: issue
+status: open
+labels: []
+assignee: [alice]
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-14 Ambiguous parent.md --
+---
+id: DOC-14
+title: Ambiguous parent
+kind: issue
+status: open
+parent: "[[DOC-16 Clean]]"
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-16 Clean.md --
+---
+id: DOC-16
+title: Clean
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+Nothing wrong here.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-2 Kind drift.md --
+---
+id: DOC-2
+title: Kind drift
+kind: spec
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-4 Wrong id.md --
+---
+id: DOC-9
+title: Wrong id
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+The id was pasted from another Item.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-5 Missing keys.md --
+---
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-6 Labels.md --
+---
+id: DOC-6
+title: Labels
+kind: issue
+status: open
+labels:
+  - Needs Triage!
+  - BUG
+  - bug
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-7 Marker gone.md --
+---
+id: DOC-7
+title: Marker gone
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+The body ends here.
+
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+A comment, whose marker line was deleted in Obsidian.
+-- vault/Projects/DOC/Issues/DOC-8 Stray text.md --
+---
+id: DOC-8
+title: Stray text
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+The body ends here.
+
+## Comments
+
+Stray text, which is not a comment.
+-- vault/Projects/DOC/Issues/DOC-9 Flow style.md --
+---
+{id: DOC-9, title: Flow style, kind: issue, status: open}
+---
+The frontmatter is flow style.
+
+<!-- otman:comments -->
+## Comments
+vault/Projects/DOC/Notes/
+-- vault/Projects/DOC/Notes/DOC-16 Clean.md --
+---
+id: DOC-16
+title: Clean
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+A copy of DOC-16, made by hand.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Notes/DOC-3 Outside a Kind folder.md --
+---
+id: DOC-3
+title: Outside a Kind folder
+kind: prd
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+Moved into Notes/ by hand.
+
+<!-- otman:comments -->
+## Comments
+vault/Projects/DOC/PRDs/
+vault/Projects/DOC/Specs/
+vault/Projects/OTH/
+vault/Projects/OTH/Issues/
+-- vault/Projects/OTH/Issues/OTH-1 Mismatch.md --
+---
+id: OTH-2
+title: Mismatch
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTH/OTH.md --
+---
+name: Other
+kind: project
+---

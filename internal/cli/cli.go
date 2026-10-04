@@ -77,6 +77,9 @@ func Run(o Options) int {
 	if !a.formatResolved {
 		a.out = a.prescanFormat()
 	}
+	if e.Silent {
+		return e.Exit
+	}
 	if werr := output.Failure(a.out, o.Stderr, e.problem()); werr != nil {
 		return ExitFailure
 	}
@@ -139,6 +142,7 @@ func (a *app) newRoot() *cobra.Command {
 	}
 	root.AddCommand(a.newConfigCmd())
 	root.AddCommand(a.newProjectCmd())
+	root.AddCommand(a.newDoctorCmd())
 	return root
 }
 

@@ -24,6 +24,21 @@ func ParseLabel(s string) (string, bool) {
 	return l, len(l) <= LabelLimit && labelRegexp.MatchString(l)
 }
 
+// invalidLabelRun is a run of characters a Label cannot hold once lowercased.
+var invalidLabelRun = regexp.MustCompile(`[^a-z0-9._:/-]+`)
+
+// SlugLabel turns s into a Label: lowercased, each run of characters a
+// Label cannot hold replaced by "-", trimmed of "-" at both ends and cut to
+// LabelLimit. ok is false when nothing valid is left, such as a label of
+// punctuation only.
+func SlugLabel(s string) (string, bool) {
+	slug := strings.Trim(invalidLabelRun.ReplaceAllString(strings.ToLower(s), "-"), "-")
+	if len(slug) > LabelLimit {
+		slug = strings.TrimRight(slug[:LabelLimit], "-")
+	}
+	return ParseLabel(slug)
+}
+
 // NormalizeLabels lowercases labels and drops repeats, keeping the first
 // of each in order. Labels match case-insensitively, so Bug and bug are
 // one Label.
@@ -55,6 +70,11 @@ func storedLabels(file []byte) (labels []string, lossless bool) {
 	labels = scalars(value)
 	return labels, len(labels) == len(value.Content) && !frontmatter.Commented(file, "labels")
 }
+
+// StoredLabels are the labels of file as stored, and whether rewriting
+// them loses nothing: the list holds plain values only, with no YAML
+// comments. Without a list of labels the result is nil and false.
+func StoredLabels(file []byte) ([]string, bool) { return storedLabels(file) }
 
 // labelEdits are the edits an Update makes to the labels of file: none
 // when adding and removing leave the same Labels, ignoring case.

@@ -14,6 +14,7 @@ Available Commands:
   comment     Append a comment to an Item
   config      Show or change user config
   create      Create an Item in the selected Project
+  doctor      Report the Drift of Items, and with --fix repair what can be repaired
   edit        Change an Item's title, Kind, body, assignee or Labels
   frontier    List the Frontier: the open, unclaimed Items with no open blockers
   help        Help about any command

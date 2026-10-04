@@ -1,0 +1,721 @@
+$ otman create --title Snapshot one --kind issue
+exit: 0
+-- stdout --
+item:
+  id: DOC-17
+  title: Snapshot one
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/DOC/Issues/DOC-17 Snapshot one.md
+  rev: 431168df2e56
+changed: true
+-- stderr --
+
+$ write "vault/Projects/DOC/Issues/DOC-17 Snapshot one.md"
+
+$ otman doctor DOC-17 --json
+exit: 4
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "findings": [
+      {
+        "code": "title_drift",
+        "path": "Projects/DOC/Issues/DOC-17 Snapshot one.md",
+        "message": "DOC-17 has title \"Retyped title\", but its filename says \"Snapshot one\"",
+        "fix": "auto"
+      }
+    ],
+    "fixed": []
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman doctor DOC-17 --fix --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "findings": [],
+    "fixed": [
+      {
+        "code": "title_drift",
+        "path": "Projects/DOC/Issues/DOC-17 Snapshot one.md",
+        "old": "\"DOC-17 Snapshot one.md\"",
+        "new": "\"DOC-17 Retyped title.md\""
+      }
+    ]
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman create --title Snapshot two --kind issue
+exit: 0
+-- stdout --
+item:
+  id: DOC-18
+  title: Snapshot two
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/DOC/Issues/DOC-18 Snapshot two.md
+  rev: 1e6038250f50
+changed: true
+-- stderr --
+
+$ rm "vault/Projects/DOC/Issues/DOC-18 Snapshot two.md"
+
+$ write "vault/Projects/DOC/Issues/DOC-18 Renamed by hand.md"
+
+$ otman doctor DOC-18 --fix --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "findings": [],
+    "fixed": [
+      {
+        "code": "title_drift",
+        "path": "Projects/DOC/Issues/DOC-18 Renamed by hand.md",
+        "old": "\"Snapshot two\"",
+        "new": "\"Renamed by hand\""
+      }
+    ]
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman create --title Snapshot three --kind issue
+exit: 0
+-- stdout --
+item:
+  id: DOC-19
+  title: Snapshot three
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/DOC/Issues/DOC-19 Snapshot three.md
+  rev: 0fa055c41852
+changed: true
+-- stderr --
+
+$ rm "vault/Projects/DOC/Issues/DOC-19 Snapshot three.md"
+
+$ write "vault/Projects/DOC/Issues/DOC-19 Both sides.md"
+
+$ otman doctor DOC-19 --fix --json
+exit: 4
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "findings": [
+      {
+        "code": "title_drift",
+        "path": "Projects/DOC/Issues/DOC-19 Both sides.md",
+        "message": "DOC-19 has title \"Both edited\", but its filename says \"Both sides\"",
+        "fix": "choice"
+      }
+    ],
+    "fixed": []
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman doctor DOC-19 --fix --prefer file --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "findings": [],
+    "fixed": [
+      {
+        "code": "title_drift",
+        "path": "Projects/DOC/Issues/DOC-19 Both sides.md",
+        "old": "\"Both edited\"",
+        "new": "\"Both sides\""
+      }
+    ]
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman create --title Snapshot four --kind issue
+exit: 0
+-- stdout --
+item:
+  id: DOC-20
+  title: Snapshot four
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/DOC/Issues/DOC-20 Snapshot four.md
+  rev: 77c5cfeeaa1c
+changed: true
+-- stderr --
+
+$ write "vault/Projects/DOC/Issues/DOC-20 Snapshot four.md"
+
+$ otman doctor DOC-20 --fix --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "findings": [],
+    "fixed": [
+      {
+        "code": "kind_drift",
+        "path": "Projects/DOC/Issues/DOC-20 Snapshot four.md",
+        "old": "\"Projects/DOC/Issues\"",
+        "new": "\"Projects/DOC/PRDs\""
+      }
+    ]
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman create --title Snapshot five --kind issue
+exit: 0
+-- stdout --
+item:
+  id: DOC-21
+  title: Snapshot five
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/DOC/Issues/DOC-21 Snapshot five.md
+  rev: a3b02f5bf499
+changed: true
+-- stderr --
+
+$ rm "vault/Projects/DOC/Issues/DOC-21 Snapshot five.md"
+
+$ write "vault/Projects/DOC/Specs/DOC-21 Snapshot five.md"
+
+$ otman doctor DOC-21 --fix --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "findings": [],
+    "fixed": [
+      {
+        "code": "kind_drift",
+        "path": "Projects/DOC/Specs/DOC-21 Snapshot five.md",
+        "old": "\"issue\"",
+        "new": "\"spec\""
+      }
+    ]
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman create --title Snapshot six --kind issue
+exit: 0
+-- stdout --
+item:
+  id: DOC-22
+  title: Snapshot six
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/DOC/Issues/DOC-22 Snapshot six.md
+  rev: 471ff35fa6bc
+changed: true
+-- stderr --
+
+$ rm "vault/Projects/DOC/Issues/DOC-22 Snapshot six.md"
+
+$ write "vault/Projects/DOC/Issues/DOC-22.md"
+
+$ otman doctor DOC-22 --fix --prefer file --json
+exit: 4
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "findings": [
+      {
+        "code": "title_drift",
+        "path": "Projects/DOC/Issues/DOC-22.md",
+        "message": "DOC-22 has title \"Snapshot six\", but its filename says \"\"",
+        "fix": "none"
+      }
+    ],
+    "fixed": []
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman create --title Keep kind --kind issue
+exit: 0
+-- stdout --
+item:
+  id: DOC-23
+  title: Keep kind
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/DOC/Issues/DOC-23 Keep kind.md
+  rev: 91b134e79214
+changed: true
+-- stderr --
+
+$ rm "vault/Projects/DOC/Issues/DOC-23 Keep kind.md"
+
+$ write "vault/Projects/DOC/Specs/DOC-23 Keep kind.md"
+
+$ otman doctor DOC-23 --fix --json
+exit: 4
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "findings": [
+      {
+        "code": "kind_drift",
+        "path": "Projects/DOC/Specs/DOC-23 Keep kind.md",
+        "message": "DOC-23 has kind prd, but it is in Projects/DOC/Specs, the folder for spec",
+        "fix": "choice"
+      }
+    ],
+    "fixed": [
+      {
+        "code": "title_drift",
+        "path": "Projects/DOC/Specs/DOC-23 Keep kind.md",
+        "old": "\"DOC-23 Keep kind.md\"",
+        "new": "\"DOC-23 Keep kind retyped.md\""
+      }
+    ]
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ rm "vault/Projects/DOC/Specs/DOC-23 Keep kind retyped.md"
+
+$ write "vault/Projects/DOC/Issues/DOC-23 Keep kind retyped.md"
+
+$ otman doctor DOC-23 --fix --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "findings": [],
+    "fixed": [
+      {
+        "code": "kind_drift",
+        "path": "Projects/DOC/Issues/DOC-23 Keep kind retyped.md",
+        "old": "\"Projects/DOC/Issues\"",
+        "new": "\"Projects/DOC/PRDs\""
+      }
+    ]
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "DOC"
+actor = "talvor"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/DOC/
+-- vault/Projects/DOC/DOC.md --
+---
+name: Doctor
+kind: project
+---
+vault/Projects/DOC/Issues/
+-- vault/Projects/DOC/Issues/DOC-1 Old name.md --
+---
+id: DOC-1
+title: New name
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-10 Bad status.md --
+---
+id: DOC-10
+title: Bad status
+kind: issue
+status: maybe
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-11 Two markers.md --
+---
+id: DOC-11
+title: Two markers
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-12 Dangling links.md --
+---
+id: DOC-12
+title: Dangling links
+kind: issue
+status: open
+parent: "[[DOC-3 Moved elsewhere]]"
+blocked_by:
+  - "[[Nothing matches]]"
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-13 Malformed assignee.md --
+---
+id: DOC-13
+title: Malformed assignee
+kind: issue
+status: open
+labels: []
+assignee: [alice]
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-14 Ambiguous parent.md --
+---
+id: DOC-14
+title: Ambiguous parent
+kind: issue
+status: open
+parent: "[[DOC-16 Clean]]"
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-16 Clean.md --
+---
+id: DOC-16
+title: Clean
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+Nothing wrong here.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-17 Retyped title.md --
+---
+id: DOC-17
+title: Retyped title
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-18 Renamed by hand.md --
+---
+id: DOC-18
+title: Renamed by hand
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-19 Both sides.md --
+---
+id: DOC-19
+title: Both sides
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-2 Kind drift.md --
+---
+id: DOC-2
+title: Kind drift
+kind: spec
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-22.md --
+---
+id: DOC-22
+title: Snapshot six
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-4 Wrong id.md --
+---
+id: DOC-9
+title: Wrong id
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+The id was pasted from another Item.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-5 Missing keys.md --
+---
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-6 Labels.md --
+---
+id: DOC-6
+title: Labels
+kind: issue
+status: open
+labels:
+  - Needs Triage!
+  - BUG
+  - bug
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-7 Marker gone.md --
+---
+id: DOC-7
+title: Marker gone
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+The body ends here.
+
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+A comment, whose marker line was deleted in Obsidian.
+-- vault/Projects/DOC/Issues/DOC-8 Stray text.md --
+---
+id: DOC-8
+title: Stray text
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+The body ends here.
+
+## Comments
+
+Stray text, which is not a comment.
+-- vault/Projects/DOC/Issues/DOC-9 Flow style.md --
+---
+{id: DOC-9, title: Flow style, kind: issue, status: open}
+---
+The frontmatter is flow style.
+
+<!-- otman:comments -->
+## Comments
+vault/Projects/DOC/Notes/
+-- vault/Projects/DOC/Notes/DOC-16 Clean.md --
+---
+id: DOC-16
+title: Clean
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+A copy of DOC-16, made by hand.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Notes/DOC-3 Outside a Kind folder.md --
+---
+id: DOC-3
+title: Outside a Kind folder
+kind: prd
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+Moved into Notes/ by hand.
+
+<!-- otman:comments -->
+## Comments
+vault/Projects/DOC/PRDs/
+-- vault/Projects/DOC/PRDs/DOC-20 Snapshot four.md --
+---
+id: DOC-20
+title: Snapshot four
+kind: prd
+status: open
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/PRDs/DOC-23 Keep kind retyped.md --
+---
+id: DOC-23
+title: Keep kind retyped
+kind: prd
+status: open
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+
+<!-- otman:comments -->
+## Comments
+vault/Projects/DOC/Specs/
+-- vault/Projects/DOC/Specs/DOC-21 Snapshot five.md --
+---
+id: DOC-21
+title: Snapshot five
+kind: spec
+status: open
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+
+<!-- otman:comments -->
+## Comments
+vault/Projects/OTH/
+vault/Projects/OTH/Issues/
+-- vault/Projects/OTH/Issues/OTH-1 Mismatch.md --
+---
+id: OTH-2
+title: Mismatch
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTH/OTH.md --
+---
+name: Other
+kind: project
+---

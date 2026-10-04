@@ -24,6 +24,9 @@ type Error struct {
 	Message string
 	Details map[string]any
 	Hint    string
+	// Silent is set when the command has already written its result and
+	// only its exit status is left to report, as doctor does for findings.
+	Silent bool
 }
 
 func (e *Error) Error() string { return e.Message }
