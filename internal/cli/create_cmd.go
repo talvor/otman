@@ -138,7 +138,7 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 				return err
 			}
 		}
-		parent, blockers, err := createRelations(v, key.Value, cmd.Flags().Changed("parent"), f.parent, f.blockedBy)
+		parent, blockers, err := createRelations(v, key.Value, f.parent, f.blockedBy)
 		if err != nil {
 			return err
 		}
@@ -165,12 +165,12 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 	})
 }
 
-// createRelations resolves the --parent and --blocked-by targets of a new
+// createRelations resolves the --parent (none when "") and --blocked-by targets of a new
 // Item in Project key to the wikilinks it stores, without repeats. A new
 // Item has no children and blocks nothing, so no edge can close a cycle.
-func createRelations(v *vault.Vault, key string, hasParent bool, parentRef string, blockerRefs []string) (*string, []string, error) {
+func createRelations(v *vault.Vault, key, parentRef string, blockerRefs []string) (*string, []string, error) {
 	var parent *string
-	if hasParent {
+	if parentRef != "" {
 		t, err := resolveTarget(v, key, parentRef, "parent")
 		if err != nil {
 			return nil, nil, err

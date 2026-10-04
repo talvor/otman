@@ -31,18 +31,18 @@ func relationLinks(p item.Parsed, key string) []string {
 }
 
 // linkProblem is what is wrong with link, the value of relation key of
-// owner, which matches candidates: a dangling_link when it matches no
+// holder, which matches candidates: a dangling_link when it matches no
 // Item, an ambiguous_link when it matches several; ok is false when it
 // matches exactly one.
-func linkProblem(owner vault.ItemFile, key, link string, candidates []vault.ItemFile) (p output.Problem, ok bool) {
-	details := map[string]any{"id": owner.ID(), "path": owner.Path, "key": key, "link": link}
-	hint := "fix or remove the link in " + owner.Path
+func linkProblem(holder vault.ItemFile, key, link string, candidates []vault.ItemFile) (p output.Problem, ok bool) {
+	details := map[string]any{"id": holder.ID(), "path": holder.Path, "key": key, "link": link}
+	hint := "fix or remove the link in " + holder.Path
 	switch len(candidates) {
 	case 1:
 		return output.Problem{}, false
 	case 0:
 		return output.Warning("dangling_link",
-			owner.ID()+" "+key+" link "+link+" matches no Item in Project "+owner.Key,
+			holder.ID()+" "+key+" link "+link+" matches no Item in Project "+holder.Key,
 			details, hint), true
 	}
 	paths := make([]string, len(candidates))
@@ -51,46 +51,46 @@ func linkProblem(owner vault.ItemFile, key, link string, candidates []vault.Item
 	}
 	details["paths"] = paths
 	return output.Warning("ambiguous_link",
-		fmt.Sprintf("%s %s link %s matches %d Items: %s", owner.ID(), key, link, len(paths), strings.Join(paths, ", ")),
+		fmt.Sprintf("%s %s link %s matches %d Items: %s", holder.ID(), key, link, len(paths), strings.Join(paths, ", ")),
 		details, hint+", or name one Item by its path, such as [["+strings.TrimSuffix(paths[0], ".md")+"]]"), true
 }
 
-// badRelationProblem reports bad, a relation value of owner that is not a
+// badRelationProblem reports bad, a relation value of holder that is not a
 // wikilink.
-func badRelationProblem(owner vault.ItemFile, bad item.BadRelation) output.Problem {
+func badRelationProblem(holder vault.ItemFile, bad item.BadRelation) output.Problem {
 	what := "a list or mapping"
 	if bad.Value != nil {
 		what = quoteArg(*bad.Value)
 	}
 	where, want := "the parent", "a wikilink"
-	example := `parent: "[[` + owner.Key + `-1 Title]]"`
+	example := `parent: "[[` + holder.Key + `-1 Title]]"`
 	if bad.Key == "blocked_by" {
 		where, want = "the blocked_by", "a list of wikilinks"
-		example = `blocked_by: ["[[` + owner.Key + `-1 Title]]"]`
+		example = `blocked_by: ["[[` + holder.Key + `-1 Title]]"]`
 		if bad.Entry {
 			where, want = "a blocked_by entry", "a wikilink"
 		}
 	}
 	return output.Warning("malformed_relation",
-		where+" of "+owner.ID()+" is "+what+", not "+want+", so it is ignored",
-		map[string]any{"id": owner.ID(), "path": owner.Path, "key": bad.Key, "value": bad.Value},
-		"write "+bad.Key+" in "+owner.Path+" as quoted wikilinks, such as "+example)
+		where+" of "+holder.ID()+" is "+what+", not "+want+", so it is ignored",
+		map[string]any{"id": holder.ID(), "path": holder.Path, "key": bad.Key, "value": bad.Value},
+		"write "+bad.Key+" in "+holder.Path+" as quoted wikilinks, such as "+example)
 }
 
-// relationProblems warn about every relation value of owner, parsed as
+// relationProblems warn about every relation value of holder, parsed as
 // p, that does not resolve to exactly one Item. They never make a read or
 // a scalar edit fail.
-func relationProblems(owner vault.ItemFile, p item.Parsed, links itemLinks) []output.Problem {
+func relationProblems(holder vault.ItemFile, p item.Parsed, links itemLinks) []output.Problem {
 	var ws []output.Problem
 	for _, key := range []string{"parent", "blocked_by"} {
 		for _, l := range relationLinks(p, key) {
-			if w, bad := linkProblem(owner, key, l, links.candidates(l)); bad {
+			if w, bad := linkProblem(holder, key, l, links.candidates(l)); bad {
 				ws = append(ws, w)
 			}
 		}
 		for _, bad := range p.BadRelations {
 			if bad.Key == key {
-				ws = append(ws, badRelationProblem(owner, bad))
+				ws = append(ws, badRelationProblem(holder, bad))
 			}
 		}
 	}
@@ -240,18 +240,18 @@ func checkParentCycle(v *vault.Vault, links itemLinks, child, parent vault.ItemF
 }
 
 // checkBlockingCycle fails with blocking_cycle when making blocker block
-// it would close a cycle: when blocker is already blocked, directly or
-// through other Items, by it. Every blocked_by link reached must resolve.
-func checkBlockingCycle(v *vault.Vault, links itemLinks, it, blocker vault.ItemFile) error {
+// blocked would close a cycle: when blocker is already blocked, directly
+// or through other Items, by blocked. Every blocked_by link reached must resolve.
+func checkBlockingCycle(v *vault.Vault, links itemLinks, blocked, blocker vault.ItemFile) error {
 	seen := map[string]bool{}
 	var visit func(cur vault.ItemFile, chain []string) error
 	visit = func(cur vault.ItemFile, chain []string) error {
-		if cur.Path == it.Path {
+		if cur.Path == blocked.Path {
 			return &Error{Exit: ExitConflict, Code: "blocking_cycle",
-				Message: "blocking " + it.ID() + " by " + blocker.ID() + " would make a cycle: " +
+				Message: "blocking " + blocked.ID() + " by " + blocker.ID() + " would make a cycle: " +
 					strings.Join(chain, " ← ") + ", each blocked by the next",
-				Details: map[string]any{"id": it.ID(), "blocker": blocker.ID(), "cycle": chain},
-				Hint:    blocker.ID() + " already waits on " + it.ID() + "; remove that dependency first"}
+				Details: map[string]any{"id": blocked.ID(), "blocker": blocker.ID(), "cycle": chain},
+				Hint:    blocker.ID() + " already waits on " + blocked.ID() + "; remove that dependency first"}
 		}
 		if seen[cur.Path] {
 			return nil
@@ -268,21 +268,21 @@ func checkBlockingCycle(v *vault.Vault, links itemLinks, it, blocker vault.ItemF
 		}
 		return nil
 	}
-	return visit(blocker, []string{it.ID(), blocker.ID()})
+	return visit(blocker, []string{blocked.ID(), blocker.ID()})
 }
 
-// matchingLinks are the entries of links, an Item's relation key held by
-// owner, that resolve to target. An entry that is ambiguous between
+// matchingLinks are the entries, the links of relation key held by
+// holder, that resolve to target. An entry that is ambiguous between
 // target and other Items fails, since otman cannot tell whether it is the
 // edge asked about.
-func matchingLinks(owner vault.ItemFile, key string, entries []string, links itemLinks, target vault.ItemFile) ([]string, error) {
+func matchingLinks(holder vault.ItemFile, key string, entries []string, links itemLinks, target vault.ItemFile) ([]string, error) {
 	var out []string
 	for _, l := range entries {
 		found := links.candidates(l)
 		if !slices.Contains(found, target) {
 			continue
 		}
-		if prob, bad := linkProblem(owner, key, l, found); bad {
+		if prob, bad := linkProblem(holder, key, l, found); bad {
 			return nil, graphError(prob)
 		}
 		out = append(out, l)

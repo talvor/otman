@@ -205,6 +205,25 @@ exit: 2
   }
 }
 
+$ otman list --all-projects --blocked-by REL-2 --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "conflicting_flags",
+    "message": "--all-projects conflicts with --blocked-by",
+    "details": {
+      "flags": [
+        "--all-projects",
+        "--blocked-by"
+      ]
+    },
+    "hint": "drop --all-projects; --blocked-by lists within its Item's Project"
+  }
+}
+
 $ otman list --parent REL-99 --json
 exit: 3
 -- stdout --

@@ -111,7 +111,7 @@ func TestRelationErrors(t *testing.T) {
 // dangling parent, a dangling blocker and a malformed one; REL-21 is
 // blocked by a link that matches both REL-7 Twin files; REL-22 has a
 // malformed blocked_by value; REL-23 cannot be read; REL-24 is a child
-// of REL-23.
+// of REL-23; REL-25 has a null blocked_by entry.
 var brokenFiles = map[string]string{
 	"vault/Projects/REL/Issues/REL-20 Dangling.md": relationItem("REL-20", "Dangling",
 		`"[[REL-98 Missing parent]]"`, "\n  - \"[[REL-99 Gone]]\"\n  - REL-2\n  - \"[[REL-5 Old groundwork]]\""),
@@ -124,6 +124,8 @@ var brokenFiles = map[string]string{
 	"vault/Projects/REL/Issues/REL-23 Unreadable.md": "---\nparent: [unclosed\n---\n",
 	"vault/Projects/REL/Issues/REL-24 Child of the unreadable.md": relationItem("REL-24", "Child of the unreadable",
 		`"[[REL-23 Unreadable]]"`, "[]"),
+	"vault/Projects/REL/Issues/REL-25 Null entry.md": relationItem("REL-25", "Null entry",
+		"null", "\n  - ~"),
 }
 
 // Broken links never block view or scalar edits, which warn about them,
@@ -149,6 +151,9 @@ func TestRelationBrokenLinks(t *testing.T) {
 			{args: []string{"unblock", "REL-20", "--by", "REL-5"}, tty: true},
 			{args: []string{"parent", "set", "REL-20", "REL-1"}},
 			{args: []string{"parent", "clear", "REL-22", "--json"}},
+			{args: []string{"block", "REL-22", "--by", "REL-6", "--json"}},
+			{args: []string{"unblock", "REL-22", "--by", "REL-2"}, tty: true},
+			{args: []string{"view", "REL-25"}, tty: true},
 			{args: []string{"parent", "set", "REL-23", "REL-1", "--json"}},
 		},
 	})
@@ -196,6 +201,7 @@ func TestListRelations(t *testing.T) {
 			{args: []string{"list", "--parent", "REL-1"}, env: map[string]string{"OTM_PROJECT": "OTH"}, tty: true},
 			{args: []string{"list", "--parent", "REL-1", "--project", "OTH", "--json"}},
 			{args: []string{"list", "--parent", "REL-1", "--blocked-by", "OTH-1", "--json"}},
+			{args: []string{"list", "--all-projects", "--blocked-by", "REL-2", "--json"}},
 			{args: []string{"list", "--parent", "REL-99", "--json"}},
 			{args: []string{"list", "--parent", "", "--json"}},
 		},

@@ -287,13 +287,21 @@ func optionalLink(link *string) *yaml.Node {
 }
 
 // links is a list of quoted relation wikilinks.
-func links(items []string) *yaml.Node {
-	n := list(nil)
-	if len(items) > 0 {
-		n.Style = 0
+func links(items []string) *yaml.Node { return sequence(quotedAll(items)) }
+
+func quotedAll(items []string) []*yaml.Node {
+	nodes := make([]*yaml.Node, len(items))
+	for i, s := range items {
+		nodes[i] = quoted(s)
 	}
-	for _, l := range items {
-		n.Content = append(n.Content, quoted(l))
+	return nodes
+}
+
+// sequence is a list of nodes, written [] when empty.
+func sequence(nodes []*yaml.Node) *yaml.Node {
+	n := &yaml.Node{Kind: yaml.SequenceNode, Tag: "!!seq", Content: nodes}
+	if len(nodes) == 0 {
+		n.Style = yaml.FlowStyle
 	}
 	return n
 }
@@ -413,12 +421,12 @@ func (p *Parsed) readFrontmatter(fm []byte) {
 			if l := scalar(v); l != nil && IsLink(*l) {
 				p.Parent = l
 			} else if !isNull(v) {
-				p.BadRelations = append(p.BadRelations, BadRelation{Key: "parent", Value: scalar(v)})
+				p.BadRelations = append(p.BadRelations, BadRelation{Key: "parent", Value: scalarText(v)})
 			}
 		case "blocked_by":
 			if v.Kind != yaml.SequenceNode {
 				if !isNull(v) {
-					p.BadRelations = append(p.BadRelations, BadRelation{Key: "blocked_by", Value: scalar(v)})
+					p.BadRelations = append(p.BadRelations, BadRelation{Key: "blocked_by", Value: scalarText(v)})
 				}
 				break
 			}
@@ -426,7 +434,7 @@ func (p *Parsed) readFrontmatter(fm []byte) {
 				if l := scalar(c); l != nil && IsLink(*l) {
 					p.BlockedBy = append(p.BlockedBy, *l)
 				} else {
-					p.BadRelations = append(p.BadRelations, BadRelation{Key: "blocked_by", Entry: true, Value: scalar(c)})
+					p.BadRelations = append(p.BadRelations, BadRelation{Key: "blocked_by", Entry: true, Value: scalarText(c)})
 				}
 			}
 		}
@@ -436,6 +444,16 @@ func (p *Parsed) readFrontmatter(fm []byte) {
 // isNull reports whether n is a null scalar, such as null, ~ or nothing.
 func isNull(n *yaml.Node) bool {
 	return n.Kind == yaml.ScalarNode && n.Tag == "!!null"
+}
+
+// scalarText is a scalar's text as written, null included, or nil for a
+// list or mapping.
+func scalarText(n *yaml.Node) *string {
+	if n.Kind != yaml.ScalarNode {
+		return nil
+	}
+	s := n.Value
+	return &s
 }
 
 // scalar is a non-null scalar's text, or nil.
@@ -536,8 +554,11 @@ func Apply(file []byte, update Update, now time.Time) (out []byte, changed bool,
 		edits = append(edits, frontmatter.Edit{Key: "parent", Value: quoted(*update.Parent)})
 	}
 	if len(update.AddBlockers) > 0 || len(update.RemoveBlockers) > 0 {
-		edits = append(edits, frontmatter.Edit{Key: "blocked_by",
-			Value: blockerList(file, update.AddBlockers, update.RemoveBlockers)})
+		blockers, err := blockerList(file, update.AddBlockers, update.RemoveBlockers)
+		if err != nil {
+			return nil, false, err
+		}
+		edits = append(edits, frontmatter.Edit{Key: "blocked_by", Value: blockers})
 	}
 	var transform func([]byte) ([]byte, error)
 	if body := update.Body; body != nil {
@@ -723,26 +744,27 @@ func IsLink(s string) bool {
 // filename without ".md".
 func Link(name string) string { return "[[" + strings.TrimSuffix(name, ".md") + "]]" }
 
+// ErrBlockersNotList refuses to rewrite a blocked_by value that is
+// neither a list nor null, which otman would have to discard.
+var ErrBlockersNotList = errors.New("its blocked_by is not a list, and rewriting it would lose that value")
+
 // blockerList is the blocked_by value of file with the entries remove
 // names dropped and the links add appended as quoted scalars. Entries of
-// an existing list are otherwise kept as they are; a value that is not a
-// list reads as no blockers and is replaced.
-func blockerList(file []byte, add, remove []string) *yaml.Node {
-	out := links(nil)
+// an existing list are otherwise kept as they are. A missing or null
+// value is no blockers; any other value that is not a list fails with
+// ErrBlockersNotList rather than be replaced.
+func blockerList(file []byte, add, remove []string) (*yaml.Node, error) {
+	var entries []*yaml.Node
 	if v := frontmatterValue(file, "blocked_by"); v != nil && v.Kind == yaml.SequenceNode {
 		for _, c := range v.Content {
 			if s := scalar(c); s == nil || !slices.Contains(remove, *s) {
-				out.Content = append(out.Content, c)
+				entries = append(entries, c)
 			}
 		}
+	} else if v != nil && !isNull(v) {
+		return nil, ErrBlockersNotList
 	}
-	for _, l := range add {
-		out.Content = append(out.Content, quoted(l))
-	}
-	if len(out.Content) > 0 {
-		out.Style = 0
-	}
-	return out
+	return sequence(append(entries, quotedAll(add)...)), nil
 }
 
 // frontmatterValue is the value of the top-level key of file's

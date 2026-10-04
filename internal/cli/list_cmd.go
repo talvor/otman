@@ -200,6 +200,16 @@ func (a *app) list(cmd *cobra.Command, f listFlags) error {
 		q.assignee = &name
 	}
 	selectors := f.parent != "" || f.blockedBy != ""
+	// A relation selector sets the Project scope, so it excludes
+	// --all-projects as --project does.
+	if f.allProjects && selectors {
+		other := "--parent"
+		if f.parent == "" {
+			other = "--blocked-by"
+		}
+		return conflictingFlags("--all-projects", other,
+			"drop --all-projects; "+other+" lists within its Item's Project")
+	}
 	var sel config.Value
 	if !f.allProjects && !selectors {
 		if sel, err = selectedProject(s, "--all-projects"); err != nil {

@@ -399,6 +399,46 @@ exit: 0
 }
 -- stderr --
 
+$ otman block REL-22 --by REL-6 --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "unsafe_write",
+    "message": "refusing to rewrite Projects/REL/Issues/REL-22 Malformed.md: its blocked_by is not a list, and rewriting it would lose that value",
+    "details": {
+      "path": "Projects/REL/Issues/REL-22 Malformed.md",
+      "reason": "its blocked_by is not a list, and rewriting it would lose that value"
+    },
+    "hint": "make blocked_by in Projects/REL/Issues/REL-22 Malformed.md a list of quoted wikilinks, such as blocked_by: [\"[[REL-1 Title]]\"], then retry"
+  }
+}
+
+$ otman unblock REL-22 --by REL-2
+tty: true
+exit: 0
+-- stdout --
+REL-22 · Malformed is not blocked by REL-2
+-- stderr --
+warning[malformed_relation]: the blocked_by of REL-22 is "[[REL-2 Wikilink scanner]]", not a list of wikilinks, so it is ignored
+hint: write blocked_by in Projects/REL/Issues/REL-22 Malformed.md as quoted wikilinks, such as blocked_by: ["[[REL-1 Title]]"]
+
+$ otman view REL-25
+tty: true
+exit: 0
+-- stdout --
+REL-25 · Null entry
+issue · open · unassigned
+Author: - · created - · updated -
+Path: Projects/REL/Issues/REL-25 Null entry.md
+
+(no body)
+-- stderr --
+warning[malformed_relation]: a blocked_by entry of REL-25 is "~", not a wikilink, so it is ignored
+hint: write blocked_by in Projects/REL/Issues/REL-25 Null entry.md as quoted wikilinks, such as blocked_by: ["[[REL-1 Title]]"]
+
 $ otman parent set REL-23 REL-1 --json
 exit: 4
 -- stdout --
@@ -525,6 +565,18 @@ kind: issue
 status: open
 parent: "[[REL-23 Unreadable]]"
 blocked_by: []
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-25 Null entry.md --
+---
+id: REL-25
+title: Null entry
+kind: issue
+status: open
+parent: null
+blocked_by: 
+  - ~
 ---
 <!-- otman:comments -->
 ## Comments

@@ -20,7 +20,7 @@ func (a *app) newParentCmd() *cobra.Command {
 		Args:  cobra.ExactArgs(2),
 		RunE: func(_ *cobra.Command, args []string) error {
 			return a.changeRelations(args[0], func(v *vault.Vault, f vault.ItemFile, p item.Parsed, links itemLinks) (relationChange, error) {
-				return parentSet(v, f, p, links, args[1])
+				return planParentSet(v, f, p, links, args[1])
 			})
 		},
 	})
@@ -29,7 +29,7 @@ func (a *app) newParentCmd() *cobra.Command {
 		Short: "Clear the parent of CHILD",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(_ *cobra.Command, args []string) error {
-			return a.changeRelations(args[0], parentClear)
+			return a.changeRelations(args[0], planParentClear)
 		},
 	})
 	return cmd
@@ -58,9 +58,9 @@ func (a *app) newBlockCmd(c blockCommand) *cobra.Command {
 				return invalid("invalid_arguments", c.use+" needs --by BLOCKER",
 					map[string]any{"flag": "--by"}, "pass the blocking Item with --by, such as --by OTM-3")
 			}
-			plan := unblock
+			plan := planUnblock
 			if c.add {
-				plan = block
+				plan = planBlock
 			}
 			return a.changeRelations(args[0], func(v *vault.Vault, f vault.ItemFile, p item.Parsed, links itemLinks) (relationChange, error) {
 				return plan(v, f, p, links, by)
@@ -128,9 +128,9 @@ func (a *app) changeRelations(ref string, plan func(*vault.Vault, vault.ItemFile
 }
 
 // named is how a human message names Item file f, parsed as p.
-func named(f vault.ItemFile, p item.Parsed) string { return f.ID() + " · " + itemTitle(f, p) }
+func itemLabel(f vault.ItemFile, p item.Parsed) string { return f.ID() + " · " + itemTitle(f, p) }
 
-func parentSet(v *vault.Vault, f vault.ItemFile, p item.Parsed, links itemLinks, ref string) (relationChange, error) {
+func planParentSet(v *vault.Vault, f vault.ItemFile, p item.Parsed, links itemLinks, ref string) (relationChange, error) {
 	parent, err := resolveTarget(v, f.Key, ref, "parent")
 	if err != nil {
 		return relationChange{}, err
@@ -140,7 +140,7 @@ func parentSet(v *vault.Vault, f vault.ItemFile, p item.Parsed, links itemLinks,
 	}
 	if p.Parent != nil {
 		if t, ok := links.target(*p.Parent); ok && t == parent {
-			return relationChange{human: fmt.Sprintf("%s already has the parent %s\n", named(f, p), parent.ID())}, nil
+			return relationChange{human: fmt.Sprintf("%s already has the parent %s\n", itemLabel(f, p), parent.ID())}, nil
 		}
 	}
 	if err := checkParentCycle(v, links, f, parent); err != nil {
@@ -148,22 +148,22 @@ func parentSet(v *vault.Vault, f vault.ItemFile, p item.Parsed, links itemLinks,
 	}
 	link := item.Link(parent.Name())
 	return relationChange{update: item.Update{Parent: &link}, changed: true,
-		human: fmt.Sprintf("Set the parent of %s to %s\n", named(f, p), parent.ID())}, nil
+		human: fmt.Sprintf("Set the parent of %s to %s\n", itemLabel(f, p), parent.ID())}, nil
 }
 
-func parentClear(_ *vault.Vault, f vault.ItemFile, p item.Parsed, _ itemLinks) (relationChange, error) {
+func planParentClear(_ *vault.Vault, f vault.ItemFile, p item.Parsed, _ itemLinks) (relationChange, error) {
 	hasBad := false
 	for _, bad := range p.BadRelations {
 		hasBad = hasBad || bad.Key == "parent"
 	}
 	if p.Parent == nil && !hasBad {
-		return relationChange{human: fmt.Sprintf("%s has no parent\n", named(f, p))}, nil
+		return relationChange{human: fmt.Sprintf("%s has no parent\n", itemLabel(f, p))}, nil
 	}
 	return relationChange{update: item.Update{ClearParent: true}, changed: true,
-		human: fmt.Sprintf("Cleared the parent of %s\n", named(f, p))}, nil
+		human: fmt.Sprintf("Cleared the parent of %s\n", itemLabel(f, p))}, nil
 }
 
-func block(v *vault.Vault, f vault.ItemFile, p item.Parsed, links itemLinks, ref string) (relationChange, error) {
+func planBlock(v *vault.Vault, f vault.ItemFile, p item.Parsed, links itemLinks, ref string) (relationChange, error) {
 	blocker, err := resolveTarget(v, f.Key, ref, "blocker")
 	if err != nil {
 		return relationChange{}, err
@@ -176,16 +176,16 @@ func block(v *vault.Vault, f vault.ItemFile, p item.Parsed, links itemLinks, ref
 		return relationChange{}, err
 	}
 	if len(existing) > 0 {
-		return relationChange{human: fmt.Sprintf("%s is already blocked by %s\n", named(f, p), blocker.ID())}, nil
+		return relationChange{human: fmt.Sprintf("%s is already blocked by %s\n", itemLabel(f, p), blocker.ID())}, nil
 	}
 	if err := checkBlockingCycle(v, links, f, blocker); err != nil {
 		return relationChange{}, err
 	}
 	return relationChange{update: item.Update{AddBlockers: []string{item.Link(blocker.Name())}}, changed: true,
-		human: fmt.Sprintf("%s is now blocked by %s\n", named(f, p), blocker.ID())}, nil
+		human: fmt.Sprintf("%s is now blocked by %s\n", itemLabel(f, p), blocker.ID())}, nil
 }
 
-func unblock(v *vault.Vault, f vault.ItemFile, p item.Parsed, links itemLinks, ref string) (relationChange, error) {
+func planUnblock(v *vault.Vault, f vault.ItemFile, p item.Parsed, links itemLinks, ref string) (relationChange, error) {
 	blocker, err := resolveTarget(v, f.Key, ref, "blocker")
 	if err != nil {
 		return relationChange{}, err
@@ -195,8 +195,8 @@ func unblock(v *vault.Vault, f vault.ItemFile, p item.Parsed, links itemLinks, r
 		return relationChange{}, err
 	}
 	if len(existing) == 0 {
-		return relationChange{human: fmt.Sprintf("%s is not blocked by %s\n", named(f, p), blocker.ID())}, nil
+		return relationChange{human: fmt.Sprintf("%s is not blocked by %s\n", itemLabel(f, p), blocker.ID())}, nil
 	}
 	return relationChange{update: item.Update{RemoveBlockers: existing}, changed: true,
-		human: fmt.Sprintf("%s is no longer blocked by %s\n", named(f, p), blocker.ID())}, nil
+		human: fmt.Sprintf("%s is no longer blocked by %s\n", itemLabel(f, p), blocker.ID())}, nil
 }
