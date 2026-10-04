@@ -117,9 +117,10 @@ func (e *AmbiguousLinkError) Error() string {
 // links in data itself are rewritten too. The whole operation is planned
 // before anything is written: a target that exists fails with a
 // *TargetExistsError, a file whose links cannot be rewritten with a
-// *LinkRewriteError and a link to another note that the new path would
-// make ambiguous with an *AmbiguousLinkError. It then runs through a journal. operation names it in
-// the journal: RetitleOperation or MoveOperation. RenameItem returns the
+// *LinkRewriteError and a link anywhere in a note, frontmatter included,
+// to another note that the new path would make ambiguous with an
+// *AmbiguousLinkError. It then runs through a journal. operation names it
+// in the journal: RetitleOperation or MoveOperation. RenameItem returns the
 // moved Item file and its final bytes.
 func (v *Vault) RenameItem(f ItemFile, to string, data []byte, operation string) (ItemFile, []byte, error) {
 	if err := v.checkMove(f, to); err != nil {
@@ -141,26 +142,27 @@ func (v *Vault) RenameItem(f ItemFile, to string, data []byte, operation string)
 		}
 	}
 	after := wikilink.NewIndex(moved)
-	linking := f.Path
-	var ambiguous *AmbiguousLinkError
 	retarget := func(target string) (string, bool) {
 		found := ix.Resolve(target)
-		if len(found) != 1 {
-			return "", false
-		}
-		if found[0] != f.Path {
-			if ambiguous == nil && len(after.Resolve(target)) > 1 {
-				ambiguous = &AmbiguousLinkError{Path: linking, Target: target, Note: found[0]}
-			}
+		if len(found) != 1 || found[0] != f.Path {
 			return "", false
 		}
 		return newTarget(target, to, after), true
 	}
+	ambiguous := func(p string, text []byte) error {
+		for _, l := range wikilink.Scan(string(text)) {
+			found := ix.Resolve(l.Target)
+			if len(found) == 1 && found[0] != f.Path && len(after.Resolve(l.Target)) > 1 {
+				return &AmbiguousLinkError{Path: p, Target: l.Target, Note: found[0]}
+			}
+		}
+		return nil
+	}
+	if err := ambiguous(f.Path, data); err != nil {
+		return f, nil, err
+	}
 	if data, err = item.RetargetLinks(data, retarget); err != nil {
 		return f, nil, &LinkRewriteError{Path: f.Path, Err: err}
-	}
-	if ambiguous != nil {
-		return f, nil, ambiguous
 	}
 	j := Journal{Version: journalVersion, Operation: operation, Item: f.ID(), From: f.Path, To: to,
 		Steps: []Step{{Action: renameStep, Path: f.Path, To: to, PreRev: item.Rev(current)}}}
@@ -176,13 +178,12 @@ func (v *Vault) RenameItem(f ItemFile, to string, data []byte, operation string)
 		if err != nil {
 			return f, nil, err
 		}
-		linking = p
+		if err := ambiguous(p, before); err != nil {
+			return f, nil, err
+		}
 		after, err := item.RetargetLinks(before, retarget)
 		if err != nil {
 			return f, nil, &LinkRewriteError{Path: p, Err: err}
-		}
-		if ambiguous != nil {
-			return f, nil, ambiguous
 		}
 		if item.Rev(after) != item.Rev(before) {
 			j.Steps = append(j.Steps, Step{Action: writeStep, Path: p,

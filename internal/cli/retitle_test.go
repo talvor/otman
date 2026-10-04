@@ -137,7 +137,7 @@ func TestRetitleAmbiguousNewName(t *testing.T) {
 
 // A retitle whose new filename another note already has, when some note
 // links to that other note by a target the new filename would also match,
-// fails with move_target_exists naming the other note and the linking
+// in its body or in any frontmatter property, fails with move_target_exists naming the other note and the linking
 // file. Nothing is written, and no journal is started.
 func TestRetitleAmbiguatesOtherLinks(t *testing.T) {
 	runGolden(t, goldenCase{
@@ -146,10 +146,13 @@ func TestRetitleAmbiguatesOtherLinks(t *testing.T) {
 		files: withRET(map[string]string{
 			"vault/Archive/Issues/RET-1 Taken elsewhere.md": "A note that already has the name.\n",
 			"vault/Notes/Archive links.md":                  "See [[RET-1 Taken elsewhere|the archived one]].\n",
+			"vault/Notes/Archive property.md":               "---\nrelated: \"[[Issues/RET-1 Kept elsewhere]]\"\n---\nNo link in the body.\n",
+			"vault/Archive/Issues/RET-1 Kept elsewhere.md":  "Another note that already has a name.\n",
 		}),
 		steps: []step{
 			{args: []string{"edit", "RET-1", "--title", "Taken elsewhere", "--json"}},
 			{args: []string{"edit", "RET-1", "--title", "Taken elsewhere"}, tty: true},
+			{args: []string{"edit", "RET-1", "--title", "Kept elsewhere", "--json"}},
 		},
 	})
 }

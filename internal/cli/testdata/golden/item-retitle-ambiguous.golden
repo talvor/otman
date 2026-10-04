@@ -25,6 +25,25 @@ exit: 4
 error[move_target_exists]: cannot rename RET-1: the link [[RET-1 Taken elsewhere]] in Notes/Archive links.md to Archive/Issues/RET-1 Taken elsewhere.md would become ambiguous
 hint: rename or move Archive/Issues/RET-1 Taken elsewhere.md, or name it by path in Notes/Archive links.md, then retry
 
+$ otman edit RET-1 --title Kept elsewhere --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "move_target_exists",
+    "message": "cannot rename RET-1: the link [[Issues/RET-1 Kept elsewhere]] in Notes/Archive property.md to Archive/Issues/RET-1 Kept elsewhere.md would become ambiguous",
+    "details": {
+      "item": "RET-1",
+      "link": "Issues/RET-1 Kept elsewhere",
+      "path": "Notes/Archive property.md",
+      "target": "Archive/Issues/RET-1 Kept elsewhere.md"
+    },
+    "hint": "rename or move Archive/Issues/RET-1 Kept elsewhere.md, or name it by path in Notes/Archive property.md, then retry"
+  }
+}
+
 == tree ==
 config/
 config/otman/
@@ -44,11 +63,18 @@ vault/.trash/
 A hidden folder: [[RET-1 Old title]] is left alone.
 vault/Archive/
 vault/Archive/Issues/
+-- vault/Archive/Issues/RET-1 Kept elsewhere.md --
+Another note that already has a name.
 -- vault/Archive/Issues/RET-1 Taken elsewhere.md --
 A note that already has the name.
 vault/Notes/
 -- vault/Notes/Archive links.md --
 See [[RET-1 Taken elsewhere|the archived one]].
+-- vault/Notes/Archive property.md --
+---
+related: "[[Issues/RET-1 Kept elsewhere]]"
+---
+No link in the body.
 -- vault/Notes/Broken frontmatter.md --
 ---
 title: [unclosed
