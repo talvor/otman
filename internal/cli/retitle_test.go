@@ -100,6 +100,41 @@ func TestRetitleTruncated(t *testing.T) {
 	})
 }
 
+// A rewritten link that would be ambiguous, because another note already
+// has the new filename, names as much more of the new path as it takes to
+// resolve to the retitled Item alone.
+func TestRetitleAmbiguousNewName(t *testing.T) {
+	vault := retitleVault(t)
+	other := filepath.Join(vault, "Archive", "Issues", "RET-1 New title rewritten.md")
+	if err := os.MkdirAll(filepath.Dir(other), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(other, []byte("A misplaced copy.\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if code, _, stderr := runFault(vault, nil, retitleArgs...); code != 0 {
+		t.Fatalf("retitle: exit %d: %s", code, stderr)
+	}
+	for file, wants := range map[string][]string{
+		filepath.Join("Notes", "Daily.md"): {"[[RET/Issues/RET-1 New title rewritten|today]]"},
+		filepath.Join("Projects", "RET", "Specs", "RET-4 Path links.md"): {
+			"[[Projects/RET/Issues/RET-1 New title rewritten]]",
+			"[[RET/Issues/RET-1 New title rewritten#Notes]]",
+			"![[RET/Issues/RET-1 New title rewritten.md]]",
+		},
+	} {
+		b, err := os.ReadFile(filepath.Join(vault, file))
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, want := range wants {
+			if !strings.Contains(string(b), want) {
+				t.Errorf("%s lacks %s:\n%s", file, want, b)
+			}
+		}
+	}
+}
+
 // A blank or multi-line title fails with exit 2, and a retitle to the
 // current title is a no-op. A rename onto an existing file fails with
 // move_target_exists, and one that would have to rewrite a link in

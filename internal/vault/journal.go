@@ -122,12 +122,19 @@ func (v *Vault) RenameItem(f ItemFile, to string, data []byte, operation string)
 		return f, nil, err
 	}
 	ix := wikilink.NewIndex(notes)
+	moved := []string{to}
+	for _, p := range notes {
+		if p != f.Path {
+			moved = append(moved, p)
+		}
+	}
+	after := wikilink.NewIndex(moved)
 	retarget := func(target string) (string, bool) {
 		found := ix.Resolve(target)
 		if len(found) != 1 || found[0] != f.Path {
 			return "", false
 		}
-		return newTarget(target, to), true
+		return newTarget(target, to, after), true
 	}
 	if data, err = item.RetargetLinks(data, retarget); err != nil {
 		return f, nil, &LinkRewriteError{Path: f.Path, Err: err}
@@ -165,8 +172,10 @@ func (v *Vault) RenameItem(f ItemFile, to string, data []byte, operation string)
 // newTarget is a link target, written as old, rewritten to name the note
 // at the Vault-relative path to. It keeps the form of old: a bare name
 // stays a name, a path keeps as many trailing segments and any leading
-// "/", and a ".md" extension is kept as written.
-func newTarget(old, to string) string {
+// "/", and a ".md" extension is kept as written. When that would be
+// ambiguous in ix, the Vault's notes after the move, it names more of
+// the path, as many trailing segments as it takes to resolve to to alone.
+func newTarget(old, to string, ix *wikilink.Index) string {
 	lead := ""
 	if strings.HasPrefix(old, "/") {
 		lead = "/"
@@ -177,6 +186,9 @@ func newTarget(old, to string) string {
 	}
 	segments := strings.Split(strings.TrimSuffix(to, ".md"), "/")
 	keep := min(strings.Count(bare, "/")+1, len(segments))
+	for keep < len(segments) && len(ix.Resolve(strings.Join(segments[len(segments)-keep:], "/"))) > 1 {
+		keep++
+	}
 	return lead + strings.Join(segments[len(segments)-keep:], "/") + ext
 }
 
