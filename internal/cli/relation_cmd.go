@@ -98,7 +98,7 @@ func (a *app) changeRelations(ref string, plan func(*vault.Vault, vault.ItemFile
 		}
 		// Refuse a file otman could not rewrite, whatever its relations
 		// seem to say, even when the change turns out to be a no-op.
-		if _, _, err := item.Apply(data, item.Update{}, a.opts.Now()); err != nil {
+		if _, _, err := item.Apply(data, f.Derived(), item.Update{}, a.opts.Now()); err != nil {
 			return writeError(f, err)
 		}
 		files, err := v.ItemFiles(f.Key)
@@ -112,7 +112,7 @@ func (a *app) changeRelations(ref string, plan func(*vault.Vault, vault.ItemFile
 		}
 		out, changed := data, false
 		if c.changed {
-			if out, changed, err = item.Apply(data, c.update, a.opts.Now()); err != nil {
+			if out, changed, err = item.Apply(data, f.Derived(), c.update, a.opts.Now()); err != nil {
 				return writeError(f, err)
 			}
 		}
@@ -122,7 +122,7 @@ func (a *app) changeRelations(ref string, plan func(*vault.Vault, vault.ItemFile
 			}
 		}
 		p := item.Parse(out)
-		warnings = append(warnings, relationProblems(f, p, links)...)
+		warnings = append(warnings, itemProblems(f, p, links)...)
 		return a.emit(mutationResult{newItemSummary(f, p, out, links), changed, c.human}, warnings)
 	})
 }

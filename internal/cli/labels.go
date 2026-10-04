@@ -3,6 +3,7 @@ package cli
 import (
 	"cmp"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/talvor/otman/internal/item"
@@ -20,7 +21,7 @@ func parseLabels(flag string, values []string) ([]string, error) {
 		if !ok {
 			return nil, invalid("invalid_label", "invalid Label "+quoteArg(v)+" for "+flag,
 				map[string]any{"flag": flag, "label": v, "pattern": item.LabelPattern, "max_length": item.LabelLimit},
-				"use lowercase letters, digits and . _ : / -, starting with a letter or digit, at most 64 characters")
+				"use "+labelRules)
 		}
 		if !slices.Contains(labels, l) {
 			labels = append(labels, l)
@@ -28,6 +29,10 @@ func parseLabels(flag string, values []string) ([]string, error) {
 	}
 	return labels, nil
 }
+
+// labelRules says what a valid Label is made of.
+var labelRules = "lowercase letters, digits and . _ : / -, starting with a letter or digit, at most " +
+	strconv.Itoa(item.LabelLimit) + " characters"
 
 // labelSet is the Labels in use, lowercased.
 type labelSet map[string]bool

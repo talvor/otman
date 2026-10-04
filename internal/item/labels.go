@@ -45,15 +45,15 @@ func HasLabel(labels []string, label string) bool {
 // storedLabels is the labels key of file's frontmatter as Parse reads it:
 // the plain values of a list, or none for any other value. lossless is
 // true when that list is all there is, so rewriting it loses nothing; it
-// is false for a list holding null or nested entries, and for a missing
-// key or any other value.
+// is false for a list holding null or nested entries or YAML comments, and
+// for a missing key or any other value.
 func storedLabels(file []byte) (labels []string, lossless bool) {
 	value := frontmatterValue(file, "labels")
 	if value == nil || value.Kind != yaml.SequenceNode {
 		return nil, false
 	}
 	labels = scalars(value)
-	return labels, len(labels) == len(value.Content)
+	return labels, len(labels) == len(value.Content) && !frontmatter.Commented(file, "labels")
 }
 
 // labelEdits are the edits an Update makes to the labels of file: none

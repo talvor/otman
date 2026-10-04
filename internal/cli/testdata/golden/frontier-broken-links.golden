@@ -56,7 +56,7 @@ exit: 0
   "warnings": [
     {
       "code": "malformed_frontmatter",
-      "message": "cannot read the frontmatter of Projects/REL/Issues/REL-23 Unreadable.md: yaml: line 1: did not find expected ',' or ']'",
+      "message": "cannot read the frontmatter of Projects/REL/Issues/REL-23 Unreadable.md: the frontmatter is not valid YAML: yaml: line 1: did not find expected ',' or ']'",
       "details": {
         "path": "Projects/REL/Issues/REL-23 Unreadable.md"
       },
@@ -93,7 +93,7 @@ exit: 0
   "warnings": [
     {
       "code": "malformed_frontmatter",
-      "message": "cannot read the frontmatter of Projects/REL/Issues/REL-23 Unreadable.md: yaml: line 1: did not find expected ',' or ']'",
+      "message": "cannot read the frontmatter of Projects/REL/Issues/REL-23 Unreadable.md: the frontmatter is not valid YAML: yaml: line 1: did not find expected ',' or ']'",
       "details": {
         "path": "Projects/REL/Issues/REL-23 Unreadable.md"
       },
@@ -159,7 +159,7 @@ exit: 4
   "schema_version": 1,
   "error": {
     "code": "malformed_frontmatter",
-    "message": "cannot read the status of REL-23, a blocker of REL-33: yaml: line 1: did not find expected ',' or ']'",
+    "message": "cannot read the status of REL-23, a blocker of REL-33: the frontmatter is not valid YAML: yaml: line 1: did not find expected ',' or ']'",
     "details": {
       "blocked": "REL-33",
       "id": "REL-23",
@@ -181,7 +181,7 @@ REL-2   issue  open    -         Wikilink scanner
 REL-6   issue  open    -         Loose end
 REL-36  issue  open    -         Lost parent
 -- stderr --
-warning[malformed_frontmatter]: cannot read the frontmatter of Projects/REL/Issues/REL-23 Unreadable.md: yaml: line 1: did not find expected ',' or ']'
+warning[malformed_frontmatter]: cannot read the frontmatter of Projects/REL/Issues/REL-23 Unreadable.md: the frontmatter is not valid YAML: yaml: line 1: did not find expected ',' or ']'
 hint: fix the YAML between the --- lines in Projects/REL/Issues/REL-23 Unreadable.md
 
 == tree ==

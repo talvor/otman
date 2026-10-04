@@ -191,24 +191,6 @@ exit: 3
   }
 }
 
-$ otman comment OTM-3 --body x --json
-env: OTM_ACTOR=talvor
-exit: 4
--- stdout --
--- stderr --
-{
-  "schema_version": 1,
-  "error": {
-    "code": "unsafe_write",
-    "message": "refusing to rewrite Projects/OTM/Issues/OTM-3 No marker.md: the Item has no <!-- otman:comments --> line",
-    "details": {
-      "path": "Projects/OTM/Issues/OTM-3 No marker.md",
-      "reason": "the Item has no <!-- otman:comments --> line"
-    },
-    "hint": "put the line <!-- otman:comments --> back just before ## Comments, then retry"
-  }
-}
-
 == tree ==
 config/
 config/otman/
@@ -259,16 +241,6 @@ Fixed in the scanner.
 
 ### A heading inside the comment
 stays part of it.
--- vault/Projects/OTM/Issues/OTM-3 No marker.md --
----
-id: OTM-3
-title: No marker
-kind: issue
-status: open
----
-Body.
-
-## Comments
 -- vault/Projects/OTM/OTM.md --
 ---
 name: otman

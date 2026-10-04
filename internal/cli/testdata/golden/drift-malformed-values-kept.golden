@@ -1,0 +1,463 @@
+$ otman view DRF-8 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "DRF-8",
+      "title": "Malformed values",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/DRF/Issues/DRF-8 Malformed values.md",
+      "rev": "774b08ab0fc8",
+      "author": null,
+      "body": "",
+      "created": "2026-01-01T10:00:00Z",
+      "updated": "2026-01-01T11:00:00Z",
+      "comments": [],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": [
+    {
+      "code": "malformed_value",
+      "message": "the labels value of DRF-8 is \"needs-triage\", not a list of Labels, so it reads as absent",
+      "details": {
+        "id": "DRF-8",
+        "key": "labels",
+        "path": "Projects/DRF/Issues/DRF-8 Malformed values.md",
+        "value": "needs-triage"
+      },
+      "hint": "fix labels in Projects/DRF/Issues/DRF-8 Malformed values.md; otman keeps it as written until a command sets labels"
+    },
+    {
+      "code": "malformed_value",
+      "message": "the assignee value of DRF-8 is a list or mapping, not a name, so it reads as absent",
+      "details": {
+        "id": "DRF-8",
+        "key": "assignee",
+        "path": "Projects/DRF/Issues/DRF-8 Malformed values.md",
+        "value": null
+      },
+      "hint": "fix assignee in Projects/DRF/Issues/DRF-8 Malformed values.md; otman keeps it as written until a command sets assignee"
+    }
+  ]
+}
+-- stderr --
+
+$ otman list --unassigned --unlabeled --search values
+tty: true
+exit: 0
+-- stdout --
+ID     KIND   STATUS  ASSIGNEE  TITLE
+DRF-8  issue  open    -         Malformed values
+-- stderr --
+warning[malformed_frontmatter]: cannot read the frontmatter of Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML
+hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-9 Flow style.md
+warning[malformed_frontmatter]: cannot read the frontmatter of Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'
+hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-10 Unparseable.md
+warning[malformed_frontmatter]: cannot read the frontmatter of Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key "status"
+hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-11 Repeated key.md
+warning[malformed_value]: the labels value of DRF-8 is "needs-triage", not a list of Labels, so it reads as absent
+hint: fix labels in Projects/DRF/Issues/DRF-8 Malformed values.md; otman keeps it as written until a command sets labels
+warning[malformed_value]: the assignee value of DRF-8 is a list or mapping, not a name, so it reads as absent
+hint: fix assignee in Projects/DRF/Issues/DRF-8 Malformed values.md; otman keeps it as written until a command sets assignee
+
+$ otman comment DRF-8 --body Both values are kept. --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "DRF-8",
+      "title": "Malformed values",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/DRF/Issues/DRF-8 Malformed values.md",
+      "rev": "92e2b187377e"
+    },
+    "changed": true
+  },
+  "warnings": [
+    {
+      "code": "malformed_value",
+      "message": "the labels value of DRF-8 is \"needs-triage\", not a list of Labels, so it reads as absent",
+      "details": {
+        "id": "DRF-8",
+        "key": "labels",
+        "path": "Projects/DRF/Issues/DRF-8 Malformed values.md",
+        "value": "needs-triage"
+      },
+      "hint": "fix labels in Projects/DRF/Issues/DRF-8 Malformed values.md; otman keeps it as written until a command sets labels"
+    },
+    {
+      "code": "malformed_value",
+      "message": "the assignee value of DRF-8 is a list or mapping, not a name, so it reads as absent",
+      "details": {
+        "id": "DRF-8",
+        "key": "assignee",
+        "path": "Projects/DRF/Issues/DRF-8 Malformed values.md",
+        "value": null
+      },
+      "hint": "fix assignee in Projects/DRF/Issues/DRF-8 Malformed values.md; otman keeps it as written until a command sets assignee"
+    }
+  ]
+}
+-- stderr --
+
+$ otman close DRF-8 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "DRF-8",
+      "title": "Malformed values",
+      "kind": "issue",
+      "status": "closed",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/DRF/Issues/DRF-8 Malformed values.md",
+      "rev": "7694684ff1d2"
+    },
+    "changed": true
+  },
+  "warnings": [
+    {
+      "code": "malformed_value",
+      "message": "the labels value of DRF-8 is \"needs-triage\", not a list of Labels, so it reads as absent",
+      "details": {
+        "id": "DRF-8",
+        "key": "labels",
+        "path": "Projects/DRF/Issues/DRF-8 Malformed values.md",
+        "value": "needs-triage"
+      },
+      "hint": "fix labels in Projects/DRF/Issues/DRF-8 Malformed values.md; otman keeps it as written until a command sets labels"
+    },
+    {
+      "code": "malformed_value",
+      "message": "the assignee value of DRF-8 is a list or mapping, not a name, so it reads as absent",
+      "details": {
+        "id": "DRF-8",
+        "key": "assignee",
+        "path": "Projects/DRF/Issues/DRF-8 Malformed values.md",
+        "value": null
+      },
+      "hint": "fix assignee in Projects/DRF/Issues/DRF-8 Malformed values.md; otman keeps it as written until a command sets assignee"
+    }
+  ]
+}
+-- stderr --
+
+$ otman release DRF-8 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "DRF-8",
+      "title": "Malformed values",
+      "kind": "issue",
+      "status": "closed",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/DRF/Issues/DRF-8 Malformed values.md",
+      "rev": "7694684ff1d2"
+    },
+    "changed": false
+  },
+  "warnings": [
+    {
+      "code": "malformed_value",
+      "message": "the labels value of DRF-8 is \"needs-triage\", not a list of Labels, so it reads as absent",
+      "details": {
+        "id": "DRF-8",
+        "key": "labels",
+        "path": "Projects/DRF/Issues/DRF-8 Malformed values.md",
+        "value": "needs-triage"
+      },
+      "hint": "fix labels in Projects/DRF/Issues/DRF-8 Malformed values.md; otman keeps it as written until a command sets labels"
+    },
+    {
+      "code": "malformed_value",
+      "message": "the assignee value of DRF-8 is a list or mapping, not a name, so it reads as absent",
+      "details": {
+        "id": "DRF-8",
+        "key": "assignee",
+        "path": "Projects/DRF/Issues/DRF-8 Malformed values.md",
+        "value": null
+      },
+      "hint": "fix assignee in Projects/DRF/Issues/DRF-8 Malformed values.md; otman keeps it as written until a command sets assignee"
+    }
+  ]
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "DRF"
+actor = "talvor"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/DRF/
+-- vault/Projects/DRF/DRF.md --
+---
+name: Drift
+kind: project
+---
+vault/Projects/DRF/Issues/
+-- vault/Projects/DRF/Issues/DRF-1 Mismatched id.md --
+---
+# Copied from another note in Obsidian
+id: DRF-9   # wrong number
+title: Mismatched id
+kind: issue
+
+status: open
+priority: high
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+The id was pasted from another Item.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-10 Unparseable.md --
+---
+id: DRF-10
+title: Unparseable
+status: [open
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-11 Repeated key.md --
+---
+id: DRF-11
+title: Repeated key
+kind: issue
+status: open
+labels: []
+status: closed
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-12 Missing marker.md --
+---
+id: DRF-12
+title: Missing marker
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+The body has its own section.
+
+## Comments
+
+Not otman's comments: this heading is part of the body.
+
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+The marker line above was deleted in Obsidian.
+-- vault/Projects/DRF/Issues/DRF-13 No comments section.md --
+---
+id: DRF-13
+title: No comments section
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+The marker and the heading were both deleted.
+-- vault/Projects/DRF/Issues/DRF-14 Duplicate markers.md --
+---
+id: DRF-14
+title: Duplicate markers
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+Pasted twice.
+
+<!-- otman:comments -->
+## Comments
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+A comment after the second marker.
+-- vault/Projects/DRF/Issues/DRF-15 Invalid labels.md --
+---
+id: DRF-15
+title: Invalid labels
+kind: issue
+status: open
+labels:
+  - Needs Triage!   # a space and a bang
+  - BUG
+  - bug
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-2 Short title.md --
+---
+id: DRF-2
+title: A longer title, retyped in Obsidian   # not the filename
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-3 Filed as a spec.md --
+---
+id: DRF-3
+title: Filed as a spec
+kind: spec
+status: open
+labels: []
+assignee: null
+
+due: 2026-02-01
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-5 Missing keys.md --
+---
+# only some keys survived a hand edit
+status: open
+
+estimate: 3   # an unknown key
+labels: []
+---
+No id, title, kind, created or updated.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-6 Invalid status.md --
+---
+id: DRF-6
+title: Invalid status
+kind: issue
+status: doing   # not a status otman knows
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-7 Missing status.md --
+---
+id: DRF-7
+title: Missing status
+kind: issue
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-8 Malformed values.md --
+---
+id: DRF-8
+title: Malformed values
+kind: issue
+status: closed
+labels: needs-triage   # not a list
+assignee:
+  - alice
+  - bob
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-02T03:04:05Z · talvor
+Both values are kept.
+-- vault/Projects/DRF/Issues/DRF-9 Flow style.md --
+---
+{id: DRF-9, title: Flow style, kind: issue, status: open, labels: [], assignee: null}
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/DRF/Notes/
+-- vault/Projects/DRF/Notes/DRF-4 Outside a Kind folder.md --
+---
+id: DRF-4
+title: Outside a Kind folder
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+Moved into Notes/ by hand.
+
+<!-- otman:comments -->
+## Comments
+vault/Projects/DRF/Specs/
+-- vault/Projects/DRF/Specs/DRF-16 Malformed title and kind.md --
+---
+id: DRF-16
+title:
+  - one
+  - two
+kind: bug
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments

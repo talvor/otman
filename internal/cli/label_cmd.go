@@ -106,6 +106,7 @@ func (a *app) labelList(allProjects bool, p *paging) error {
 					ws = append(ws, malformedFrontmatter(f, it.FrontmatterErr))
 					continue
 				}
+				ws = append(ws, invalidLabels(f, it)...)
 				open := it.Status != nil && *it.Status == item.Open
 				for _, l := range item.NormalizeLabels(it.Labels) {
 					c := counts[l]

@@ -3,10 +3,13 @@ package cli_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
@@ -88,7 +91,8 @@ var itemName = regexp.MustCompile(`^[A-Z][A-Z0-9]*-[1-9][0-9]* ?.*\.md$`)
 // Byte-identical round trip: for every Item of every fixture Vault, a
 // close or reopen that changes nothing reproduces the file's exact bytes,
 // and one that changes the status alters only the status and updated
-// spans. Files otman refuses to rewrite stay as they were.
+// spans, and those of any keys it heals. Files otman refuses to rewrite
+// stay as they were.
 func TestRoundTrip(t *testing.T) {
 	eachFixtureItem(t, roundTrip)
 }
@@ -164,7 +168,8 @@ func roundTrip(t *testing.T, fixture, rel string) {
 			}
 			return false
 		}
-		if want := withoutKeys(before, "status", "updated"); !bytes.Equal(withoutKeys(after, "status", "updated"), want) {
+		keys := append([]string{"status", "updated"}, healed(rel, before)...)
+		if want := withoutKeys(before, keys...); !bytes.Equal(withoutKeys(after, keys...), want) {
 			t.Fatalf("%s changed more than status and updated:\n%q\n%q", verb[status], before, after)
 		}
 		eol := "\n"
@@ -189,6 +194,29 @@ func roundTrip(t *testing.T, fixture, rel string) {
 	set(other[status])
 	set(status)
 	set(status)
+}
+
+// healed are the keys of the Item file at the Vault-relative path rel,
+// whose bytes are data, that any write that changes it also rewrites to
+// heal lossless Drift (ADR 0005): an id other than the filename prefix, a
+// missing title or kind, and Labels that differ only by case.
+func healed(rel string, data []byte) []string {
+	p := item.Parse(data)
+	key, n, _, _ := item.ParseFilename(path.Base(rel))
+	var keys []string
+	if p.ID == nil || *p.ID != fmt.Sprintf("%s-%d", key, n) {
+		keys = append(keys, "id")
+	}
+	if p.Title == nil {
+		keys = append(keys, "title")
+	}
+	if p.Kind == nil {
+		keys = append(keys, "kind")
+	}
+	if !slices.Equal(p.Labels, item.NormalizeLabels(p.Labels)) {
+		keys = append(keys, "labels")
+	}
+	return keys
 }
 
 // withoutKeys drops keys from a file's frontmatter: each key's line and

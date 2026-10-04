@@ -234,18 +234,23 @@ func (a *app) list(cmd *cobra.Command, f listFlags) error {
 			return err
 		}
 		all := []itemSummary{}
+		drift := map[string][]output.Problem{}
 		inUse := labelSet{}
 		for _, key := range keys {
-			found, pws, err := listProject(v, key, q, inUse)
+			found, pws, err := listProject(v, key, q, inUse, drift)
 			if err != nil {
 				return err
 			}
 			all = append(all, found...)
 			ws = append(ws, pws...)
 		}
+		shown := page(f.paging, all)
+		for _, s := range shown.Items {
+			ws = append(ws, drift[s.Path]...)
+		}
 		ws = append(ws, unknownLabelWarnings("--label", q.labels, inUse)...)
 		ws = append(ws, unknownLabelWarnings("--without-label", q.withoutLabels, inUse)...)
-		return a.emit(listResult{page(f.paging, all)}, append(warnings, ws...))
+		return a.emit(listResult{shown}, append(warnings, ws...))
 	})
 }
 
@@ -344,13 +349,15 @@ func listScope(v *vault.Vault, sel config.Value) ([]string, []output.Problem, er
 
 // listProject is the summaries of the Items of Project key that q keeps,
 // sorted by number, then path, and a warning for each Item left out
-// because it drifted: its frontmatter cannot be read, or only its status,
-// missing or neither open nor closed, kept it from --state open or closed.
-// --state all keeps any status. It adds the Labels of every Item it reads,
-// kept or not, to inUse. It checks the blockers of an Item, under
-// q.unblocked, only once every other filter keeps it, so broken blocker
-// links of Items left out anyway do not matter.
-func listProject(v *vault.Vault, key string, q itemQuery, inUse labelSet) ([]itemSummary, []output.Problem, error) {
+// because it drifted: its frontmatter cannot be read, or its status is
+// missing or neither open nor closed, whatever --state says. It records
+// the drift warnings of each Item it keeps in drift, by path, so that only
+// those of the Items shown are reported. It adds the Labels of every Item
+// it reads, kept or not, to inUse. It checks the
+// blockers of an Item, under q.unblocked, only once every other filter
+// keeps it, so broken blocker links of Items left out anyway do not
+// matter.
+func listProject(v *vault.Vault, key string, q itemQuery, inUse labelSet, drift map[string][]output.Problem) ([]itemSummary, []output.Problem, error) {
 	files, err := v.ItemFiles(key)
 	if err != nil {
 		return nil, nil, ioError(err)
@@ -379,38 +386,19 @@ func listProject(v *vault.Vault, key string, q itemQuery, inUse labelSet) ([]ite
 		} else if !ok {
 			continue
 		}
-		if q.state != "all" && (s.Status == nil || *s.Status != q.state) {
-			if s.Status == nil || (*s.Status != item.Open && *s.Status != item.Closed) {
-				warnings = append(warnings, invalidStatus(s))
-			}
+		if !hasValidStatus(p) {
+			warnings = append(warnings, invalidStatus(f, p, true))
+			continue
+		}
+		if q.state != "all" && *s.Status != q.state {
 			continue
 		}
 		if ok, err := q.clearOfBlockers(v, links, open, f, p); err != nil {
 			return nil, nil, err
 		} else if ok {
 			found = append(found, s)
+			drift[f.Path] = driftProblems(f, p)
 		}
 	}
 	return found, warnings, nil
-}
-
-// malformedFrontmatter warns that the Item file f was left out because
-// its frontmatter cannot be read.
-func malformedFrontmatter(f vault.ItemFile, err error) output.Problem {
-	return output.Warning("malformed_frontmatter",
-		"cannot read the frontmatter of "+f.Path+": "+err.Error(),
-		map[string]any{"path": f.Path},
-		"fix the YAML between the --- lines in "+f.Path)
-}
-
-// invalidStatus warns that the Item summarised by s was left out of a
-// --state open or closed list because its status is neither.
-func invalidStatus(s itemSummary) output.Problem {
-	msg := s.ID + " has no status"
-	if s.Status != nil {
-		msg = s.ID + " has status " + quoteArg(*s.Status)
-	}
-	return output.Warning("invalid_status", msg+", not open or closed, so it is not listed",
-		map[string]any{"id": s.ID, "path": s.Path, "status": s.Status},
-		"set status: open or closed in "+s.Path+", or pass --state all")
 }

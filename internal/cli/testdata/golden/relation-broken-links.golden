@@ -150,7 +150,7 @@ exit: 4
   "schema_version": 1,
   "error": {
     "code": "malformed_frontmatter",
-    "message": "cannot read the relations of REL-23: yaml: line 1: did not find expected ',' or ']'",
+    "message": "cannot read the relations of REL-23: the frontmatter is not valid YAML: yaml: line 1: did not find expected ',' or ']'",
     "details": {
       "id": "REL-23",
       "path": "Projects/REL/Issues/REL-23 Unreadable.md"

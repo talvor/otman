@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"path"
-
 	"github.com/talvor/otman/internal/item"
 	"github.com/talvor/otman/internal/vault"
 	"github.com/talvor/otman/internal/wikilink"
@@ -106,9 +104,7 @@ func newItemSummary(f vault.ItemFile, p item.Parsed, data []byte, links itemLink
 		s.Labels = []string{}
 	}
 	if s.Kind == nil {
-		if k, ok := item.KindOfFolder(path.Base(path.Dir(f.Path))); ok {
-			s.Kind = &k
-		}
+		s.Kind = f.Derived().Kind
 	}
 	if p.Parent != nil {
 		ref := links.ref(*p.Parent)
@@ -124,8 +120,7 @@ func itemTitle(f vault.ItemFile, p item.Parsed) string {
 	if p.Title != nil {
 		return *p.Title
 	}
-	_, _, title, _ := item.ParseFilename(f.Name())
-	return title
+	return f.Derived().Title
 }
 
 // commentJSON is one comment of a full Item.

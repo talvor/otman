@@ -71,6 +71,17 @@ exit: 0
   },
   "warnings": [
     {
+      "code": "kind_drift",
+      "message": "OTM-10 has kind issue, but it is in Projects/OTM/Specs, the folder for spec",
+      "details": {
+        "folder_kind": "spec",
+        "id": "OTM-10",
+        "kind": "issue",
+        "path": "Projects/OTM/Specs/OTM-10 Relations hub.md"
+      },
+      "hint": "otman shows the frontmatter Kind; 'otman doctor --fix --prefer frontmatter|file' settles which is right"
+    },
+    {
       "code": "dangling_link",
       "message": "OTM-10 blocked_by link [[OTM-99 Gone]] matches no Item in Project OTM",
       "details": {
@@ -148,6 +159,8 @@ Path: Projects/OTM/Specs/OTM-10 Relations hub.md
 
 (no body)
 -- stderr --
+warning[kind_drift]: OTM-10 has kind issue, but it is in Projects/OTM/Specs, the folder for spec
+hint: otman shows the frontmatter Kind; 'otman doctor --fix --prefer frontmatter|file' settles which is right
 warning[dangling_link]: OTM-10 blocked_by link [[OTM-99 Gone]] matches no Item in Project OTM
 hint: fix or remove the link in Projects/OTM/Specs/OTM-10 Relations hub.md
 warning[ambiguous_link]: OTM-10 blocked_by link [[OTM-3 Twin]] matches 2 Items: Projects/OTM/Issues/OTM-3 Twin.md, Projects/OTM/PRDs/OTM-3 Twin.md
@@ -202,6 +215,15 @@ item:
     OTM-12,Projects/OTM/Issues/OTM-12 Lowercase link.md,true
 truncated: false
 -- stderr --
+warning:
+  code: kind_drift
+  message: "OTM-10 has kind issue, but it is in Projects/OTM/Specs, the folder for spec"
+  details:
+    folder_kind: spec
+    id: OTM-10
+    kind: issue
+    path: Projects/OTM/Specs/OTM-10 Relations hub.md
+  hint: otman shows the frontmatter Kind; 'otman doctor --fix --prefer frontmatter|file' settles which is right
 warning:
   code: dangling_link
   message: "OTM-10 blocked_by link [[OTM-99 Gone]] matches no Item in Project OTM"
@@ -457,7 +479,16 @@ exit: 0
       "blocks": []
     }
   },
-  "warnings": []
+  "warnings": [
+    {
+      "code": "malformed_frontmatter",
+      "message": "cannot read the frontmatter of Projects/OTM/Issues/OTM-15 Unreadable.md: the frontmatter is not valid YAML: yaml: line 1: did not find expected ',' or ']'",
+      "details": {
+        "path": "Projects/OTM/Issues/OTM-15 Unreadable.md"
+      },
+      "hint": "fix the YAML between the --- lines in Projects/OTM/Issues/OTM-15 Unreadable.md"
+    }
+  ]
 }
 -- stderr --
 

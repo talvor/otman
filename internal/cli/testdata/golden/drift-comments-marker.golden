@@ -1,0 +1,776 @@
+$ otman view DRF-12 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "DRF-12",
+      "title": "Missing marker",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/DRF/Issues/DRF-12 Missing marker.md",
+      "rev": "8a191704ccdb",
+      "author": null,
+      "body": "The body has its own section.\n\n## Comments\n\nNot otman's comments: this heading is part of the body.",
+      "created": "2026-01-01T10:00:00Z",
+      "updated": "2026-01-01T11:00:00Z",
+      "comments": [
+        {
+          "author": "talvor",
+          "created": "2026-01-01T10:30:00Z",
+          "body": "The marker line above was deleted in Obsidian."
+        }
+      ],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": [
+    {
+      "code": "missing_comments_marker",
+      "message": "DRF-12 has no <!-- otman:comments --> line, so its comments are read from the last ## Comments heading",
+      "details": {
+        "id": "DRF-12",
+        "path": "Projects/DRF/Issues/DRF-12 Missing marker.md"
+      },
+      "hint": "'otman comment DRF-12' restores the marker; until then body edits are refused"
+    }
+  ]
+}
+-- stderr --
+
+$ otman view DRF-12 --comments
+tty: true
+exit: 0
+-- stdout --
+DRF-12 · Missing marker
+issue · open · unassigned
+Author: - · created 2026-01-01T10:00:00Z · updated 2026-01-01T11:00:00Z
+Path: Projects/DRF/Issues/DRF-12 Missing marker.md
+
+The body has its own section.
+
+## Comments
+
+Not otman's comments: this heading is part of the body.
+
+Comments (1)
+
+### 2026-01-01T10:30:00Z · talvor
+The marker line above was deleted in Obsidian.
+-- stderr --
+warning[missing_comments_marker]: DRF-12 has no <!-- otman:comments --> line, so its comments are read from the last ## Comments heading
+hint: 'otman comment DRF-12' restores the marker; until then body edits are refused
+
+$ otman edit DRF-12 --body Rewritten. --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "unsafe_write",
+    "message": "refusing to rewrite Projects/DRF/Issues/DRF-12 Missing marker.md: the Item has no <!-- otman:comments --> line",
+    "details": {
+      "path": "Projects/DRF/Issues/DRF-12 Missing marker.md",
+      "reason": "the Item has no <!-- otman:comments --> line"
+    },
+    "hint": "put the line <!-- otman:comments --> back just before ## Comments, or run 'otman comment DRF-12', which restores it, then retry"
+  }
+}
+
+$ otman edit DRF-12 --clear-body
+tty: true
+exit: 4
+-- stdout --
+-- stderr --
+error[unsafe_write]: refusing to rewrite Projects/DRF/Issues/DRF-12 Missing marker.md: the Item has no <!-- otman:comments --> line
+hint: put the line <!-- otman:comments --> back just before ## Comments, or run 'otman comment DRF-12', which restores it, then retry
+
+$ otman comment DRF-12 --body The marker is back. --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "DRF-12",
+      "title": "Missing marker",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/DRF/Issues/DRF-12 Missing marker.md",
+      "rev": "c79e557452ec"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman view DRF-12 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "DRF-12",
+      "title": "Missing marker",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/DRF/Issues/DRF-12 Missing marker.md",
+      "rev": "c79e557452ec",
+      "author": null,
+      "body": "The body has its own section.\n\n## Comments\n\nNot otman's comments: this heading is part of the body.",
+      "created": "2026-01-01T10:00:00Z",
+      "updated": "2026-01-02T03:04:05Z",
+      "comments": [
+        {
+          "author": "talvor",
+          "created": "2026-01-01T10:30:00Z",
+          "body": "The marker line above was deleted in Obsidian."
+        },
+        {
+          "author": "talvor",
+          "created": "2026-01-02T03:04:05Z",
+          "body": "The marker is back."
+        }
+      ],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman view DRF-13 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "DRF-13",
+      "title": "No comments section",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/DRF/Issues/DRF-13 No comments section.md",
+      "rev": "61202b046032",
+      "author": null,
+      "body": "The marker and the heading were both deleted.",
+      "created": "2026-01-01T10:00:00Z",
+      "updated": "2026-01-01T11:00:00Z",
+      "comments": [],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": [
+    {
+      "code": "missing_comments_marker",
+      "message": "DRF-13 has no <!-- otman:comments --> line, so its comments are read from the last ## Comments heading",
+      "details": {
+        "id": "DRF-13",
+        "path": "Projects/DRF/Issues/DRF-13 No comments section.md"
+      },
+      "hint": "'otman comment DRF-13' restores the marker; until then body edits are refused"
+    }
+  ]
+}
+-- stderr --
+
+$ otman close DRF-13 --comment Closed with a new comments section.
+tty: true
+exit: 0
+-- stdout --
+Closed DRF-13 · No comments section, with a comment
+-- stderr --
+
+$ otman view DRF-13 --comments
+tty: true
+exit: 0
+-- stdout --
+DRF-13 · No comments section
+issue · closed · unassigned
+Author: - · created 2026-01-01T10:00:00Z · updated 2026-01-02T03:04:05Z
+Path: Projects/DRF/Issues/DRF-13 No comments section.md
+
+The marker and the heading were both deleted.
+
+Comments (1)
+
+### 2026-01-02T03:04:05Z · talvor
+Closed with a new comments section.
+-- stderr --
+
+$ otman view DRF-14 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "DRF-14",
+      "title": "Duplicate markers",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/DRF/Issues/DRF-14 Duplicate markers.md",
+      "rev": "8c7671164c3b",
+      "author": null,
+      "body": "Pasted twice.",
+      "created": "2026-01-01T10:00:00Z",
+      "updated": "2026-01-01T11:00:00Z",
+      "comments": [
+        {
+          "author": "talvor",
+          "created": "2026-01-01T10:30:00Z",
+          "body": "A comment after the second marker."
+        }
+      ],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": [
+    {
+      "code": "duplicate_comments_markers",
+      "message": "DRF-14 has 2 <!-- otman:comments --> lines, so its comments are read from the first",
+      "details": {
+        "id": "DRF-14",
+        "path": "Projects/DRF/Issues/DRF-14 Duplicate markers.md"
+      },
+      "hint": "keep only the marker just before the comments' ## Comments heading; until then body edits and comments are refused"
+    }
+  ]
+}
+-- stderr --
+
+$ otman comment DRF-14 --body Refused. --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "unsafe_write",
+    "message": "refusing to rewrite Projects/DRF/Issues/DRF-14 Duplicate markers.md: the Item has more than one <!-- otman:comments --> line",
+    "details": {
+      "path": "Projects/DRF/Issues/DRF-14 Duplicate markers.md",
+      "reason": "the Item has more than one <!-- otman:comments --> line"
+    },
+    "hint": "keep only the <!-- otman:comments --> line just before the comments' ## Comments heading, then retry"
+  }
+}
+
+$ otman close DRF-14 --comment Refused too.
+tty: true
+exit: 4
+-- stdout --
+-- stderr --
+error[unsafe_write]: refusing to rewrite Projects/DRF/Issues/DRF-14 Duplicate markers.md: the Item has more than one <!-- otman:comments --> line
+hint: keep only the <!-- otman:comments --> line just before the comments' ## Comments heading, then retry
+
+$ otman edit DRF-14 --body Refused as well. --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "unsafe_write",
+    "message": "refusing to rewrite Projects/DRF/Issues/DRF-14 Duplicate markers.md: the Item has more than one <!-- otman:comments --> line",
+    "details": {
+      "path": "Projects/DRF/Issues/DRF-14 Duplicate markers.md",
+      "reason": "the Item has more than one <!-- otman:comments --> line"
+    },
+    "hint": "keep only the <!-- otman:comments --> line just before the comments' ## Comments heading, then retry"
+  }
+}
+
+$ otman edit DRF-14 --assignee alice --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "DRF-14",
+      "title": "Duplicate markers",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": "alice",
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/DRF/Issues/DRF-14 Duplicate markers.md",
+      "rev": "a40368a1cc8f"
+    },
+    "changed": true
+  },
+  "warnings": [
+    {
+      "code": "duplicate_comments_markers",
+      "message": "DRF-14 has 2 <!-- otman:comments --> lines, so its comments are read from the first",
+      "details": {
+        "id": "DRF-14",
+        "path": "Projects/DRF/Issues/DRF-14 Duplicate markers.md"
+      },
+      "hint": "keep only the marker just before the comments' ## Comments heading; until then body edits and comments are refused"
+    }
+  ]
+}
+-- stderr --
+
+$ otman view DRF-17 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "DRF-17",
+      "title": "Prose after the heading",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/DRF/Issues/DRF-17 Prose after the heading.md",
+      "rev": "d9f0e0eeaec9",
+      "author": null,
+      "body": "The body.",
+      "created": null,
+      "updated": null,
+      "comments": [
+        {
+          "author": "talvor",
+          "created": "2026-01-01T10:30:00Z",
+          "body": "A comment."
+        }
+      ],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": [
+    {
+      "code": "missing_comments_marker",
+      "message": "DRF-17 has no <!-- otman:comments --> line, so its comments are read from the last ## Comments heading",
+      "details": {
+        "id": "DRF-17",
+        "path": "Projects/DRF/Issues/DRF-17 Prose after the heading.md"
+      },
+      "hint": "'otman comment DRF-17' restores the marker; until then body edits are refused"
+    }
+  ]
+}
+-- stderr --
+
+$ otman edit DRF-17 --body Refused. --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "unsafe_write",
+    "message": "refusing to rewrite Projects/DRF/Issues/DRF-17 Prose after the heading.md: the Item has no <!-- otman:comments --> line",
+    "details": {
+      "path": "Projects/DRF/Issues/DRF-17 Prose after the heading.md",
+      "reason": "the Item has no <!-- otman:comments --> line"
+    },
+    "hint": "put the line <!-- otman:comments --> back just before ## Comments, or run 'otman comment DRF-17', which restores it, then retry"
+  }
+}
+
+$ otman close DRF-17 --comment The marker is back before the heading.
+tty: true
+exit: 0
+-- stdout --
+Closed DRF-17 · Prose after the heading, with a comment
+-- stderr --
+
+$ otman view DRF-17 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "DRF-17",
+      "title": "Prose after the heading",
+      "kind": "issue",
+      "status": "closed",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/DRF/Issues/DRF-17 Prose after the heading.md",
+      "rev": "5c37513f9c70",
+      "author": null,
+      "body": "The body.",
+      "created": null,
+      "updated": "2026-01-02T03:04:05Z",
+      "comments": [
+        {
+          "author": "talvor",
+          "created": "2026-01-01T10:30:00Z",
+          "body": "A comment."
+        },
+        {
+          "author": "talvor",
+          "created": "2026-01-02T03:04:05Z",
+          "body": "The marker is back before the heading."
+        }
+      ],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman comment DRF-18 --body The marker is back before the heading. --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "DRF-18",
+      "title": "Only the heading",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/DRF/Issues/DRF-18 Only the heading.md",
+      "rev": "cd2533a62e4c"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "DRF"
+actor = "talvor"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/DRF/
+-- vault/Projects/DRF/DRF.md --
+---
+name: Drift
+kind: project
+---
+vault/Projects/DRF/Issues/
+-- vault/Projects/DRF/Issues/DRF-1 Mismatched id.md --
+---
+# Copied from another note in Obsidian
+id: DRF-9   # wrong number
+title: Mismatched id
+kind: issue
+
+status: open
+priority: high
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+The id was pasted from another Item.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-10 Unparseable.md --
+---
+id: DRF-10
+title: Unparseable
+status: [open
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-11 Repeated key.md --
+---
+id: DRF-11
+title: Repeated key
+kind: issue
+status: open
+labels: []
+status: closed
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-12 Missing marker.md --
+---
+id: DRF-12
+title: Missing marker
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+The body has its own section.
+
+## Comments
+
+Not otman's comments: this heading is part of the body.
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+The marker line above was deleted in Obsidian.
+
+### 2026-01-02T03:04:05Z · talvor
+The marker is back.
+-- vault/Projects/DRF/Issues/DRF-13 No comments section.md --
+---
+id: DRF-13
+title: No comments section
+kind: issue
+status: closed
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+The marker and the heading were both deleted.
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-02T03:04:05Z · talvor
+Closed with a new comments section.
+-- vault/Projects/DRF/Issues/DRF-14 Duplicate markers.md --
+---
+id: DRF-14
+title: Duplicate markers
+kind: issue
+status: open
+labels: []
+assignee: alice
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+Pasted twice.
+
+<!-- otman:comments -->
+## Comments
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+A comment after the second marker.
+-- vault/Projects/DRF/Issues/DRF-15 Invalid labels.md --
+---
+id: DRF-15
+title: Invalid labels
+kind: issue
+status: open
+labels:
+  - Needs Triage!   # a space and a bang
+  - BUG
+  - bug
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-17 Prose after the heading.md --
+---
+id: DRF-17
+title: Prose after the heading
+kind: issue
+status: closed
+labels: []
+updated: 2026-01-02T03:04:05Z
+---
+The body.
+
+<!-- otman:comments -->
+## Comments
+
+Prose under the heading, not a comment.
+
+### 2026-01-01T10:30:00Z · talvor
+A comment.
+
+### 2026-01-02T03:04:05Z · talvor
+The marker is back before the heading.
+-- vault/Projects/DRF/Issues/DRF-18 Only the heading.md --
+---
+id: DRF-18
+title: Only the heading
+kind: issue
+status: open
+labels: []
+updated: 2026-01-02T03:04:05Z
+---
+The body.
+
+<!-- otman:comments -->
+## Comments
+  
+
+### 2026-01-02T03:04:05Z · talvor
+The marker is back before the heading.
+-- vault/Projects/DRF/Issues/DRF-2 Short title.md --
+---
+id: DRF-2
+title: A longer title, retyped in Obsidian   # not the filename
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-3 Filed as a spec.md --
+---
+id: DRF-3
+title: Filed as a spec
+kind: spec
+status: open
+labels: []
+assignee: null
+
+due: 2026-02-01
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-5 Missing keys.md --
+---
+# only some keys survived a hand edit
+status: open
+
+estimate: 3   # an unknown key
+labels: []
+---
+No id, title, kind, created or updated.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-6 Invalid status.md --
+---
+id: DRF-6
+title: Invalid status
+kind: issue
+status: doing   # not a status otman knows
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-7 Missing status.md --
+---
+id: DRF-7
+title: Missing status
+kind: issue
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-8 Malformed values.md --
+---
+id: DRF-8
+title: Malformed values
+kind: issue
+status: open
+labels: needs-triage   # not a list
+assignee:
+  - alice
+  - bob
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-9 Flow style.md --
+---
+{id: DRF-9, title: Flow style, kind: issue, status: open, labels: [], assignee: null}
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/DRF/Notes/
+-- vault/Projects/DRF/Notes/DRF-4 Outside a Kind folder.md --
+---
+id: DRF-4
+title: Outside a Kind folder
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+Moved into Notes/ by hand.
+
+<!-- otman:comments -->
+## Comments
+vault/Projects/DRF/Specs/
+-- vault/Projects/DRF/Specs/DRF-16 Malformed title and kind.md --
+---
+id: DRF-16
+title:
+  - one
+  - two
+kind: bug
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments

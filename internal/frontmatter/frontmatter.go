@@ -104,17 +104,7 @@ func Splice(file []byte, edits []Edit) ([]byte, error) {
 		return nil, err
 	}
 
-	// Key i's span runs from its line to ends[i].
 	keys := before.keys
-	ends := make([]int, len(keys))
-	for i := range keys {
-		next := len(fm)
-		if i+1 < len(keys) {
-			next = keys[i+1].offset
-		}
-		ends[i] = trimTrailing(fm, keys[i].offset, next)
-	}
-
 	type replacement struct {
 		from, to int
 		text     []byte
@@ -126,7 +116,7 @@ func Splice(file []byte, edits []Edit) ([]byte, error) {
 		i := before.index(e.Key)
 		if e.Value == nil {
 			if i >= 0 {
-				reps = append(reps, replacement{keys[i].offset, ends[i], nil})
+				reps = append(reps, replacement{keys[i].offset, before.spanEnd(fm, i), nil})
 			}
 			continue
 		}
@@ -145,7 +135,7 @@ func Splice(file []byte, edits []Edit) ([]byte, error) {
 		case i < 0:
 			added = append(added, text...)
 		case !equal(keys[i].value, value):
-			reps = append(reps, replacement{keys[i].offset, ends[i], text})
+			reps = append(reps, replacement{keys[i].offset, before.spanEnd(fm, i), text})
 		}
 	}
 	if len(reps) == 0 && len(added) == 0 {
@@ -174,6 +164,44 @@ func Splice(file []byte, edits []Edit) ([]byte, error) {
 	return append(result, file[end:]...), nil
 }
 
+// Commented reports whether the span of the top-level key name of file's
+// frontmatter holds a YAML comment, which splicing another value over the
+// key would lose.
+func Commented(file []byte, name string) bool {
+	start, end, ok := fences(file)
+	if !ok {
+		return false
+	}
+	fm := file[start:end]
+	p, err := parse(fm)
+	i := p.index(name)
+	if err != nil || i < 0 {
+		return false
+	}
+	var doc yaml.Node
+	if err := yaml.Unmarshal(fm[p.keys[i].offset:p.spanEnd(fm, i)], &doc); err != nil {
+		return true
+	}
+	return hasComment(&doc)
+}
+
+// hasComment reports whether n or any node under it carries a comment.
+func hasComment(n *yaml.Node) bool {
+	if n.HeadComment != "" || n.LineComment != "" || n.FootComment != "" {
+		return true
+	}
+	return slices.ContainsFunc(n.Content, hasComment)
+}
+
+// Check reports why the frontmatter fm, the YAML between the --- lines,
+// could not be spliced, as an *UnsafeError, or nil when it could. A read
+// that accepts only what Check accepts never shows an Item that every
+// write would refuse.
+func Check(fm []byte) error {
+	_, err := parse(fm)
+	return err
+}
+
 // key is one top-level key of the frontmatter as parsed.
 type key struct {
 	name   string
@@ -190,6 +218,17 @@ func (p parsed) index(name string) int {
 		}
 	}
 	return -1
+}
+
+// spanEnd is where the span of key i in frontmatter fm ends: at the line
+// before the next top-level key, less trailing blank and comment lines.
+// The span starts at the key's own line.
+func (p parsed) spanEnd(fm []byte, i int) int {
+	next := len(fm)
+	if i+1 < len(p.keys) {
+		next = p.keys[i+1].offset
+	}
+	return trimTrailing(fm, p.keys[i].offset, next)
 }
 
 // parse reads frontmatter fm as a flat block mapping whose keys start

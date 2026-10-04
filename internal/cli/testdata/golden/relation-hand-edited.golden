@@ -87,7 +87,19 @@ exit: 0
     },
     "changed": true
   },
-  "warnings": []
+  "warnings": [
+    {
+      "code": "title_drift",
+      "message": "HND-2 has title \"Odd quoting: it's fine\", but its filename says \"Odd quoting and order\"",
+      "details": {
+        "filename_title": "Odd quoting and order",
+        "id": "HND-2",
+        "path": "Projects/HND/Issues/HND-2 Odd quoting and order.md",
+        "title": "Odd quoting: it's fine"
+      },
+      "hint": "otman shows the frontmatter title; 'otman doctor --fix --prefer frontmatter|file' settles which is right"
+    }
+  ]
 }
 -- stderr --
 

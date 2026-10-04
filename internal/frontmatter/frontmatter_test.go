@@ -311,3 +311,30 @@ func names(keys []topKey) []string {
 	}
 	return out
 }
+
+// Commented tells whether a key's span holds a YAML comment, which
+// splicing a new value over it would lose.
+func TestCommented(t *testing.T) {
+	for _, tc := range []struct {
+		name, file string
+		want       bool
+	}{
+		{"as otman writes it", "---\nlabels:\n  - Bug\n  - bug\nstatus: open\n---\n", false},
+		{"its own layout", "---\nlabels: \n- \"Bug\"\n- 'bug'\n---\n", false},
+		{"flow style", "---\nlabels: [Bug, bug]\n---\n", false},
+		{"a # inside a quoted entry", "---\nlabels:\n  - \"a # b\"\n---\n", false},
+		{"a comment line after it, outside its span", "---\nlabels:\n  - Bug\n# about status\nstatus: open\n---\n", false},
+		{"a comment on an entry", "---\nlabels:\n  - Bug   # why\n  - bug\n---\n", true},
+		{"a comment on the key line", "---\nlabels: # why\n  - Bug\n---\n", true},
+		{"a comment line between entries", "---\nlabels:\n  - Bug\n  # why\n  - bug\nstatus: open\n---\n", true},
+		{"with CRLF line breaks", "---\r\nlabels:\r\n  - Bug # why\r\n---\r\n", true},
+		{"no such key", "---\nstatus: open # why\n---\n", false},
+		{"no frontmatter", "labels:\n  - Bug # why\n", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := frontmatter.Commented([]byte(tc.file), "labels"); got != tc.want {
+				t.Errorf("Commented(%q) = %v, want %v", tc.file, got, tc.want)
+			}
+		})
+	}
+}

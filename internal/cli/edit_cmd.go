@@ -146,7 +146,7 @@ func (a *app) edit(cmd *cobra.Command, ref string, f editFlags) error {
 				Hint:    "view the Item again, then retry with its current rev"}
 		}
 		before := item.Parse(data)
-		data, changed, err := item.Apply(data, update, a.opts.Now())
+		data, changed, err := item.Apply(data, file.Derived(), update, a.opts.Now())
 		if err != nil {
 			return writeError(file, err)
 		}
