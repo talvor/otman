@@ -344,12 +344,12 @@ func listScope(v *vault.Vault, sel config.Value) ([]string, []output.Problem, er
 
 // listProject is the summaries of the Items of Project key that q keeps,
 // sorted by number, then path, and a warning for each Item left out
-// because it drifted: its frontmatter cannot be read, or only its status,
-// missing or neither open nor closed, kept it from --state open or closed.
-// --state all keeps any status. It adds the Labels of every Item it reads,
-// kept or not, to inUse. It checks the blockers of an Item, under
-// q.unblocked, only once every other filter keeps it, so broken blocker
-// links of Items left out anyway do not matter.
+// because it drifted: its frontmatter cannot be read, or its status is
+// missing or neither open nor closed, whatever --state says. It adds the
+// Labels of every Item it reads, kept or not, to inUse. It checks the
+// blockers of an Item, under q.unblocked, only once every other filter
+// keeps it, so broken blocker links of Items left out anyway do not
+// matter.
 func listProject(v *vault.Vault, key string, q itemQuery, inUse labelSet) ([]itemSummary, []output.Problem, error) {
 	files, err := v.ItemFiles(key)
 	if err != nil {
@@ -379,10 +379,11 @@ func listProject(v *vault.Vault, key string, q itemQuery, inUse labelSet) ([]ite
 		} else if !ok {
 			continue
 		}
-		if q.state != "all" && (s.Status == nil || *s.Status != q.state) {
-			if s.Status == nil || (*s.Status != item.Open && *s.Status != item.Closed) {
-				warnings = append(warnings, invalidStatus(s))
-			}
+		if !hasValidStatus(p) {
+			warnings = append(warnings, invalidStatus(f, p, true))
+			continue
+		}
+		if q.state != "all" && *s.Status != q.state {
 			continue
 		}
 		if ok, err := q.clearOfBlockers(v, links, open, f, p); err != nil {
@@ -393,22 +394,4 @@ func listProject(v *vault.Vault, key string, q itemQuery, inUse labelSet) ([]ite
 		}
 	}
 	return found, warnings, nil
-}
-
-// invalidStatus warns that the Item summarised by s was left out of a
-// --state open or closed list because its status is neither.
-func invalidStatus(s itemSummary) output.Problem {
-	return output.Warning("invalid_status", statusMessage(s.ID, s.Status)+", so it is not listed",
-		map[string]any{"id": s.ID, "path": s.Path, "status": s.Status},
-		"set status: open or closed in "+s.Path+", or pass --state all")
-}
-
-// statusMessage says that Item id has status, which is neither open nor
-// closed.
-func statusMessage(id string, status *string) string {
-	msg := id + " has no status"
-	if status != nil {
-		msg = id + " has status " + quoteArg(*status)
-	}
-	return msg + ", not open or closed"
 }

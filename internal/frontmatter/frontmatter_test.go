@@ -311,3 +311,34 @@ func names(keys []topKey) []string {
 	}
 	return out
 }
+
+// WrittenAs tells whether a key is written exactly as Splice writes it,
+// so that splicing a new value over it loses nothing else.
+func TestWrittenAs(t *testing.T) {
+	labels := &yaml.Node{Kind: yaml.SequenceNode, Content: []*yaml.Node{
+		{Kind: yaml.ScalarNode, Tag: "!!str", Value: "Bug"},
+		{Kind: yaml.ScalarNode, Tag: "!!str", Value: "bug"},
+	}}
+	for _, tc := range []struct {
+		name, file string
+		want       bool
+	}{
+		{"as otman writes it", "---\nlabels:\n  - Bug\n  - bug\nstatus: open\n---\n", true},
+		{"with CRLF line breaks", "---\r\nlabels:\r\n  - Bug\r\n  - bug\r\n---\r\n", true},
+		{"a comment line after it, outside its span", "---\nlabels:\n  - Bug\n  - bug\n# about status\nstatus: open\n---\n", true},
+		{"a comment on an entry", "---\nlabels:\n  - Bug   # why\n  - bug\n---\n", false},
+		{"a comment on the key line", "---\nlabels: # why\n  - Bug\n  - bug\n---\n", false},
+		{"a trailing space on the key line", "---\nlabels: \n  - Bug\n  - bug\n---\n", false},
+		{"quoted entries", "---\nlabels:\n  - \"Bug\"\n  - bug\n---\n", false},
+		{"flow style", "---\nlabels: [Bug, bug]\n---\n", false},
+		{"another value", "---\nlabels:\n  - Bug\n---\n", false},
+		{"no such key", "---\nstatus: open\n---\n", false},
+		{"no frontmatter", "labels:\n  - Bug\n  - bug\n", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := frontmatter.WrittenAs([]byte(tc.file), "labels", labels); got != tc.want {
+				t.Errorf("WrittenAs(%q) = %v, want %v", tc.file, got, tc.want)
+			}
+		})
+	}
+}

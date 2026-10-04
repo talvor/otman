@@ -45,9 +45,9 @@ func TestListAllProjects(t *testing.T) {
 }
 
 // --state picks open (the default), closed or all Items. An Item whose
-// status is neither is listed only by --state all, with its status as
-// found, and otherwise named in a warning unless another filter left it
-// out. An unreadable Item is named in a warning in every state. --kind picks one Kind, read from the
+// status is neither is never listed, even by --state all, and is named in
+// a warning unless another filter left it out. An unreadable Item is
+// named in a warning in every state. --kind picks one Kind, read from the
 // frontmatter or else the folder.
 func TestListStateAndKind(t *testing.T) {
 	runGolden(t, goldenCase{

@@ -164,7 +164,7 @@ exit: 0
     },
     {
       "code": "malformed_value",
-      "message": "the kind value of DRF-16 is \"bug\", not issue, prd or spec, so it reads as absent",
+      "message": "the kind value of DRF-16 is \"bug\", not \"issue\", \"prd\" or \"spec\", so it reads as absent",
       "details": {
         "id": "DRF-16",
         "key": "kind",
@@ -187,15 +187,15 @@ DRF-16  spec  open    -         Malformed title and kind
 -- stderr --
 warning[kind_drift]: DRF-3 has kind spec, but it is in Projects/DRF/Issues, the folder for issue
 hint: otman shows the frontmatter Kind; 'otman doctor --fix --prefer frontmatter|file' settles which is right
-warning[malformed_frontmatter]: cannot read Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML
+warning[malformed_frontmatter]: cannot read the frontmatter of Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML
 hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-9 Flow style.md
-warning[malformed_frontmatter]: cannot read Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'
+warning[malformed_frontmatter]: cannot read the frontmatter of Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'
 hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-10 Unparseable.md
-warning[malformed_frontmatter]: cannot read Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key "status"
+warning[malformed_frontmatter]: cannot read the frontmatter of Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key "status"
 hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-11 Repeated key.md
 warning[malformed_value]: the title value of DRF-16 is a list or mapping, not text, so it reads as absent
 hint: fix title in Projects/DRF/Specs/DRF-16 Malformed title and kind.md; otman keeps it as written until a command sets title
-warning[malformed_value]: the kind value of DRF-16 is "bug", not issue, prd or spec, so it reads as absent
+warning[malformed_value]: the kind value of DRF-16 is "bug", not "issue", "prd" or "spec", so it reads as absent
 hint: fix kind in Projects/DRF/Specs/DRF-16 Malformed title and kind.md; otman keeps it as written until a command sets kind
 
 $ otman list --search outside
@@ -227,19 +227,19 @@ warning:
   hint: "move it to Projects/DRF/Issues/DRF-4 Outside a Kind folder.md, or run 'otman doctor --fix'"
 warning:
   code: malformed_frontmatter
-  message: "cannot read Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML"
+  message: "cannot read the frontmatter of Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML"
   details:
     path: Projects/DRF/Issues/DRF-9 Flow style.md
   hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-9 Flow style.md
 warning:
   code: malformed_frontmatter
-  message: "cannot read Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'"
+  message: "cannot read the frontmatter of Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'"
   details:
     path: Projects/DRF/Issues/DRF-10 Unparseable.md
   hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-10 Unparseable.md
 warning:
   code: malformed_frontmatter
-  message: "cannot read Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key \"status\""
+  message: "cannot read the frontmatter of Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key \"status\""
   details:
     path: Projects/DRF/Issues/DRF-11 Repeated key.md
   hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-11 Repeated key.md
@@ -376,7 +376,7 @@ exit: 0
     },
     {
       "code": "malformed_value",
-      "message": "the kind value of DRF-16 is \"bug\", not issue, prd or spec, so it reads as absent",
+      "message": "the kind value of DRF-16 is \"bug\", not \"issue\", \"prd\" or \"spec\", so it reads as absent",
       "details": {
         "id": "DRF-16",
         "key": "kind",

@@ -59,6 +59,9 @@ func driftProblems(f vault.ItemFile, p item.Parsed) []output.Problem {
 			msg += ", so it reads as " + quoteArg(*m.derived) + " from its " + m.from
 			hint = "the next otman write to " + f.ID() + " adds " + m.key + " from its " + m.from
 		}
+		if !p.HasFrontmatter {
+			hint = noFrontmatterHint(f)
+		}
 		ws = append(ws, output.Warning("missing_key", msg,
 			map[string]any{"id": f.ID(), "path": f.Path, "key": m.key, "derived": m.derived}, hint))
 	}
@@ -85,10 +88,8 @@ func driftProblems(f vault.ItemFile, p item.Parsed) []output.Problem {
 			map[string]any{"id": f.ID(), "path": f.Path, "kind": *p.Kind, "folder_kind": *d.Kind},
 			"otman shows the frontmatter Kind; 'otman doctor --fix --prefer frontmatter|file' settles which is right"))
 	}
-	if p.Status == nil || *p.Status != item.Open && *p.Status != item.Closed {
-		ws = append(ws, output.Warning("invalid_status", statusMessage(f.ID(), p.Status),
-			map[string]any{"id": f.ID(), "path": f.Path, "status": p.Status},
-			"run 'otman reopen "+f.ID()+"' or 'otman close "+f.ID()+"' to set it"))
+	if !hasValidStatus(p) {
+		ws = append(ws, invalidStatus(f, p, false))
 	}
 	for _, bad := range p.BadValues {
 		if bad.Key != "id" {
@@ -96,18 +97,66 @@ func driftProblems(f vault.ItemFile, p item.Parsed) []output.Problem {
 		}
 	}
 	ws = append(ws, invalidLabels(f, p)...)
-	details := map[string]any{"id": f.ID(), "path": f.Path}
-	switch {
-	case p.Markers == 0:
-		ws = append(ws, output.Warning("missing_comments_marker",
-			f.ID()+" has no "+item.CommentsMarker+" line, so its comments are read from the last "+item.CommentsHeading+" heading",
-			details, "'otman comment "+f.ID()+"' restores the marker; until then body edits are refused"))
-	case p.Markers > 1:
-		ws = append(ws, output.Warning("duplicate_comments_markers",
-			f.ID()+" has "+strconv.Itoa(p.Markers)+" "+item.CommentsMarker+" lines, so its comments are read from the first",
-			details, "keep only the marker just before the comments' "+item.CommentsHeading+" heading; until then body edits and comments are refused"))
+	if w, ok := markerProblem(f, p); ok {
+		ws = append(ws, w)
 	}
 	return ws
+}
+
+// markerProblem warns when Item file f, parsed as p, has no comments
+// marker line or more than one.
+func markerProblem(f vault.ItemFile, p item.Parsed) (output.Problem, bool) {
+	details := map[string]any{"id": f.ID(), "path": f.Path}
+	msg := f.ID() + " has no " + item.CommentsMarker + " line, so its comments are read from the last " + item.CommentsHeading + " heading"
+	switch {
+	case p.MarkerLines > 1:
+		return output.Warning("duplicate_comments_markers",
+			f.ID()+" has "+strconv.Itoa(p.MarkerLines)+" "+item.CommentsMarker+" lines, so its comments are read from the first",
+			details, "keep only the marker just before the comments' "+item.CommentsHeading+" heading; until then body edits and comments are refused"), true
+	case p.MarkerLines == 1:
+		return output.Problem{}, false
+	case !p.HasFrontmatter:
+		return output.Warning("missing_comments_marker", msg, details, noFrontmatterHint(f)), true
+	case p.StrayText:
+		return output.Warning("missing_comments_marker",
+			msg+", where text before the first comment is not shown",
+			details, "put the line "+item.CommentsMarker+" back just before the "+item.CommentsHeading+
+				" heading where the comments start; until then body edits and comments are refused"), true
+	}
+	return output.Warning("missing_comments_marker", msg,
+		details, "'otman comment "+f.ID()+"' restores the marker; until then body edits are refused"), true
+}
+
+// noFrontmatterHint is the hint of each warning about Item file f, which
+// has no frontmatter: every write refuses until it has some.
+func noFrontmatterHint(f vault.ItemFile) string {
+	return "otman refuses every write to " + f.ID() + " until it has frontmatter: add id, title, kind and status between --- lines at the top of " + f.Path
+}
+
+// hasValidStatus reports whether p's status is open or closed.
+func hasValidStatus(p item.Parsed) bool {
+	return p.Status != nil && (*p.Status == item.Open || *p.Status == item.Closed)
+}
+
+// invalidStatus warns that Item file f, parsed as p, has no status or one
+// that is neither open nor closed. unlisted says list or frontier left it
+// out for that.
+func invalidStatus(f vault.ItemFile, p item.Parsed, unlisted bool) output.Problem {
+	msg := f.ID() + " has no status"
+	if p.Status != nil {
+		msg = f.ID() + " has status " + quoteArg(*p.Status)
+	}
+	msg += ", not open or closed"
+	hint := "run 'otman reopen " + f.ID() + "' or 'otman close " + f.ID() + "' to set it"
+	if !p.HasFrontmatter {
+		hint = noFrontmatterHint(f)
+	}
+	if unlisted {
+		msg += ", so it is not listed"
+		hint = "'otman view " + f.ID() + "' shows it; " + hint
+	}
+	return output.Warning("invalid_status", msg,
+		map[string]any{"id": f.ID(), "path": f.Path, "status": p.Status}, hint)
 }
 
 // invalidLabels warn about each Label of Item file f, parsed as p, that
@@ -124,7 +173,7 @@ func invalidLabels(f vault.ItemFile, p item.Parsed) []output.Problem {
 		ws = append(ws, output.Warning("invalid_label",
 			f.ID()+" has the label "+quoteArg(l)+", which is not a valid Label even lowercased",
 			map[string]any{"id": f.ID(), "path": f.Path, "label": l, "pattern": item.LabelPattern, "max_length": item.LabelLimit},
-			"otman keeps it; rename it in "+f.Path+" to lowercase letters, digits and . _ : / -, starting with a letter or digit, at most 64 characters"))
+			"otman keeps it; rename it in "+f.Path+" to "+labelRules))
 	}
 	return ws
 }
@@ -156,9 +205,9 @@ func kindFolders(key string) string {
 	return strings.Join(names, ", ")
 }
 
-// badWant is what each owned key's value should be.
-var badWant = map[string]string{
-	"title": "text", "kind": "issue, prd or spec", "author": "a name", "assignee": "a name",
+// wellFormed is what the value of each owned key should be.
+var wellFormed = map[string]string{
+	"title": "text", "kind": `"issue", "prd" or "spec"`, "author": "a name", "assignee": "a name",
 	"created": "a timestamp", "updated": "a timestamp", "labels": "a list of Labels",
 }
 
@@ -170,7 +219,7 @@ func badValue(f vault.ItemFile, bad item.BadValue) output.Problem {
 		what = quoteArg(*bad.Value)
 	}
 	return output.Warning("malformed_value",
-		"the "+bad.Key+" value of "+f.ID()+" is "+what+", not "+badWant[bad.Key]+", so it reads as absent",
+		"the "+bad.Key+" value of "+f.ID()+" is "+what+", not "+wellFormed[bad.Key]+", so it reads as absent",
 		map[string]any{"id": f.ID(), "path": f.Path, "key": bad.Key, "value": bad.Value},
 		"fix "+bad.Key+" in "+f.Path+"; otman keeps it as written until a command sets "+bad.Key)
 }
@@ -179,7 +228,7 @@ func badValue(f vault.ItemFile, bad item.BadValue) output.Problem {
 // its frontmatter cannot be read.
 func malformedFrontmatter(f vault.ItemFile, err error) output.Problem {
 	return output.Warning("malformed_frontmatter",
-		"cannot read "+f.Path+": "+err.Error(),
+		"cannot read the frontmatter of "+f.Path+": "+err.Error(),
 		map[string]any{"path": f.Path},
 		"fix the YAML between the --- lines in "+f.Path)
 }

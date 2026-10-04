@@ -343,6 +343,118 @@ exit: 0
 }
 -- stderr --
 
+$ otman view DRF-17 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "DRF-17",
+      "title": "Prose after the heading",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/DRF/Issues/DRF-17 Prose after the heading.md",
+      "rev": "d9f0e0eeaec9",
+      "author": null,
+      "body": "The body.",
+      "created": null,
+      "updated": null,
+      "comments": [
+        {
+          "author": "talvor",
+          "created": "2026-01-01T10:30:00Z",
+          "body": "A comment."
+        }
+      ],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": [
+    {
+      "code": "missing_comments_marker",
+      "message": "DRF-17 has no <!-- otman:comments --> line, so its comments are read from the last ## Comments heading, where text before the first comment is not shown",
+      "details": {
+        "id": "DRF-17",
+        "path": "Projects/DRF/Issues/DRF-17 Prose after the heading.md"
+      },
+      "hint": "put the line <!-- otman:comments --> back just before the ## Comments heading where the comments start; until then body edits and comments are refused"
+    }
+  ]
+}
+-- stderr --
+
+$ otman comment DRF-17 --body Refused. --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "unsafe_write",
+    "message": "refusing to rewrite Projects/DRF/Issues/DRF-17 Prose after the heading.md: the Item has no <!-- otman:comments --> line, and text after its last ## Comments heading is not a comment",
+    "details": {
+      "path": "Projects/DRF/Issues/DRF-17 Prose after the heading.md",
+      "reason": "the Item has no <!-- otman:comments --> line, and text after its last ## Comments heading is not a comment"
+    },
+    "hint": "put the line <!-- otman:comments --> back just before the ## Comments heading where the comments start, then retry"
+  }
+}
+
+$ otman close DRF-17 --comment Refused too.
+tty: true
+exit: 4
+-- stdout --
+-- stderr --
+error[unsafe_write]: refusing to rewrite Projects/DRF/Issues/DRF-17 Prose after the heading.md: the Item has no <!-- otman:comments --> line, and text after its last ## Comments heading is not a comment
+hint: put the line <!-- otman:comments --> back just before the ## Comments heading where the comments start, then retry
+
+$ otman edit DRF-17 --body Refused as well. --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "unsafe_write",
+    "message": "refusing to rewrite Projects/DRF/Issues/DRF-17 Prose after the heading.md: the Item has no <!-- otman:comments --> line, and text after its last ## Comments heading is not a comment",
+    "details": {
+      "path": "Projects/DRF/Issues/DRF-17 Prose after the heading.md",
+      "reason": "the Item has no <!-- otman:comments --> line, and text after its last ## Comments heading is not a comment"
+    },
+    "hint": "put the line <!-- otman:comments --> back just before the ## Comments heading where the comments start, then retry"
+  }
+}
+
+$ otman comment DRF-18 --body The marker is back before the heading. --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "DRF-18",
+      "title": "Only the heading",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/DRF/Issues/DRF-18 Only the heading.md",
+      "rev": "cd2533a62e4c"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
 == tree ==
 config/
 config/otman/
@@ -483,6 +595,39 @@ updated: 2026-01-01T11:00:00Z
 ---
 <!-- otman:comments -->
 ## Comments
+-- vault/Projects/DRF/Issues/DRF-17 Prose after the heading.md --
+---
+id: DRF-17
+title: Prose after the heading
+kind: issue
+status: open
+labels: []
+---
+The body.
+
+## Comments
+
+Prose under the heading, not a comment.
+
+### 2026-01-01T10:30:00Z · talvor
+A comment.
+-- vault/Projects/DRF/Issues/DRF-18 Only the heading.md --
+---
+id: DRF-18
+title: Only the heading
+kind: issue
+status: open
+labels: []
+updated: 2026-01-02T03:04:05Z
+---
+The body.
+
+<!-- otman:comments -->
+## Comments
+  
+
+### 2026-01-02T03:04:05Z · talvor
+The marker is back before the heading.
 -- vault/Projects/DRF/Issues/DRF-2 Short title.md --
 ---
 id: DRF-2

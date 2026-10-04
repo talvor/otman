@@ -355,12 +355,20 @@ type Parsed struct {
 
 	Body     string
 	Comments []Comment
-	// Markers is how many comments marker lines follow the frontmatter:
-	// one, unless the file drifted. Without one, the comments section
-	// starts at the last "## Comments" heading; with several, at the
-	// first marker.
-	Markers int
+	// MarkerLines is how many comments marker lines follow the
+	// frontmatter: one, unless the file drifted. Without one, the comments
+	// section starts at the last "## Comments" heading; with several, at
+	// the first marker.
+	MarkerLines int
+	// StrayText is true when, with no marker line, the last "## Comments"
+	// heading is followed by text that is not a comment, before the first
+	// comment. A read does not show it, and a comment is refused, since
+	// restoring the marker would make it part of the comments.
+	StrayText bool
 
+	// HasFrontmatter is true when the file has frontmatter between ---
+	// lines. Every write to a file without it is refused.
+	HasFrontmatter bool
 	// FrontmatterErr is why the frontmatter could not be read, leaving
 	// every field nil; nil when it was read or there is none.
 	FrontmatterErr error
@@ -391,13 +399,12 @@ type BadRelation struct {
 func Parse(b []byte) Parsed {
 	var p Parsed
 	fm, rest, ok := frontmatter.Split(b)
-	if !ok {
-		rest = b
-	} else {
+	if p.HasFrontmatter = ok; ok {
 		p.readFrontmatter(fm)
 	}
-	p.Markers = countMarkers(string(rest))
-	body, comments := splitComments(string(rest))
+	section := locateComments(string(rest))
+	p.MarkerLines, p.StrayText = section.markers, section.strayText
+	body, comments := section.split(string(rest))
 	p.Body = strings.TrimRight(body, "\r\n")
 	p.Comments = parseComments(comments)
 	return p
@@ -429,20 +436,13 @@ func (p *Parsed) readFrontmatter(fm []byte) {
 	}
 	for i := 0; i+1 < len(m.Content); i += 2 {
 		k, v := m.Content[i].Value, m.Content[i+1]
-		// owned reads a scalar key, noting a value of the wrong shape.
-		owned := func() *string {
-			if v.Kind != yaml.ScalarNode {
-				p.BadValues = append(p.BadValues, BadValue{Key: k})
-			}
-			return scalar(v)
-		}
 		switch k {
 		case "id":
-			p.ID = owned()
+			p.ID = p.readScalar(k, v)
 		case "title":
-			p.Title = owned()
+			p.Title = p.readScalar(k, v)
 		case "kind":
-			if text := owned(); text != nil {
+			if text := p.readScalar(k, v); text != nil {
 				if kind, ok := ParseKind(*text); ok {
 					p.Kind = &kind
 				} else {
@@ -452,13 +452,13 @@ func (p *Parsed) readFrontmatter(fm []byte) {
 		case "status":
 			p.Status = scalar(v)
 		case "author":
-			p.Author = owned()
+			p.Author = p.readScalar(k, v)
 		case "assignee":
-			p.Assignee = owned()
+			p.Assignee = p.readScalar(k, v)
 		case "created":
-			p.Created = owned()
+			p.Created = p.readScalar(k, v)
 		case "updated":
-			p.Updated = owned()
+			p.Updated = p.readScalar(k, v)
 		case "labels":
 			if v.Kind != yaml.SequenceNode && !isNull(v) {
 				p.BadValues = append(p.BadValues, BadValue{Key: k, Value: scalarText(v)})
@@ -486,6 +486,16 @@ func (p *Parsed) readFrontmatter(fm []byte) {
 			}
 		}
 	}
+}
+
+// readScalar is the text of v, the value of the owned key k, or nil when
+// it is null. A list or mapping reads as nil too, and is noted in
+// p.BadValues.
+func (p *Parsed) readScalar(k string, v *yaml.Node) *string {
+	if v.Kind != yaml.ScalarNode {
+		p.BadValues = append(p.BadValues, BadValue{Key: k})
+	}
+	return scalar(v)
 }
 
 // isNull reports whether n is a null scalar, such as null, ~ or nothing.
@@ -544,9 +554,10 @@ func SetStatus(file []byte, d Derived, status string, comment *Comment, now time
 // AppendComment appends c at the end of an Item file's comments section
 // and sets its updated time to now. Everything already in the file is
 // kept byte for byte, and the comment uses the file's line endings. A
-// missing comments marker line is restored; a file with several fails
-// with ErrDuplicateMarkers, and one otman could not rewrite with a
-// *frontmatter.UnsafeError.
+// missing comments marker line is restored, unless text that is not a
+// comment follows the last "## Comments" heading (ErrStrayText); a file
+// with several fails with ErrDuplicateMarkers, and one otman could not
+// rewrite with a *frontmatter.UnsafeError.
 func AppendComment(file []byte, d Derived, c Comment, now time.Time) ([]byte, error) {
 	out, _, err := rewrite(file, d, nil, func(b []byte) ([]byte, error) { return appendComment(b, c) }, now)
 	return out, err
@@ -580,6 +591,13 @@ type Update struct {
 // marker line, whose body/comments boundary otman will not guess at.
 var ErrNoMarker = errors.New("the Item has no " + CommentsMarker + " line")
 
+// ErrStrayText refuses a comment on, or a body rewrite of, an Item file
+// with no comments marker line whose last "## Comments" heading is
+// followed by text that is not a comment: restoring the marker there
+// would make that text part of the comments (ADR 0005).
+var ErrStrayText = errors.New("the Item has no " + CommentsMarker + " line, and text after its last " +
+	CommentsHeading + " heading is not a comment")
+
 // ErrDuplicateMarkers refuses a body rewrite of, or a comment on, an Item
 // file with more than one comments marker line, whose body/comments
 // boundary otman will not guess at.
@@ -590,8 +608,9 @@ var ErrDuplicateMarkers = errors.New("the Item has more than one " + CommentsMar
 // rewrite replaces only the text between the frontmatter and the comments
 // marker, keeping the comments section byte for byte, and uses the file's
 // line endings. As with SetStatus, a file otman could not rewrite fails
-// with a *frontmatter.UnsafeError, or ErrNoMarker or ErrDuplicateMarkers
-// for a body rewrite, even when update would change nothing.
+// with a *frontmatter.UnsafeError, or ErrNoMarker, ErrStrayText or
+// ErrDuplicateMarkers for a body rewrite, even when update would change
+// nothing.
 func Apply(file []byte, d Derived, update Update, now time.Time) (out []byte, changed bool, err error) {
 	var edits []frontmatter.Edit
 	if update.Title != nil {
@@ -632,8 +651,8 @@ func Apply(file []byte, d Derived, update Update, now time.Time) (out []byte, ch
 // when it is not nil. When that changes the file, it does so again with
 // updated set to now and, unless edits set them, the lossless Drift of
 // the file healed: the identity keys restored from d (see healEdits) and
-// the labels lowercased and deduped. A write that changes nothing heals
-// nothing.
+// the labels lowercased and deduped where nothing else is lost (see
+// healLabels). A write that changes nothing heals nothing.
 func rewrite(file []byte, d Derived, edits []frontmatter.Edit, transform func([]byte) ([]byte, error), now time.Time) ([]byte, bool, error) {
 	apply := func(edits []frontmatter.Edit) ([]byte, error) {
 		out, err := frontmatter.Splice(file, edits)
@@ -650,7 +669,7 @@ func rewrite(file []byte, d Derived, edits []frontmatter.Edit, transform func([]
 	// the caller's backing array.
 	edits = append(edits[:len(edits):len(edits)], healEdits(file, d, edits)...)
 	edits = append(edits, frontmatter.Edit{Key: "updated", Value: timestamp(now)})
-	if heal := healLabels(file); heal != nil && !slices.ContainsFunc(edits, func(e frontmatter.Edit) bool { return e.Key == "labels" }) {
+	if heal := healLabels(file); heal != nil && !sets(edits, "labels") {
 		edits = append(edits, *heal)
 	}
 	out, err = apply(edits)
@@ -779,24 +798,29 @@ type Derived struct {
 // filename, and a missing or null title or kind is filled in from d. A
 // title or kind that is present, even of the wrong shape, is kept.
 func healEdits(file []byte, d Derived, edits []frontmatter.Edit) []frontmatter.Edit {
-	sets := func(key string) bool {
-		return slices.ContainsFunc(edits, func(e frontmatter.Edit) bool { return e.Key == key })
-	}
 	missing := func(key string) bool {
 		v := frontmatterValue(file, key)
 		return v == nil || isNull(v)
 	}
 	var heal []frontmatter.Edit
-	if id := frontmatterValue(file, "id"); !sets("id") && (id == nil || id.Kind != yaml.ScalarNode || id.Tag == "!!null" || id.Value != d.ID) {
+	if id := frontmatterValue(file, "id"); !sets(edits, "id") && (id == nil || !equalText(scalar(id), d.ID)) {
 		heal = append(heal, frontmatter.Edit{Key: "id", Value: str(d.ID)})
 	}
-	if d.Title != "" && !sets("title") && missing("title") {
+	if d.Title != "" && !sets(edits, "title") && missing("title") {
 		heal = append(heal, frontmatter.Edit{Key: "title", Value: str(d.Title)})
 	}
-	if d.Kind != nil && !sets("kind") && missing("kind") {
+	if d.Kind != nil && !sets(edits, "kind") && missing("kind") {
 		heal = append(heal, frontmatter.Edit{Key: "kind", Value: str(string(*d.Kind))})
 	}
 	return heal
+}
+
+// equalText reports whether text is not nil and is s.
+func equalText(text *string, s string) bool { return text != nil && *text == s }
+
+// sets reports whether edits set or remove key.
+func sets(edits []frontmatter.Edit, key string) bool {
+	return slices.ContainsFunc(edits, func(e frontmatter.Edit) bool { return e.Key == key })
 }
 
 // replaceBody replaces the body of file, which has frontmatter, with body
@@ -804,14 +828,10 @@ func healEdits(file []byte, d Derived, edits []frontmatter.Edit) []frontmatter.E
 // opening line.
 func replaceBody(file []byte, body string) ([]byte, error) {
 	_, rest, _ := frontmatter.Split(file)
-	switch countMarkers(string(rest)) {
-	case 0:
-		return nil, ErrNoMarker
-	case 1:
-	default:
-		return nil, ErrDuplicateMarkers
+	marker, err := locateComments(string(rest)).marker()
+	if err != nil {
+		return nil, err
 	}
-	marker := markerOffset(string(rest))
 	eol := lineEnding(file)
 	var b bytes.Buffer
 	b.Write(file[:len(file)-len(rest)])
@@ -829,17 +849,17 @@ func replaceBody(file []byte, body string) ([]byte, error) {
 // Leading and trailing line breaks of the text are not kept. A file with
 // no comments marker line gets it back where a read found the comments
 // section: just before the last "## Comments" heading or, with none, in a
-// new section at the end. One with several fails with
-// ErrDuplicateMarkers.
+// new section at the end. When text that is not a comment follows that
+// heading, it fails with ErrStrayText rather than make the text part of
+// the comments; with several marker lines, with ErrDuplicateMarkers.
 func appendComment(file []byte, c Comment) ([]byte, error) {
 	_, rest, _ := frontmatter.Split(file)
 	eol := lineEnding(file)
-	switch countMarkers(string(rest)) {
-	case 0:
-		file = restoreMarker(file, len(file)-len(rest), eol)
-	case 1:
-	default:
-		return nil, ErrDuplicateMarkers
+	section := locateComments(string(rest))
+	if _, err := section.marker(); errors.Is(err, ErrNoMarker) {
+		file = restoreMarker(file, len(file)-len(rest), section.start, eol)
+	} else if err != nil {
+		return nil, err
 	}
 	var b bytes.Buffer
 	b.Write(file)
@@ -860,23 +880,16 @@ func lineEnding(file []byte) string {
 
 // restoreMarker puts the comments marker line back into file, whose text
 // after the frontmatter starts at offset start and has no marker: just
-// before the last "## Comments" heading, where a read starts the comments
-// section, or, with no heading, at the end with a heading after it and a
-// blank line before it. It uses the line endings eol.
-func restoreMarker(file []byte, start int, eol string) []byte {
-	heading := -1
-	offset := start
-	for line := range strings.Lines(string(file[start:])) {
-		if isLine(line, CommentsHeading) {
-			heading = offset
-		}
-		offset += len(line)
-	}
+// before its last "## Comments" heading, at offset heading of that text,
+// where a read starts the comments section, or, with no heading (-1), at
+// the end with a heading after it and a blank line before it. It uses the
+// line endings eol.
+func restoreMarker(file []byte, start, heading int, eol string) []byte {
 	var b bytes.Buffer
 	if heading >= 0 {
-		b.Write(file[:heading])
+		b.Write(file[:start+heading])
 		b.WriteString(CommentsMarker + eol)
-		b.Write(file[heading:])
+		b.Write(file[start+heading:])
 		return b.Bytes()
 	}
 	b.Write(file)
@@ -900,56 +913,83 @@ func blankLine(file []byte, eol string) string {
 	return ""
 }
 
-// countMarkers is how many comments marker lines text has.
-func countMarkers(text string) int {
-	n := 0
-	for line := range strings.Lines(text) {
-		if isLine(line, CommentsMarker) {
-			n++
-		}
-	}
-	return n
+// commentsSection is where the comments section of text, an Item file
+// after its frontmatter, starts.
+type commentsSection struct {
+	// markers is how many comments marker lines text has.
+	markers int
+	// start is the offset of the first marker line or, with none, of the
+	// last "## Comments" heading; -1 when text has neither.
+	start int
+	// strayText is true when, with no marker line, a line after the last
+	// "## Comments" heading and before the first comment is not blank.
+	strayText bool
 }
 
-// markerOffset is the offset of text's first comments marker line, or -1.
-func markerOffset(text string) int {
-	offset := 0
+// locateComments finds the comments section of text, an Item file after
+// its frontmatter, in one pass.
+func locateComments(text string) commentsSection {
+	s := commentsSection{start: -1}
+	heading, offset := -1, 0
 	for line := range strings.Lines(text) {
-		if isLine(line, CommentsMarker) {
-			return offset
+		switch {
+		case isLine(line, CommentsMarker):
+			if s.markers == 0 {
+				s.start = offset
+			}
+			s.markers++
+		case isLine(line, CommentsHeading):
+			heading = offset
 		}
 		offset += len(line)
 	}
-	return -1
+	if s.markers == 0 && heading >= 0 {
+		s.start = heading
+		_, after, _ := strings.Cut(text[heading:], "\n")
+		for line := range strings.Lines(after) {
+			if _, ok := commentHeadingOf(line); ok {
+				break
+			}
+			if strings.TrimSpace(line) != "" {
+				s.strayText = true
+				break
+			}
+		}
+	}
+	return s
 }
 
-// splitComments splits text after the frontmatter at the comments marker
-// into the body and the comments that follow the heading. Without a
-// marker it falls back to the last "## Comments" heading.
-func splitComments(text string) (body, comments string) {
-	if marker := markerOffset(text); marker >= 0 {
-		_, after, _ := strings.Cut(text[marker:], "\n")
+// marker is the offset of the one comments marker line, or fails with
+// ErrNoMarker (ErrStrayText when text that is not a comment follows the
+// last "## Comments" heading) or ErrDuplicateMarkers.
+func (s commentsSection) marker() (int, error) {
+	switch {
+	case s.markers == 1:
+		return s.start, nil
+	case s.markers > 1:
+		return -1, ErrDuplicateMarkers
+	case s.strayText:
+		return -1, ErrStrayText
+	}
+	return -1, ErrNoMarker
+}
+
+// split splits text, located as s, into the body and the comments that
+// follow the section's heading: at the first marker line or, without
+// one, at the last "## Comments" heading.
+func (s commentsSection) split(text string) (body, comments string) {
+	if s.start < 0 {
+		return text, ""
+	}
+	_, after, _ := strings.Cut(text[s.start:], "\n")
+	if s.markers > 0 {
 		first, _, _ := strings.Cut(after, "\n")
 		if isLine(first, CommentsHeading) {
 			after = strings.TrimPrefix(after, first)
 			after = strings.TrimPrefix(after, "\n")
 		}
-		return text[:marker], after
 	}
-	lastHeading := -1
-	offset := 0
-	for line := range strings.Lines(text) {
-		if isLine(line, CommentsHeading) {
-			lastHeading = offset
-		}
-		offset += len(line)
-	}
-	if lastHeading < 0 {
-		return text, ""
-	}
-	rest := text[lastHeading:]
-	_, after, _ := strings.Cut(rest, "\n")
-	return text[:lastHeading], after
+	return text[:s.start], after
 }
 
 var commentHeading = regexp.MustCompile(`^### (\S+) · (.+?)\s*$`)

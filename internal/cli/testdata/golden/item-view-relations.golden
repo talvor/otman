@@ -482,7 +482,7 @@ exit: 0
   "warnings": [
     {
       "code": "malformed_frontmatter",
-      "message": "cannot read Projects/OTM/Issues/OTM-15 Unreadable.md: the frontmatter is not valid YAML: yaml: line 1: did not find expected ',' or ']'",
+      "message": "cannot read the frontmatter of Projects/OTM/Issues/OTM-15 Unreadable.md: the frontmatter is not valid YAML: yaml: line 1: did not find expected ',' or ']'",
       "details": {
         "path": "Projects/OTM/Issues/OTM-15 Unreadable.md"
       },

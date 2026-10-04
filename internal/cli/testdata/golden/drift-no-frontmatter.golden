@@ -1,24 +1,24 @@
-$ otman view DRF-6 --json
+$ otman view DRF-19 --json
 exit: 0
 -- stdout --
 {
   "schema_version": 1,
   "data": {
     "item": {
-      "id": "DRF-6",
-      "title": "Invalid status",
+      "id": "DRF-19",
+      "title": "No frontmatter",
       "kind": "issue",
-      "status": "doing",
+      "status": null,
       "labels": [],
       "assignee": null,
       "parent": null,
       "blocked_by": [],
-      "path": "Projects/DRF/Issues/DRF-6 Invalid status.md",
-      "rev": "f49b94880a5c",
+      "path": "Projects/DRF/Issues/DRF-19 No frontmatter.md",
+      "rev": "8bf3132d893c",
       "author": null,
-      "body": "",
-      "created": "2026-01-01T10:00:00Z",
-      "updated": "2026-01-01T11:00:00Z",
+      "body": "Just a body, written by hand.",
+      "created": null,
+      "updated": null,
       "comments": [],
       "children": [],
       "blocks": []
@@ -26,51 +26,84 @@ exit: 0
   },
   "warnings": [
     {
-      "code": "invalid_status",
-      "message": "DRF-6 has status \"doing\", not open or closed",
+      "code": "missing_key",
+      "message": "DRF-19 has no id, so it reads as \"DRF-19\" from its filename",
       "details": {
-        "id": "DRF-6",
-        "path": "Projects/DRF/Issues/DRF-6 Invalid status.md",
-        "status": "doing"
+        "derived": "DRF-19",
+        "id": "DRF-19",
+        "key": "id",
+        "path": "Projects/DRF/Issues/DRF-19 No frontmatter.md"
       },
-      "hint": "run 'otman reopen DRF-6' or 'otman close DRF-6' to set it"
+      "hint": "otman refuses every write to DRF-19 until it has frontmatter: add id, title, kind and status between --- lines at the top of Projects/DRF/Issues/DRF-19 No frontmatter.md"
+    },
+    {
+      "code": "missing_key",
+      "message": "DRF-19 has no title, so it reads as \"No frontmatter\" from its filename",
+      "details": {
+        "derived": "No frontmatter",
+        "id": "DRF-19",
+        "key": "title",
+        "path": "Projects/DRF/Issues/DRF-19 No frontmatter.md"
+      },
+      "hint": "otman refuses every write to DRF-19 until it has frontmatter: add id, title, kind and status between --- lines at the top of Projects/DRF/Issues/DRF-19 No frontmatter.md"
+    },
+    {
+      "code": "missing_key",
+      "message": "DRF-19 has no kind, so it reads as \"issue\" from its folder",
+      "details": {
+        "derived": "issue",
+        "id": "DRF-19",
+        "key": "kind",
+        "path": "Projects/DRF/Issues/DRF-19 No frontmatter.md"
+      },
+      "hint": "otman refuses every write to DRF-19 until it has frontmatter: add id, title, kind and status between --- lines at the top of Projects/DRF/Issues/DRF-19 No frontmatter.md"
+    },
+    {
+      "code": "invalid_status",
+      "message": "DRF-19 has no status, not open or closed",
+      "details": {
+        "id": "DRF-19",
+        "path": "Projects/DRF/Issues/DRF-19 No frontmatter.md",
+        "status": null
+      },
+      "hint": "otman refuses every write to DRF-19 until it has frontmatter: add id, title, kind and status between --- lines at the top of Projects/DRF/Issues/DRF-19 No frontmatter.md"
+    },
+    {
+      "code": "missing_comments_marker",
+      "message": "DRF-19 has no <!-- otman:comments --> line, so its comments are read from the last ## Comments heading",
+      "details": {
+        "id": "DRF-19",
+        "path": "Projects/DRF/Issues/DRF-19 No frontmatter.md"
+      },
+      "hint": "otman refuses every write to DRF-19 until it has frontmatter: add id, title, kind and status between --- lines at the top of Projects/DRF/Issues/DRF-19 No frontmatter.md"
     }
   ]
 }
 -- stderr --
 
-$ otman view DRF-7
+$ otman view DRF-19
 tty: true
 exit: 0
 -- stdout --
-DRF-7 · Missing status
+DRF-19 · No frontmatter
 issue · - · unassigned
-Author: - · created 2026-01-01T10:00:00Z · updated 2026-01-01T11:00:00Z
-Path: Projects/DRF/Issues/DRF-7 Missing status.md
+Author: - · created - · updated -
+Path: Projects/DRF/Issues/DRF-19 No frontmatter.md
 
-(no body)
+Just a body, written by hand.
 -- stderr --
-warning[invalid_status]: DRF-7 has no status, not open or closed
-hint: run 'otman reopen DRF-7' or 'otman close DRF-7' to set it
+warning[missing_key]: DRF-19 has no id, so it reads as "DRF-19" from its filename
+hint: otman refuses every write to DRF-19 until it has frontmatter: add id, title, kind and status between --- lines at the top of Projects/DRF/Issues/DRF-19 No frontmatter.md
+warning[missing_key]: DRF-19 has no title, so it reads as "No frontmatter" from its filename
+hint: otman refuses every write to DRF-19 until it has frontmatter: add id, title, kind and status between --- lines at the top of Projects/DRF/Issues/DRF-19 No frontmatter.md
+warning[missing_key]: DRF-19 has no kind, so it reads as "issue" from its folder
+hint: otman refuses every write to DRF-19 until it has frontmatter: add id, title, kind and status between --- lines at the top of Projects/DRF/Issues/DRF-19 No frontmatter.md
+warning[invalid_status]: DRF-19 has no status, not open or closed
+hint: otman refuses every write to DRF-19 until it has frontmatter: add id, title, kind and status between --- lines at the top of Projects/DRF/Issues/DRF-19 No frontmatter.md
+warning[missing_comments_marker]: DRF-19 has no <!-- otman:comments --> line, so its comments are read from the last ## Comments heading
+hint: otman refuses every write to DRF-19 until it has frontmatter: add id, title, kind and status between --- lines at the top of Projects/DRF/Issues/DRF-19 No frontmatter.md
 
-$ otman list --search status
-tty: true
-exit: 0
--- stdout --
-No Items match
--- stderr --
-warning[invalid_status]: DRF-6 has status "doing", not open or closed, so it is not listed
-hint: 'otman view DRF-6' shows it; run 'otman reopen DRF-6' or 'otman close DRF-6' to set it
-warning[invalid_status]: DRF-7 has no status, not open or closed, so it is not listed
-hint: 'otman view DRF-7' shows it; run 'otman reopen DRF-7' or 'otman close DRF-7' to set it
-warning[malformed_frontmatter]: cannot read the frontmatter of Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML
-hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-9 Flow style.md
-warning[malformed_frontmatter]: cannot read the frontmatter of Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'
-hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-10 Unparseable.md
-warning[malformed_frontmatter]: cannot read the frontmatter of Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key "status"
-hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-11 Repeated key.md
-
-$ otman frontier --search status --json
+$ otman list --state all --search frontmatter --json
 exit: 0
 -- stdout --
 {
@@ -82,26 +115,6 @@ exit: 0
     "has_more": false
   },
   "warnings": [
-    {
-      "code": "invalid_status",
-      "message": "DRF-6 has status \"doing\", not open or closed, so it is not listed",
-      "details": {
-        "id": "DRF-6",
-        "path": "Projects/DRF/Issues/DRF-6 Invalid status.md",
-        "status": "doing"
-      },
-      "hint": "'otman view DRF-6' shows it; run 'otman reopen DRF-6' or 'otman close DRF-6' to set it"
-    },
-    {
-      "code": "invalid_status",
-      "message": "DRF-7 has no status, not open or closed, so it is not listed",
-      "details": {
-        "id": "DRF-7",
-        "path": "Projects/DRF/Issues/DRF-7 Missing status.md",
-        "status": null
-      },
-      "hint": "'otman view DRF-7' shows it; run 'otman reopen DRF-7' or 'otman close DRF-7' to set it"
-    },
     {
       "code": "malformed_frontmatter",
       "message": "cannot read the frontmatter of Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML",
@@ -125,90 +138,54 @@ exit: 0
         "path": "Projects/DRF/Issues/DRF-11 Repeated key.md"
       },
       "hint": "fix the YAML between the --- lines in Projects/DRF/Issues/DRF-11 Repeated key.md"
+    },
+    {
+      "code": "invalid_status",
+      "message": "DRF-19 has no status, not open or closed, so it is not listed",
+      "details": {
+        "id": "DRF-19",
+        "path": "Projects/DRF/Issues/DRF-19 No frontmatter.md",
+        "status": null
+      },
+      "hint": "'otman view DRF-19' shows it; otman refuses every write to DRF-19 until it has frontmatter: add id, title, kind and status between --- lines at the top of Projects/DRF/Issues/DRF-19 No frontmatter.md"
     }
   ]
 }
 -- stderr --
 
-$ otman list --state all --search status
-tty: true
-exit: 0
+$ otman reopen DRF-19 --json
+exit: 4
 -- stdout --
-No Items match
 -- stderr --
-warning[invalid_status]: DRF-6 has status "doing", not open or closed, so it is not listed
-hint: 'otman view DRF-6' shows it; run 'otman reopen DRF-6' or 'otman close DRF-6' to set it
-warning[invalid_status]: DRF-7 has no status, not open or closed, so it is not listed
-hint: 'otman view DRF-7' shows it; run 'otman reopen DRF-7' or 'otman close DRF-7' to set it
-warning[malformed_frontmatter]: cannot read the frontmatter of Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML
-hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-9 Flow style.md
-warning[malformed_frontmatter]: cannot read the frontmatter of Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'
-hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-10 Unparseable.md
-warning[malformed_frontmatter]: cannot read the frontmatter of Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key "status"
-hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-11 Repeated key.md
-
-$ otman close DRF-6 --json
-exit: 0
--- stdout --
 {
   "schema_version": 1,
-  "data": {
-    "item": {
-      "id": "DRF-6",
-      "title": "Invalid status",
-      "kind": "issue",
-      "status": "closed",
-      "labels": [],
-      "assignee": null,
-      "parent": null,
-      "blocked_by": [],
-      "path": "Projects/DRF/Issues/DRF-6 Invalid status.md",
-      "rev": "988f459c6ca1"
+  "error": {
+    "code": "unsafe_write",
+    "message": "refusing to rewrite Projects/DRF/Issues/DRF-19 No frontmatter.md: the file has no frontmatter between --- lines",
+    "details": {
+      "path": "Projects/DRF/Issues/DRF-19 No frontmatter.md",
+      "reason": "the file has no frontmatter between --- lines"
     },
-    "changed": true
-  },
-  "warnings": []
+    "hint": "make the frontmatter plain block-style YAML between --- lines, then retry"
+  }
 }
--- stderr --
 
-$ otman reopen DRF-7 --json
-exit: 0
+$ otman comment DRF-19 --body Refused. --json
+exit: 4
 -- stdout --
+-- stderr --
 {
   "schema_version": 1,
-  "data": {
-    "item": {
-      "id": "DRF-7",
-      "title": "Missing status",
-      "kind": "issue",
-      "status": "open",
-      "labels": [],
-      "assignee": null,
-      "parent": null,
-      "blocked_by": [],
-      "path": "Projects/DRF/Issues/DRF-7 Missing status.md",
-      "rev": "71bf52c646d2"
+  "error": {
+    "code": "unsafe_write",
+    "message": "refusing to rewrite Projects/DRF/Issues/DRF-19 No frontmatter.md: the file has no frontmatter between --- lines",
+    "details": {
+      "path": "Projects/DRF/Issues/DRF-19 No frontmatter.md",
+      "reason": "the file has no frontmatter between --- lines"
     },
-    "changed": true
-  },
-  "warnings": []
+    "hint": "make the frontmatter plain block-style YAML between --- lines, then retry"
+  }
 }
--- stderr --
-
-$ otman list --state all --search status
-tty: true
-exit: 0
--- stdout --
-ID     KIND   STATUS  ASSIGNEE  TITLE
-DRF-6  issue  closed  -         Invalid status
-DRF-7  issue  open    -         Missing status
--- stderr --
-warning[malformed_frontmatter]: cannot read the frontmatter of Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML
-hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-9 Flow style.md
-warning[malformed_frontmatter]: cannot read the frontmatter of Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'
-hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-10 Unparseable.md
-warning[malformed_frontmatter]: cannot read the frontmatter of Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key "status"
-hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-11 Repeated key.md
 
 == tree ==
 config/
@@ -340,6 +317,8 @@ updated: 2026-01-01T11:00:00Z
 ---
 <!-- otman:comments -->
 ## Comments
+-- vault/Projects/DRF/Issues/DRF-19 No frontmatter.md --
+Just a body, written by hand.
 -- vault/Projects/DRF/Issues/DRF-2 Short title.md --
 ---
 id: DRF-2
@@ -385,11 +364,11 @@ No id, title, kind, created or updated.
 id: DRF-6
 title: Invalid status
 kind: issue
-status: closed
+status: doing   # not a status otman knows
 labels: []
 assignee: null
 created: 2026-01-01T10:00:00Z
-updated: 2026-01-02T03:04:05Z
+updated: 2026-01-01T11:00:00Z
 ---
 <!-- otman:comments -->
 ## Comments
@@ -401,8 +380,7 @@ kind: issue
 labels: []
 assignee: null
 created: 2026-01-01T10:00:00Z
-updated: 2026-01-02T03:04:05Z
-status: open
+updated: 2026-01-01T11:00:00Z
 ---
 <!-- otman:comments -->
 ## Comments

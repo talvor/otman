@@ -6,10 +6,14 @@ import (
 )
 
 // labelItem is an Item file of Kind issue with status and labels, given as
-// the YAML of the labels value; "" leaves the key out.
+// the YAML of the labels value; "" leaves the key out. A block list,
+// starting with a line break, is written as otman writes one.
 func labelItem(id, title, status, labels string) string {
 	fm := "---\nid: " + id + "\ntitle: " + title + "\nkind: issue\nstatus: " + status + "\n"
-	if labels != "" {
+	switch {
+	case strings.HasPrefix(labels, "\n"):
+		fm += "labels:" + labels + "\n"
+	case labels != "":
 		fm += "labels: " + labels + "\n"
 	}
 	return fm + "assignee: null\n---\n<!-- otman:comments -->\n## Comments\n"

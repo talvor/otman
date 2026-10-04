@@ -18,7 +18,7 @@ exit: 0
       "parent": null,
       "blocked_by": [],
       "path": "Projects/OTM/Issues/OTM-5 Hand edited case.md",
-      "rev": "8e9a4aa16cbb",
+      "rev": "bf7ec84db193",
       "author": null,
       "body": "",
       "created": null,
@@ -52,7 +52,7 @@ exit: 0
       "parent": null,
       "blocked_by": [],
       "path": "Projects/OTM/Issues/OTM-5 Hand edited case.md",
-      "rev": "8e9a4aa16cbb"
+      "rev": "bf7ec84db193"
     },
     "changed": false
   },
@@ -306,7 +306,7 @@ id: OTM-2
 title: Map the way
 kind: issue
 status: open
-labels: 
+labels:
   - bug
   - wayfinder:map
 assignee: null

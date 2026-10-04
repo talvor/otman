@@ -65,7 +65,7 @@ func TestDriftIDMismatch(t *testing.T) {
 // frontmatter value, and writes are allowed and keep it. An Item anywhere
 // under its Project's folder but outside its Kind folder is still found,
 // by reference and by list, and warns unexpected_folder. A Kind that is
-// not one of issue, prd or spec, or a title that is not text, reads as
+// not one of issue, PRD or spec, or a title that is not text, reads as
 // absent, derived from the folder or the filename, and is kept on write.
 func TestDriftTitleKindFolder(t *testing.T) {
 	runGolden(t, goldenCase{
@@ -103,8 +103,8 @@ func TestDriftMissingKeys(t *testing.T) {
 }
 
 // A missing or invalid status warns invalid_status on read and leaves the
-// Item out of list and frontier, which still warn about it; --state all
-// shows it. close and reopen repair it, splicing only status and updated.
+// Item out of list and frontier, even with --state all, which still warn
+// about it. close and reopen repair it, splicing only status and updated.
 func TestDriftStatus(t *testing.T) {
 	runGolden(t, goldenCase{
 		name: "drift-status", fixture: "drift", files: driftConfig,
@@ -149,12 +149,24 @@ func TestDriftMalformedValues(t *testing.T) {
 // "## Comments" heading and warn missing_comments_marker. comment and
 // close --comment append and restore the marker, just before that heading
 // or, with no heading either, in a new comments section at the end; a body
-// edit refuses with unsafe_write. Duplicate markers warn; body edits and
-// comments refuse with unsafe_write, while writes that touch only the
-// frontmatter go ahead.
+// edit refuses with unsafe_write. When the text after that heading is not
+// all comments, restoring the marker would turn it into comments, so
+// comments refuse with unsafe_write too, and the warning says so.
+// Duplicate markers warn; body edits and comments refuse with
+// unsafe_write, while writes that touch only the frontmatter go ahead.
 func TestDriftCommentsMarker(t *testing.T) {
+	files := map[string]string{
+		"vault/Projects/DRF/Issues/DRF-17 Prose after the heading.md": "---\nid: DRF-17\ntitle: Prose after the heading\n" +
+			"kind: issue\nstatus: open\nlabels: []\n---\nThe body.\n\n## Comments\n\n" +
+			"Prose under the heading, not a comment.\n\n### 2026-01-01T10:30:00Z · talvor\nA comment.\n",
+		"vault/Projects/DRF/Issues/DRF-18 Only the heading.md": "---\nid: DRF-18\ntitle: Only the heading\n" +
+			"kind: issue\nstatus: open\nlabels: []\n---\nThe body.\n\n## Comments\n  \n",
+	}
+	for p, c := range driftConfig {
+		files[p] = c
+	}
 	runGolden(t, goldenCase{
-		name: "drift-comments-marker", fixture: "drift", files: driftConfig,
+		name: "drift-comments-marker", fixture: "drift", files: files,
 		steps: []step{
 			{args: []string{"view", "DRF-12", "--json"}},
 			{args: []string{"view", "DRF-12", "--comments"}, tty: true},
@@ -170,13 +182,20 @@ func TestDriftCommentsMarker(t *testing.T) {
 			{args: []string{"close", "DRF-14", "--comment", "Refused too."}, tty: true},
 			{args: []string{"edit", "DRF-14", "--body", "Refused as well.", "--json"}},
 			{args: []string{"edit", "DRF-14", "--assignee", "alice", "--json"}},
+			{args: []string{"view", "DRF-17", "--json"}},
+			{args: []string{"comment", "DRF-17", "--body", "Refused.", "--json"}},
+			{args: []string{"close", "DRF-17", "--comment", "Refused too."}, tty: true},
+			{args: []string{"edit", "DRF-17", "--body", "Refused as well.", "--json"}},
+			{args: []string{"comment", "DRF-18", "--body", "The marker is back before the heading.", "--json"}},
 		},
 	})
 }
 
 // Labels still invalid once lowercased read as written with an
 // invalid_label warning naming the path, by view, list and label list.
-// Writes keep them, lowercasing and deduping case-only differences.
+// A write that does not set the Labels keeps them byte for byte when
+// lowercasing and deduping them would lose anything else, such as a YAML
+// comment; a Label edit still replaces them.
 func TestDriftInvalidLabels(t *testing.T) {
 	runGolden(t, goldenCase{
 		name: "drift-invalid-labels", fixture: "drift", files: driftConfig,
@@ -184,7 +203,37 @@ func TestDriftInvalidLabels(t *testing.T) {
 			{args: []string{"view", "DRF-15", "--json"}},
 			{args: []string{"list", "--label", "bug"}, tty: true},
 			{args: []string{"label", "list"}, tty: true},
+			{args: []string{"edit", "DRF-15", "--assignee", "bob", "--json"}},
 			{args: []string{"close", "DRF-15", "--json"}},
+		},
+	})
+	runGolden(t, goldenCase{
+		name: "drift-invalid-labels-replaced", fixture: "drift", files: driftConfig,
+		steps: []step{
+			{args: []string{"edit", "DRF-15", "--add-label", "triage", "--json"}},
+		},
+	})
+}
+
+// A file with no frontmatter at all still reads, everything derived from
+// its filename and folder, with warnings whose hints say to add the
+// frontmatter: every write refuses with unsafe_write until it has some.
+// list leaves it out, as it has no status.
+func TestDriftNoFrontmatter(t *testing.T) {
+	files := map[string]string{
+		"vault/Projects/DRF/Issues/DRF-19 No frontmatter.md": "Just a body, written by hand.\n",
+	}
+	for p, c := range driftConfig {
+		files[p] = c
+	}
+	runGolden(t, goldenCase{
+		name: "drift-no-frontmatter", fixture: "drift", files: files,
+		steps: []step{
+			{args: []string{"view", "DRF-19", "--json"}},
+			{args: []string{"view", "DRF-19"}, tty: true},
+			{args: []string{"list", "--state", "all", "--search", "frontmatter", "--json"}},
+			{args: []string{"reopen", "DRF-19", "--json"}},
+			{args: []string{"comment", "DRF-19", "--body", "Refused.", "--json"}},
 		},
 	})
 }

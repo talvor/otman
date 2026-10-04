@@ -27,7 +27,7 @@ exit: 0
   "warnings": [
     {
       "code": "malformed_frontmatter",
-      "message": "cannot read Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML",
+      "message": "cannot read the frontmatter of Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML",
       "details": {
         "path": "Projects/DRF/Issues/DRF-9 Flow style.md"
       },
@@ -174,7 +174,7 @@ exit: 0
   "warnings": [
     {
       "code": "malformed_frontmatter",
-      "message": "cannot read Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'",
+      "message": "cannot read the frontmatter of Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'",
       "details": {
         "path": "Projects/DRF/Issues/DRF-10 Unparseable.md"
       },
@@ -321,7 +321,7 @@ exit: 0
   "warnings": [
     {
       "code": "malformed_frontmatter",
-      "message": "cannot read Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key \"status\"",
+      "message": "cannot read the frontmatter of Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key \"status\"",
       "details": {
         "path": "Projects/DRF/Issues/DRF-11 Repeated key.md"
       },
@@ -450,7 +450,7 @@ Path: Projects/DRF/Issues/DRF-9 Flow style.md
 
 (no body)
 -- stderr --
-warning[malformed_frontmatter]: cannot read Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML
+warning[malformed_frontmatter]: cannot read the frontmatter of Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML
 hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-9 Flow style.md
 
 $ otman list --state all --json
@@ -519,30 +519,6 @@ exit: 0
         "blocked_by": [],
         "path": "Projects/DRF/Issues/DRF-5 Missing keys.md",
         "rev": "4768a4ebfc61"
-      },
-      {
-        "id": "DRF-6",
-        "title": "Invalid status",
-        "kind": "issue",
-        "status": "doing",
-        "labels": [],
-        "assignee": null,
-        "parent": null,
-        "blocked_by": [],
-        "path": "Projects/DRF/Issues/DRF-6 Invalid status.md",
-        "rev": "f49b94880a5c"
-      },
-      {
-        "id": "DRF-7",
-        "title": "Missing status",
-        "kind": "issue",
-        "status": null,
-        "labels": [],
-        "assignee": null,
-        "parent": null,
-        "blocked_by": [],
-        "path": "Projects/DRF/Issues/DRF-7 Missing status.md",
-        "rev": "5dba3797b29d"
       },
       {
         "id": "DRF-8",
@@ -621,8 +597,8 @@ exit: 0
         "rev": "5428848d5318"
       }
     ],
-    "total": 13,
-    "count": 13,
+    "total": 11,
+    "count": 11,
     "has_more": false
   },
   "warnings": [
@@ -704,23 +680,23 @@ exit: 0
     },
     {
       "code": "invalid_status",
-      "message": "DRF-6 has status \"doing\", not open or closed",
+      "message": "DRF-6 has status \"doing\", not open or closed, so it is not listed",
       "details": {
         "id": "DRF-6",
         "path": "Projects/DRF/Issues/DRF-6 Invalid status.md",
         "status": "doing"
       },
-      "hint": "run 'otman reopen DRF-6' or 'otman close DRF-6' to set it"
+      "hint": "'otman view DRF-6' shows it; run 'otman reopen DRF-6' or 'otman close DRF-6' to set it"
     },
     {
       "code": "invalid_status",
-      "message": "DRF-7 has no status, not open or closed",
+      "message": "DRF-7 has no status, not open or closed, so it is not listed",
       "details": {
         "id": "DRF-7",
         "path": "Projects/DRF/Issues/DRF-7 Missing status.md",
         "status": null
       },
-      "hint": "run 'otman reopen DRF-7' or 'otman close DRF-7' to set it"
+      "hint": "'otman view DRF-7' shows it; run 'otman reopen DRF-7' or 'otman close DRF-7' to set it"
     },
     {
       "code": "malformed_value",
@@ -746,7 +722,7 @@ exit: 0
     },
     {
       "code": "malformed_frontmatter",
-      "message": "cannot read Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML",
+      "message": "cannot read the frontmatter of Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML",
       "details": {
         "path": "Projects/DRF/Issues/DRF-9 Flow style.md"
       },
@@ -754,7 +730,7 @@ exit: 0
     },
     {
       "code": "malformed_frontmatter",
-      "message": "cannot read Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'",
+      "message": "cannot read the frontmatter of Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'",
       "details": {
         "path": "Projects/DRF/Issues/DRF-10 Unparseable.md"
       },
@@ -762,7 +738,7 @@ exit: 0
     },
     {
       "code": "malformed_frontmatter",
-      "message": "cannot read Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key \"status\"",
+      "message": "cannot read the frontmatter of Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key \"status\"",
       "details": {
         "path": "Projects/DRF/Issues/DRF-11 Repeated key.md"
       },
@@ -820,7 +796,7 @@ exit: 0
     },
     {
       "code": "malformed_value",
-      "message": "the kind value of DRF-16 is \"bug\", not issue, prd or spec, so it reads as absent",
+      "message": "the kind value of DRF-16 is \"bug\", not \"issue\", \"prd\" or \"spec\", so it reads as absent",
       "details": {
         "id": "DRF-16",
         "key": "kind",
@@ -1020,7 +996,7 @@ warning:
     id: DRF-6
     path: Projects/DRF/Issues/DRF-6 Invalid status.md
     status: doing
-  hint: "set status: open or closed in Projects/DRF/Issues/DRF-6 Invalid status.md, or pass --state all"
+  hint: 'otman view DRF-6' shows it; run 'otman reopen DRF-6' or 'otman close DRF-6' to set it
 warning:
   code: invalid_status
   message: "DRF-7 has no status, not open or closed, so it is not listed"
@@ -1028,7 +1004,7 @@ warning:
     id: DRF-7
     path: Projects/DRF/Issues/DRF-7 Missing status.md
     status: null
-  hint: "set status: open or closed in Projects/DRF/Issues/DRF-7 Missing status.md, or pass --state all"
+  hint: 'otman view DRF-7' shows it; run 'otman reopen DRF-7' or 'otman close DRF-7' to set it
 warning:
   code: malformed_value
   message: "the labels value of DRF-8 is \"needs-triage\", not a list of Labels, so it reads as absent"
@@ -1049,19 +1025,19 @@ warning:
   hint: fix assignee in Projects/DRF/Issues/DRF-8 Malformed values.md; otman keeps it as written until a command sets assignee
 warning:
   code: malformed_frontmatter
-  message: "cannot read Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML"
+  message: "cannot read the frontmatter of Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML"
   details:
     path: Projects/DRF/Issues/DRF-9 Flow style.md
   hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-9 Flow style.md
 warning:
   code: malformed_frontmatter
-  message: "cannot read Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'"
+  message: "cannot read the frontmatter of Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'"
   details:
     path: Projects/DRF/Issues/DRF-10 Unparseable.md
   hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-10 Unparseable.md
 warning:
   code: malformed_frontmatter
-  message: "cannot read Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key \"status\""
+  message: "cannot read the frontmatter of Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key \"status\""
   details:
     path: Projects/DRF/Issues/DRF-11 Repeated key.md
   hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-11 Repeated key.md
@@ -1107,7 +1083,7 @@ warning:
   hint: fix title in Projects/DRF/Specs/DRF-16 Malformed title and kind.md; otman keeps it as written until a command sets title
 warning:
   code: malformed_value
-  message: "the kind value of DRF-16 is \"bug\", not issue, prd or spec, so it reads as absent"
+  message: "the kind value of DRF-16 is \"bug\", not \"issue\", \"prd\" or \"spec\", so it reads as absent"
   details:
     id: DRF-16
     key: kind
