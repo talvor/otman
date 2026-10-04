@@ -514,9 +514,9 @@ func writtenBytes(v *vault.Vault, f vault.ItemFile, out []byte) bool {
 }
 
 // keepBaseline rewrites the snapshot of Item file f, just written, so that
-// the folder of a Kind pl leaves unrepaired keeps what otman last wrote
-// there. It has none to keep when it had no snapshot before, so the snapshot
-// is removed.
+// the filename and title of a title pl leaves unrepaired, and the folder of
+// a Kind pl leaves unrepaired, keep what otman last wrote there. It has none
+// to keep when it had no snapshot before, so the snapshot is removed.
 func keepBaseline(v *vault.Vault, f vault.ItemFile, prev vault.Snapshot, hadPrev bool, pl doctorPlan) error {
 	if !hadPrev {
 		return v.SetSnapshot(f.Key, f.Number, nil)
@@ -524,6 +524,9 @@ func keepBaseline(v *vault.Vault, f vault.ItemFile, prev vault.Snapshot, hadPrev
 	cur, _, err := v.Snapshot(f.Key, f.Number)
 	if err != nil {
 		return err
+	}
+	if pl.keepTitle {
+		cur.Filename, cur.Title = prev.Filename, prev.Title
 	}
 	if pl.keepKind {
 		cur.Folder = prev.Folder

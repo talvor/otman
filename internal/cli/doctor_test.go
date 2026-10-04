@@ -169,6 +169,24 @@ func TestDoctorSnapshots(t *testing.T) {
 	})
 }
 
+// A title edited by hand and a file renamed by hand are a choice, since both
+// changed since otman last wrote the Item. A Kind changed by hand moves the
+// Item, and the next run still finds the title a choice, rather than
+// renaming the file back to the title the snapshot holds.
+func TestDoctorHandRenameStaysChoice(t *testing.T) {
+	runGolden(t, goldenCase{
+		name: "doctor-hand-rename-stays-choice", fixture: "doctor", files: doctorConfig,
+		steps: []step{
+			{args: []string{"create", "--title", "Snap A", "--kind", "issue"}},
+			{rm: []string{"vault/Projects/DOC/Issues/DOC-17 Snap A.md"},
+				write: map[string]string{
+					"vault/Projects/DOC/Issues/DOC-17 Snap C.md": "---\nid: DOC-17\ntitle: Snap B\nkind: spec\nstatus: open\nlabels: []\nassignee: null\ncreated: 2026-01-02T03:04:05Z\nupdated: 2026-01-02T03:04:05Z\n---\n\n<!-- otman:comments -->\n## Comments\n",
+				}, args: []string{"doctor", "DOC-17", "--fix", "--json"}},
+			{args: []string{"doctor", "DOC-17", "--fix", "--json"}},
+		},
+	})
+}
+
 // A journal that cannot be finished stops every command, so doctor reports
 // it as its one finding, exits 4 and leaves the journal in place.
 func TestDoctorUnfinishedJournal(t *testing.T) {
