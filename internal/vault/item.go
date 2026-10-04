@@ -168,7 +168,7 @@ func (v *Vault) CreateItem(key string, n NewItem) (ItemFile, []byte, error) {
 		return ItemFile{}, nil, err
 	}
 	f.Path = path.Join(ProjectsDir, key, n.Kind.Folder(), name)
-	return f, data, v.recordSnapshot(f.Path, data)
+	return f, data, v.recordSnapshot(f.Path, f.Path, nil, data)
 }
 
 // ReadItemFile returns the bytes of an Item file.
@@ -185,10 +185,14 @@ func (v *Vault) WriteItemFile(f ItemFile, data []byte) error {
 // writeFile replaces the bytes of the file at the Vault-relative path p
 // atomically and, when it is an Item file, records its snapshot.
 func (v *Vault) writeFile(p string, data []byte) error {
+	prev, err := os.ReadFile(v.abs(p))
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
 	if err := fsutil.WriteFile(v.abs(p), data); err != nil {
 		return err
 	}
-	return v.recordSnapshot(p, data)
+	return v.recordSnapshot(p, p, prev, data)
 }
 
 // abs is the file-system path of the Vault-relative path p.
@@ -231,11 +235,11 @@ func (f ItemFile) KindPath(kind item.Kind) string {
 	return path.Join(ProjectsDir, f.Key, kind.Folder(), f.Name())
 }
 
-// checkMove fails with a *TargetExistsError when moving Item file f to
+// CheckMove fails with a *TargetExistsError when moving Item file f to
 // the Vault-relative path to would replace another file. A target that
 // is f itself under another name, as a case-only rename finds it on a
 // case-insensitive file system, is not another file.
-func (v *Vault) checkMove(f ItemFile, to string) error {
+func (v *Vault) CheckMove(f ItemFile, to string) error {
 	if to == f.Path {
 		return nil
 	}

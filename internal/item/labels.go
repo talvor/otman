@@ -57,12 +57,12 @@ func HasLabel(labels []string, label string) bool {
 	return slices.ContainsFunc(labels, func(l string) bool { return strings.EqualFold(l, label) })
 }
 
-// storedLabels is the labels key of file's frontmatter as Parse reads it:
+// StoredLabels are the labels key of file's frontmatter as Parse reads it:
 // the plain values of a list, or none for any other value. lossless is
 // true when that list is all there is, so rewriting it loses nothing; it
 // is false for a list holding null or nested entries or YAML comments, and
 // for a missing key or any other value.
-func storedLabels(file []byte) (labels []string, lossless bool) {
+func StoredLabels(file []byte) (labels []string, lossless bool) {
 	value := frontmatterValue(file, "labels")
 	if value == nil || value.Kind != yaml.SequenceNode {
 		return nil, false
@@ -71,10 +71,35 @@ func storedLabels(file []byte) (labels []string, lossless bool) {
 	return labels, len(labels) == len(value.Content) && !frontmatter.Commented(file, "labels")
 }
 
-// StoredLabels are the labels of file as stored, and whether rewriting
-// them loses nothing: the list holds plain values only, with no YAML
-// comments. Without a list of labels the result is nil and false.
-func StoredLabels(file []byte) ([]string, bool) { return storedLabels(file) }
+// RepairLabels are labels as doctor repairs them: each one still invalid
+// once lowercased is slugged (see SlugLabel), and a label that repeats,
+// ignoring case, is merged into its lowercased form. Any other label keeps
+// its spelling.
+func RepairLabels(labels []string) []string {
+	healed := make([]string, 0, len(labels))
+	for _, l := range labels {
+		if _, ok := ParseLabel(l); !ok {
+			if slug, ok := SlugLabel(l); ok {
+				l = slug
+			}
+		}
+		healed = append(healed, l)
+	}
+	count := map[string]int{}
+	for _, l := range healed {
+		count[strings.ToLower(l)]++
+	}
+	out := make([]string, 0, len(healed))
+	for _, l := range healed {
+		if count[strings.ToLower(l)] > 1 {
+			l = strings.ToLower(l)
+		}
+		if !slices.Contains(out, l) {
+			out = append(out, l)
+		}
+	}
+	return out
+}
 
 // labelEdits are the edits an Update makes to the labels of file: none
 // when adding and removing leave the same Labels, ignoring case.
@@ -84,7 +109,7 @@ func labelEdits(file []byte, add, remove []string) []frontmatter.Edit {
 	}
 	// Setting the Labels replaces a value that is not a list, which reads
 	// as no Labels, and drops entries of a list that are not plain values.
-	stored, _ := storedLabels(file)
+	stored, _ := StoredLabels(file)
 	before := NormalizeLabels(stored)
 	after := slices.DeleteFunc(slices.Clone(before), func(l string) bool { return HasLabel(remove, l) })
 	after = NormalizeLabels(append(after, add...))
@@ -98,7 +123,7 @@ func labelEdits(file []byte, add, remove []string) []frontmatter.Edit {
 // file, or nil when they need no healing or cannot be rewritten without
 // loss. Labels still invalid once lowercased are kept.
 func healLabels(file []byte) *frontmatter.Edit {
-	stored, lossless := storedLabels(file)
+	stored, lossless := StoredLabels(file)
 	if !lossless {
 		return nil
 	}

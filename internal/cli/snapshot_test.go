@@ -81,8 +81,8 @@ func TestSnapshots(t *testing.T) {
 	run("edit", "RET-5", "--kind", "spec")
 	checkSnapshot(t, snapshotOf(t, dir, "RET", 5), "RET-5 Fresh one.md", "Fresh one", "spec", "Projects/RET/Specs")
 
-	// A hand edit of the title before each write shows the write recorded
-	// what it wrote.
+	// A hand edit of the title before each write is not absorbed: the write
+	// changed no title, so the snapshot keeps the title otman last wrote.
 	file := filepath.Join(dir, "Projects", "RET", "Specs", "RET-5 Fresh one.md")
 	for _, args := range [][]string{
 		{"comment", "RET-5", "--body", "A comment."},
@@ -105,7 +105,7 @@ func TestSnapshots(t *testing.T) {
 			t.Fatal(err)
 		}
 		run(args...)
-		checkSnapshot(t, snapshotOf(t, dir, "RET", 5), "RET-5 Fresh one.md", hand, "spec", "Projects/RET/Specs")
+		checkSnapshot(t, snapshotOf(t, dir, "RET", 5), "RET-5 Fresh one.md", "Fresh one", "spec", "Projects/RET/Specs")
 	}
 
 	run(retitleArgs...)

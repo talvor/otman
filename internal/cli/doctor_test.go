@@ -184,6 +184,97 @@ func TestDoctorUnfinishedJournal(t *testing.T) {
 	})
 }
 
+// A hand edit survives an unrelated write. The title is edited by hand, then
+// close writes the Item, which must keep the title snapshot it had. After the
+// file is also renamed by hand, both sides changed since otman last wrote
+// the Item, so the title disagreement is a choice, not a rename to the
+// filename.
+func TestDoctorHandEditSurvivesWrite(t *testing.T) {
+	runGolden(t, goldenCase{
+		name: "doctor-hand-edit-survives-write", fixture: "doctor", files: doctorConfig,
+		steps: []step{
+			{args: []string{"create", "--title", "Hand edit", "--kind", "issue"}},
+			{write: map[string]string{
+				"vault/Projects/DOC/Issues/DOC-17 Hand edit.md": doctorItemText("DOC-17", "Retyped by hand", ""),
+			}, args: []string{"close", "DOC-17"}},
+			{rm: []string{"vault/Projects/DOC/Issues/DOC-17 Hand edit.md"},
+				write: map[string]string{
+					"vault/Projects/DOC/Issues/DOC-17 Renamed by hand.md": doctorItemText("DOC-17", "Retyped by hand", ""),
+				}, args: []string{"doctor", "DOC-17", "--fix", "--json"}},
+		},
+	})
+}
+
+// --fix repairs only what it reports. A valid mixed-case label stays as
+// written, a label with a space is slugged, and the id is reset.
+func TestDoctorFixLeavesUnreportedFields(t *testing.T) {
+	runGolden(t, goldenCase{
+		name: "doctor-fix-leaves-unreported-fields", fixture: "doctor", files: doctorConfig,
+		steps: []step{
+			{args: []string{"create", "--title", "Mixed labels", "--kind", "issue"}},
+			{write: map[string]string{
+				"vault/Projects/DOC/Issues/DOC-17 Mixed labels.md": doctorItemText("DOC-99", "Mixed labels", "labels:\n  - Bug\n  - Needs Review\n"),
+			}, args: []string{"doctor", "DOC-17", "--fix", "--json"}},
+		},
+	})
+}
+
+// A dangling link is never repointed at the Item holding it, nor at an Item
+// whose parent chain leads back to it, since either would make a self-edge or
+// a parent cycle. Those links stay as findings.
+func TestDoctorRepointRefusesCycles(t *testing.T) {
+	runGolden(t, goldenCase{
+		name: "doctor-repoint-refuses-cycles", fixture: "doctor", files: doctorConfig,
+		steps: []step{
+			{write: map[string]string{
+				"vault/Projects/DOC/Issues/DOC-31 New.md": doctorItemText("DOC-31", "New", "parent: \"[[DOC-31 Old name]]\"\n"),
+				"vault/Projects/DOC/Issues/DOC-32 X.md":   doctorItemText("DOC-32", "X", "parent: \"[[DOC-33 Gone]]\"\n"),
+				"vault/Projects/DOC/Issues/DOC-33 Y.md":   doctorItemText("DOC-33", "Y", "parent: \"[[DOC-32 X]]\"\n"),
+			}, args: []string{"doctor", "--fix", "--json"}},
+		},
+	})
+}
+
+// A repair the vault refuses stays a finding, and the run goes on. The
+// repair of DOC-33 that came first is still reported as fixed, and the
+// rename of DOC-34 is blocked by the flow-style link in DOC-35, which the
+// link rewrite cannot splice.
+func TestDoctorBlockedRepairStaysFinding(t *testing.T) {
+	runGolden(t, goldenCase{
+		name: "doctor-blocked-repair-stays-finding", fixture: "doctor", files: doctorConfig,
+		steps: []step{
+			{write: map[string]string{
+				"vault/Projects/DOC/Issues/DOC-33 Fixed first.md": doctorItemText("DOC-99", "Fixed first", ""),
+				"vault/Projects/DOC/Issues/DOC-34 Old name.md":    doctorItemText("DOC-34", "New name", ""),
+				"vault/Projects/DOC/Issues/DOC-35 Linked.md": "---\n{id: DOC-35, title: Linked, kind: issue, status: open, labels: [], " +
+					"parent: \"[[DOC-34 Old name]]\", created: 2026-01-02T03:04:05Z, updated: 2026-01-02T03:04:05Z}\n---\n\n<!-- otman:comments -->\n## Comments\n",
+			}, args: []string{"doctor", "--fix", "--prefer", "frontmatter", "--json"}},
+		},
+	})
+}
+
+// A title that differs only in case from another Item's filename on the
+// same number is a target that is taken. --fix leaves the Item as a
+// finding instead of aborting the run.
+func TestDoctorDuplicateCaseTarget(t *testing.T) {
+	runGolden(t, goldenCase{
+		name: "doctor-duplicate-case-target", fixture: "doctor", files: doctorConfig,
+		steps: []step{
+			{write: map[string]string{
+				"vault/Projects/DOC/Issues/DOC-37 Foo.md": doctorItemText("DOC-37", "foo", ""),
+				"vault/Projects/DOC/Issues/DOC-37 foo.md": doctorItemText("DOC-37", "Other", ""),
+			}, args: []string{"doctor", "--fix", "--prefer", "frontmatter", "--json"}},
+		},
+	})
+}
+
+// doctorItemText is the text of an Item file with identity id and title,
+// and extra frontmatter lines, such as labels or a parent, after the rest.
+func doctorItemText(id, title, extra string) string {
+	return "---\nid: " + id + "\ntitle: " + title + "\nkind: issue\nstatus: open\nassignee: null\n" +
+		extra + "created: 2026-01-02T03:04:05Z\nupdated: 2026-01-02T03:04:05Z\n---\n\n<!-- otman:comments -->\n## Comments\n"
+}
+
 // Bad flags and scopes fail before anything is read: --prefer takes
 // frontmatter or file, a REF and --all-projects exclude each other, and
 // with no Project selected doctor says so.

@@ -1,23 +1,10 @@
-$ otman create --title Fresh --kind issue
-exit: 0
--- stdout --
-item:
-  id: DOC-17
-  title: Fresh
-  kind: issue
-  status: open
-  labels[0]:
-  assignee: null
-  parent: null
-  blocked_by[0]:
-  path: Projects/DOC/Issues/DOC-17 Fresh.md
-  rev: b2ff28203e25
-changed: true
--- stderr --
+$ write "vault/Projects/DOC/Issues/DOC-31 New.md"
 
-$ rm "vault/.otman/otman.db"
+$ write "vault/Projects/DOC/Issues/DOC-32 X.md"
 
-$ otman doctor --json
+$ write "vault/Projects/DOC/Issues/DOC-33 Y.md"
+
+$ otman doctor --fix --json
 exit: 4
 -- stdout --
 {
@@ -35,54 +22,6 @@ exit: 4
         "path": "Projects/DOC/Issues/DOC-2 Kind drift.md",
         "message": "DOC-2 has kind spec, but it is in Projects/DOC/Issues, the folder for issue",
         "fix": "choice"
-      },
-      {
-        "code": "unexpected_folder",
-        "path": "Projects/DOC/Notes/DOC-3 Outside a Kind folder.md",
-        "message": "DOC-3 is in Projects/DOC/Notes, not in a Kind folder of Project DOC",
-        "fix": "auto"
-      },
-      {
-        "code": "id_mismatch",
-        "path": "Projects/DOC/Issues/DOC-4 Wrong id.md",
-        "message": "DOC-4 has frontmatter id \"DOC-9\"; its identity is its filename prefix DOC-4",
-        "fix": "auto"
-      },
-      {
-        "code": "missing_key",
-        "path": "Projects/DOC/Issues/DOC-5 Missing keys.md",
-        "message": "DOC-5 has no id, so it reads as \"DOC-5\" from its filename",
-        "fix": "auto"
-      },
-      {
-        "code": "missing_key",
-        "path": "Projects/DOC/Issues/DOC-5 Missing keys.md",
-        "message": "DOC-5 has no title, so it reads as \"Missing keys\" from its filename",
-        "fix": "auto"
-      },
-      {
-        "code": "missing_key",
-        "path": "Projects/DOC/Issues/DOC-5 Missing keys.md",
-        "message": "DOC-5 has no kind, so it reads as \"issue\" from its folder",
-        "fix": "auto"
-      },
-      {
-        "code": "invalid_label",
-        "path": "Projects/DOC/Issues/DOC-6 Labels.md",
-        "message": "DOC-6 has the label \"Needs Triage!\", which is not a valid Label even lowercased",
-        "fix": "auto"
-      },
-      {
-        "code": "duplicate_label",
-        "path": "Projects/DOC/Issues/DOC-6 Labels.md",
-        "message": "DOC-6 has the label \"bug\" 2 times, ignoring case",
-        "fix": "auto"
-      },
-      {
-        "code": "missing_comments_marker",
-        "path": "Projects/DOC/Issues/DOC-7 Marker gone.md",
-        "message": "DOC-7 has no <!-- otman:comments --> line, so its comments are read from the last ## Comments heading",
-        "fix": "auto"
       },
       {
         "code": "missing_comments_marker",
@@ -111,12 +50,6 @@ exit: 4
       {
         "code": "dangling_link",
         "path": "Projects/DOC/Issues/DOC-12 Dangling links.md",
-        "message": "DOC-12 parent link [[DOC-3 Moved elsewhere]] matches no Item in Project DOC",
-        "fix": "auto"
-      },
-      {
-        "code": "dangling_link",
-        "path": "Projects/DOC/Issues/DOC-12 Dangling links.md",
         "message": "DOC-12 blocked_by link [[Nothing matches]] matches no Item in Project DOC",
         "fix": "none"
       },
@@ -137,9 +70,76 @@ exit: 4
         "path": "Projects/DOC/Notes/DOC-16 Clean.md",
         "message": "DOC-16 is in Projects/DOC/Notes, not in a Kind folder of Project DOC",
         "fix": "none"
+      },
+      {
+        "code": "dangling_link",
+        "path": "Projects/DOC/Issues/DOC-31 New.md",
+        "message": "DOC-31 parent link [[DOC-31 Old name]] matches no Item in Project DOC",
+        "fix": "none"
+      },
+      {
+        "code": "dangling_link",
+        "path": "Projects/DOC/Issues/DOC-32 X.md",
+        "message": "DOC-32 parent link [[DOC-33 Gone]] matches no Item in Project DOC",
+        "fix": "none"
       }
     ],
-    "fixed": []
+    "fixed": [
+      {
+        "code": "unexpected_folder",
+        "path": "Projects/DOC/Notes/DOC-3 Outside a Kind folder.md",
+        "old": "\"Projects/DOC/Notes\"",
+        "new": "\"Projects/DOC/PRDs\""
+      },
+      {
+        "code": "id_mismatch",
+        "path": "Projects/DOC/Issues/DOC-4 Wrong id.md",
+        "old": "\"DOC-9\"",
+        "new": "\"DOC-4\""
+      },
+      {
+        "code": "missing_key",
+        "path": "Projects/DOC/Issues/DOC-5 Missing keys.md",
+        "old": "(missing)",
+        "new": "\"DOC-5\""
+      },
+      {
+        "code": "missing_key",
+        "path": "Projects/DOC/Issues/DOC-5 Missing keys.md",
+        "old": "(missing)",
+        "new": "\"Missing keys\""
+      },
+      {
+        "code": "missing_key",
+        "path": "Projects/DOC/Issues/DOC-5 Missing keys.md",
+        "old": "(missing)",
+        "new": "\"issue\""
+      },
+      {
+        "code": "invalid_label",
+        "path": "Projects/DOC/Issues/DOC-6 Labels.md",
+        "old": "\"Needs Triage!\"",
+        "new": "\"needs-triage\""
+      },
+      {
+        "code": "duplicate_label",
+        "path": "Projects/DOC/Issues/DOC-6 Labels.md",
+        "old": "\"BUG\", \"bug\"",
+        "new": "\"bug\""
+      },
+      {
+        "code": "missing_comments_marker",
+        "path": "Projects/DOC/Issues/DOC-7 Marker gone.md",
+        "old": "(no marker)",
+        "new": "restored before ## Comments"
+      },
+      {
+        "code": "dangling_link",
+        "path": "Projects/DOC/Issues/DOC-12 Dangling links.md",
+        "old": "\"[[DOC-3 Moved elsewhere]]\"",
+        "new": "\"[[DOC-3 Outside a Kind folder]]\""
+      }
+    ]
   },
   "warnings": []
 }
@@ -214,13 +214,13 @@ id: DOC-12
 title: Dangling links
 kind: issue
 status: open
-parent: "[[DOC-3 Moved elsewhere]]"
+parent: "[[DOC-3 Outside a Kind folder]]"
 blocked_by:
   - "[[Nothing matches]]"
 labels: []
 assignee: null
 created: 2026-01-01T10:00:00Z
-updated: 2026-01-01T11:00:00Z
+updated: 2026-01-02T03:04:05Z
 ---
 <!-- otman:comments -->
 ## Comments
@@ -266,33 +266,6 @@ Nothing wrong here.
 
 <!-- otman:comments -->
 ## Comments
--- vault/Projects/DOC/Issues/DOC-17 Fresh.md --
----
-id: DOC-17
-title: Fresh
-aliases:
-  - Fresh
-kind: issue
-status: open
-author: talvor
-parent: null
-blocked_by: []
-labels: []
-assignee: null
-created: 2026-01-02T03:04:05Z
-updated: 2026-01-02T03:04:05Z
----
-## Summary
-
-<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->
-
-## Acceptance criteria
-
-<!-- A checklist that tells anyone, human or agent, when this is done. -->
-- [ ] 
-
-<!-- otman:comments -->
-## Comments
 -- vault/Projects/DOC/Issues/DOC-2 Kind drift.md --
 ---
 id: DOC-2
@@ -306,16 +279,58 @@ updated: 2026-01-01T11:00:00Z
 ---
 <!-- otman:comments -->
 ## Comments
+-- vault/Projects/DOC/Issues/DOC-31 New.md --
+---
+id: DOC-31
+title: New
+kind: issue
+status: open
+assignee: null
+parent: "[[DOC-31 Old name]]"
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-32 X.md --
+---
+id: DOC-32
+title: X
+kind: issue
+status: open
+assignee: null
+parent: "[[DOC-33 Gone]]"
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DOC/Issues/DOC-33 Y.md --
+---
+id: DOC-33
+title: Y
+kind: issue
+status: open
+assignee: null
+parent: "[[DOC-32 X]]"
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+
+<!-- otman:comments -->
+## Comments
 -- vault/Projects/DOC/Issues/DOC-4 Wrong id.md --
 ---
-id: DOC-9
+id: DOC-4
 title: Wrong id
 kind: issue
 status: open
 labels: []
 assignee: null
 created: 2026-01-01T10:00:00Z
-updated: 2026-01-01T11:00:00Z
+updated: 2026-01-02T03:04:05Z
 ---
 The id was pasted from another Item.
 
@@ -327,7 +342,10 @@ status: open
 labels: []
 assignee: null
 created: 2026-01-01T10:00:00Z
-updated: 2026-01-01T11:00:00Z
+updated: 2026-01-02T03:04:05Z
+id: DOC-5
+title: Missing keys
+kind: issue
 ---
 <!-- otman:comments -->
 ## Comments
@@ -338,12 +356,11 @@ title: Labels
 kind: issue
 status: open
 labels:
-  - Needs Triage!
-  - BUG
+  - needs-triage
   - bug
 assignee: null
 created: 2026-01-01T10:00:00Z
-updated: 2026-01-01T11:00:00Z
+updated: 2026-01-02T03:04:05Z
 ---
 <!-- otman:comments -->
 ## Comments
@@ -356,10 +373,11 @@ status: open
 labels: []
 assignee: null
 created: 2026-01-01T10:00:00Z
-updated: 2026-01-01T11:00:00Z
+updated: 2026-01-02T03:04:05Z
 ---
 The body ends here.
 
+<!-- otman:comments -->
 ## Comments
 
 ### 2026-01-01T10:30:00Z · talvor
@@ -404,7 +422,8 @@ A copy of DOC-16, made by hand.
 
 <!-- otman:comments -->
 ## Comments
--- vault/Projects/DOC/Notes/DOC-3 Outside a Kind folder.md --
+vault/Projects/DOC/PRDs/
+-- vault/Projects/DOC/PRDs/DOC-3 Outside a Kind folder.md --
 ---
 id: DOC-3
 title: Outside a Kind folder

@@ -62,25 +62,55 @@ func (v *Vault) SetSnapshot(key string, n int, s *Snapshot) error {
 	})
 }
 
-// recordSnapshot stores what otman just wrote at the Vault-relative path
-// p, data, as the snapshot of the Item p names. Every write of an Item
-// file goes through it; a file that is not an Item file is ignored.
-func (v *Vault) recordSnapshot(p string, data []byte) error {
-	key, n, ok := itemPath(p)
+// recordSnapshot records the snapshot of the Item that a write leaves at
+// the Vault-relative path to, data, moved from from. prev is the file's
+// bytes before the write, or nil when they are not known or the file is
+// new. Where an earlier snapshot exists and prev is known, a write records
+// only the sides it changed: a title, Kind, filename or folder it left
+// alone keeps the snapshot it had, so a hand edit it did not make still
+// shows as Drift. Otherwise the write records what it leaves. A file that is
+// not an Item file is ignored.
+func (v *Vault) recordSnapshot(from, to string, prev, data []byte) error {
+	key, n, ok := itemPath(to)
 	if !ok {
 		return nil
 	}
 	parsed := item.Parse(data)
+	s := Snapshot{Filename: path.Base(to), Title: parsed.Title, Kind: parsed.Kind, Folder: path.Dir(to)}
+	last, hasLast, err := v.Snapshot(key, n)
+	if err != nil {
+		return err
+	}
+	if hasLast && prev != nil {
+		before := item.Parse(prev)
+		if same(before.Title, parsed.Title) {
+			s.Title = last.Title
+		}
+		if same(before.Kind, parsed.Kind) {
+			s.Kind = last.Kind
+		}
+		if from == to {
+			s.Filename, s.Folder = last.Filename, last.Folder
+		}
+	}
 	var kind *string
-	if parsed.Kind != nil {
-		k := string(*parsed.Kind)
+	if s.Kind != nil {
+		k := string(*s.Kind)
 		kind = &k
 	}
 	return inImmediateTx(v.db, func(tx *sql.Tx) error {
 		_, err := tx.Exec(`INSERT OR REPLACE INTO snapshots (key, number, filename, title, kind, folder)
-			VALUES (?, ?, ?, ?, ?, ?)`, key, n, path.Base(p), parsed.Title, kind, path.Dir(p))
+			VALUES (?, ?, ?, ?, ?, ?)`, key, n, s.Filename, s.Title, kind, s.Folder)
 		return err
 	})
+}
+
+// same reports whether a and b are both nil or both hold the same value.
+func same[T comparable](a, b *T) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	return *a == *b
 }
 
 // itemPath reads the Vault-relative path p as an Item file's: under

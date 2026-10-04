@@ -123,7 +123,7 @@ func (e *AmbiguousLinkError) Error() string {
 // in the journal: RetitleOperation or MoveOperation. RenameItem returns the
 // moved Item file and its final bytes.
 func (v *Vault) RenameItem(f ItemFile, to string, data []byte, operation string) (ItemFile, []byte, error) {
-	if err := v.checkMove(f, to); err != nil {
+	if err := v.CheckMove(f, to); err != nil {
 		return f, nil, err
 	}
 	current, err := os.ReadFile(v.abs(f.Path))
@@ -327,7 +327,7 @@ func (v *Vault) applyStep(s Step) error {
 		case s.PostRev:
 			// Written already, but a crash may have come before the
 			// snapshot was recorded.
-			return v.recordSnapshot(s.Path, s.Content)
+			return v.recordSnapshot(s.Path, s.Path, nil, s.Content)
 		case s.PreRev:
 			return v.writeFile(s.Path, s.Content)
 		default:
@@ -394,7 +394,7 @@ func (v *Vault) renamed(s Step) error {
 	if err != nil || item.Rev(data) != s.PreRev {
 		return err
 	}
-	return v.recordSnapshot(s.To, data)
+	return v.recordSnapshot(s.Path, s.To, data, data)
 }
 
 // conflict is the *JournalConflictError of a step stopped at the
@@ -454,7 +454,7 @@ func (v *Vault) renameFile(from, to string, data []byte) error {
 	if err := fsutil.SyncDir(filepath.Dir(src)); err != nil {
 		return err
 	}
-	return v.recordSnapshot(to, data)
+	return v.recordSnapshot(from, to, data, data)
 }
 
 // resume finishes every pending journal, in name order, with a

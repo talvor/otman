@@ -543,7 +543,7 @@ func SetStatus(file []byte, d Derived, status string, comment *Comment, now time
 	if comment != nil {
 		transform = func(b []byte) ([]byte, error) { return appendComment(b, *comment) }
 	}
-	return rewrite(file, d, []frontmatter.Edit{{Key: "status", Value: str(status)}}, transform, now)
+	return rewrite(file, d, []frontmatter.Edit{{Key: "status", Value: str(status)}}, transform, now, true)
 }
 
 // AppendComment appends c at the end of an Item file's comments section
@@ -553,7 +553,7 @@ func SetStatus(file []byte, d Derived, status string, comment *Comment, now time
 // with ErrDuplicateMarkers, and one otman could not rewrite with a
 // *frontmatter.UnsafeError.
 func AppendComment(file []byte, d Derived, c Comment, now time.Time) ([]byte, error) {
-	out, _, err := rewrite(file, d, nil, func(b []byte) ([]byte, error) { return appendComment(b, c) }, now)
+	out, _, err := rewrite(file, d, nil, func(b []byte) ([]byte, error) { return appendComment(b, c) }, now, true)
 	return out, err
 }
 
@@ -631,16 +631,16 @@ func Apply(file []byte, d Derived, update Update, now time.Time) (out []byte, ch
 	if body := update.Body; body != nil {
 		transform = func(b []byte) ([]byte, error) { return replaceBody(b, *body) }
 	}
-	return rewrite(file, d, edits, transform, now)
+	return rewrite(file, d, edits, transform, now, true)
 }
 
 // rewrite splices edits into file, then applies transform to the text
 // when it is not nil. When that changes the file, it does so again with
 // updated set to now and, unless edits set them, the lossless Drift of
-// the file healed: the identity keys restored from d (see healEdits) and
-// the labels lowercased and deduped where nothing else is lost (see
-// healLabels). A write that changes nothing heals nothing.
-func rewrite(file []byte, d Derived, edits []frontmatter.Edit, transform func([]byte) ([]byte, error), now time.Time) ([]byte, bool, error) {
+// the file healed when heal is set: the identity keys restored from d (see
+// healEdits) and the labels lowercased and deduped where nothing else is
+// lost (see healLabels). A write that changes nothing heals nothing.
+func rewrite(file []byte, d Derived, edits []frontmatter.Edit, transform func([]byte) ([]byte, error), now time.Time, heal bool) ([]byte, bool, error) {
 	apply := func(edits []frontmatter.Edit) ([]byte, error) {
 		out, err := frontmatter.Splice(file, edits)
 		if err != nil || transform == nil {
@@ -654,10 +654,12 @@ func rewrite(file []byte, d Derived, edits []frontmatter.Edit, transform func([]
 	}
 	// The full slice expression makes append copy rather than write into
 	// the caller's backing array.
-	edits = append(edits[:len(edits):len(edits)], healEdits(file, d, edits)...)
+	if heal {
+		edits = append(edits[:len(edits):len(edits)], healEdits(file, d, edits)...)
+	}
 	edits = append(edits, frontmatter.Edit{Key: "updated", Value: timestamp(now)})
-	if heal := healLabels(file); heal != nil && !sets(edits, "labels") {
-		edits = append(edits, *heal)
+	if h := healLabels(file); heal && h != nil && !sets(edits, "labels") {
+		edits = append(edits, *h)
 	}
 	out, err = apply(edits)
 	return out, err == nil, err

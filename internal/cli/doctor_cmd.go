@@ -4,9 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -199,8 +197,11 @@ func (a *app) runDoctor(v *vault.Vault, s resolved, ref string, sel config.Value
 				continue
 			}
 			moved, changed, err := a.applyDoctor(v, file, data, pl)
-			if err != nil {
+			if err != nil && changed {
 				return res, ws, err
+			}
+			if err != nil {
+				ws = append(ws, repairBlocked(file, err))
 			}
 			for _, fd := range pl.findings {
 				if changed && fd.applied {
@@ -209,7 +210,7 @@ func (a *app) runDoctor(v *vault.Vault, s resolved, ref string, sel config.Value
 					res.Findings = append(res.Findings, fd.doctorFinding)
 				}
 			}
-			if moved.Path != file.Path {
+			if moved.Path != file.Path || err != nil {
 				if all, err = v.ItemFiles(key); err != nil {
 					return res, ws, ioError(err)
 				}
@@ -217,6 +218,13 @@ func (a *app) runDoctor(v *vault.Vault, s resolved, ref string, sel config.Value
 		}
 	}
 	return res, ws, nil
+}
+
+// repairBlocked is the warning for a repair the vault or the Item's text
+// refused. The Item keeps its findings, and the run goes on.
+func repairBlocked(f vault.ItemFile, err error) output.Problem {
+	return output.Warning("repair_blocked", fmt.Sprintf("cannot repair %s: %v", f.Path, err),
+		map[string]any{"path": f.Path}, "")
 }
 
 // doctorPlan is what doctor finds in one Item file and how it would repair
@@ -352,7 +360,7 @@ func planDoctor(v *vault.Vault, f vault.ItemFile, data []byte, all []vault.ItemF
 		case "dangling_link":
 			link, _ := pr.Details["link"].(string)
 			if wl, ok := wikilink.Parse(link); ok {
-				if target, ok := repointTarget(all, links, wl.Target); ok {
+				if target, ok := repointTarget(v, all, links, f, wl.Target); ok {
 					fd.set("auto", quoteArg(link), quoteArg("[["+target+"]]"))
 					relink = true
 				}
@@ -377,20 +385,11 @@ func planDoctor(v *vault.Vault, f vault.ItemFile, data []byte, all []vault.ItemF
 	}
 
 	if fixLabels {
-		healed := make([]string, 0, len(labels))
-		for _, l := range labels {
-			if _, ok := item.ParseLabel(l); !ok {
-				if slug, ok := item.SlugLabel(l); ok {
-					l = slug
-				}
-			}
-			healed = append(healed, l)
-		}
-		healed = item.NormalizeLabels(healed)
+		healed := item.RepairLabels(labels)
 		pl.repairs.Labels = &healed
 	}
 	if relink {
-		pl.repairs.Relink = func(target string) (string, bool) { return repointTarget(all, links, target) }
+		pl.repairs.Relink = func(target string) (string, bool) { return repointTarget(v, all, links, f, target) }
 	}
 
 	// A rename or move goes to one path: the Kind folder the file belongs
@@ -405,7 +404,7 @@ func planDoctor(v *vault.Vault, f vault.ItemFile, data []byte, all []vault.ItemF
 		if renameTitle {
 			name = item.Filename(f.Key, f.Number, *p.Title)
 		}
-		if to := path.Join(dir, name); targetTaken(v, f, to) {
+		if to := path.Join(dir, name); v.CheckMove(f, to) != nil {
 			for _, fd := range moves {
 				fd.Fix, fd.applied = "none", false
 			}
@@ -507,10 +506,11 @@ func keepBaseline(v *vault.Vault, f vault.ItemFile, prev vault.Snapshot, hadPrev
 }
 
 // repointTarget is the target that repoints the dangling relation link
-// target to: the full filename, without ".md", of the one Item of
+// target of holder to: the full filename, without ".md", of the one Item of
 // Project all whose <KEY>-n prefix target carries. It fails when target
-// resolves, has no such prefix, or its prefix matches no Item or several.
-func repointTarget(all []vault.ItemFile, links itemLinks, target string) (string, bool) {
+// resolves, has no such prefix, or its prefix matches no Item or several,
+// and when that Item cannot be holder's parent (see unusableParent).
+func repointTarget(v *vault.Vault, all []vault.ItemFile, links itemLinks, holder vault.ItemFile, target string) (string, bool) {
 	if len(links.index.Resolve(target)) != 0 {
 		return "", false
 	}
@@ -525,21 +525,33 @@ func repointTarget(all []vault.ItemFile, links itemLinks, target string) (string
 			found = append(found, f)
 		}
 	}
-	if len(found) != 1 {
+	if len(found) != 1 || unusableParent(v, links, holder, found[0]) {
 		return "", false
 	}
 	return strings.TrimSuffix(found[0].Name(), ".md"), true
 }
 
-// targetTaken reports whether moving Item file f to the Vault-relative path
-// to would replace another file. A case-only change of f's own path is not
-// another file.
-func targetTaken(v *vault.Vault, f vault.ItemFile, to string) bool {
-	if strings.EqualFold(to, f.Path) {
-		return false
+// unusableParent reports whether holder cannot take f as its parent: f is
+// holder itself, holder is among f's ancestors, or an ancestor link does not
+// resolve. Each would make a self-edge, a parent cycle or a chain the
+// relation commands refuse to follow.
+func unusableParent(v *vault.Vault, links itemLinks, holder, f vault.ItemFile) bool {
+	seen := map[string]bool{}
+	for cur := f; !seen[cur.Path]; {
+		if cur.Path == holder.Path {
+			return true
+		}
+		seen[cur.Path] = true
+		next, err := followLinks(v, links, cur, "parent")
+		if err != nil {
+			return true
+		}
+		if len(next) == 0 {
+			return false
+		}
+		cur = next[0]
 	}
-	_, err := os.Lstat(filepath.Join(v.Root, filepath.FromSlash(to)))
-	return err == nil
+	return false
 }
 
 // duplicateLabel is a Label an Item carries more than once, ignoring case.

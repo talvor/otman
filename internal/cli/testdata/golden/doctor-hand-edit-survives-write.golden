@@ -1,23 +1,53 @@
-$ otman create --title Fresh --kind issue
+$ otman create --title Hand edit --kind issue
 exit: 0
 -- stdout --
 item:
   id: DOC-17
-  title: Fresh
+  title: Hand edit
   kind: issue
   status: open
   labels[0]:
   assignee: null
   parent: null
   blocked_by[0]:
-  path: Projects/DOC/Issues/DOC-17 Fresh.md
-  rev: b2ff28203e25
+  path: Projects/DOC/Issues/DOC-17 Hand edit.md
+  rev: f9e4cf0a3295
 changed: true
 -- stderr --
 
-$ rm "vault/.otman/otman.db"
+$ write "vault/Projects/DOC/Issues/DOC-17 Hand edit.md"
 
-$ otman doctor --json
+$ otman close DOC-17
+exit: 0
+-- stdout --
+item:
+  id: DOC-17
+  title: Retyped by hand
+  kind: issue
+  status: closed
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/DOC/Issues/DOC-17 Hand edit.md
+  rev: 1bfa51535af6
+changed: true
+-- stderr --
+warning:
+  code: title_drift
+  message: "DOC-17 has title \"Retyped by hand\", but its filename says \"Hand edit\""
+  details:
+    filename_title: Hand edit
+    id: DOC-17
+    path: Projects/DOC/Issues/DOC-17 Hand edit.md
+    title: Retyped by hand
+  hint: otman shows the frontmatter title; 'otman doctor --fix --prefer frontmatter|file' settles which is right
+
+$ rm "vault/Projects/DOC/Issues/DOC-17 Hand edit.md"
+
+$ write "vault/Projects/DOC/Issues/DOC-17 Renamed by hand.md"
+
+$ otman doctor DOC-17 --fix --json
 exit: 4
 -- stdout --
 {
@@ -26,117 +56,9 @@ exit: 4
     "findings": [
       {
         "code": "title_drift",
-        "path": "Projects/DOC/Issues/DOC-1 Old name.md",
-        "message": "DOC-1 has title \"New name\", but its filename says \"Old name\"",
+        "path": "Projects/DOC/Issues/DOC-17 Renamed by hand.md",
+        "message": "DOC-17 has title \"Retyped by hand\", but its filename says \"Renamed by hand\"",
         "fix": "choice"
-      },
-      {
-        "code": "kind_drift",
-        "path": "Projects/DOC/Issues/DOC-2 Kind drift.md",
-        "message": "DOC-2 has kind spec, but it is in Projects/DOC/Issues, the folder for issue",
-        "fix": "choice"
-      },
-      {
-        "code": "unexpected_folder",
-        "path": "Projects/DOC/Notes/DOC-3 Outside a Kind folder.md",
-        "message": "DOC-3 is in Projects/DOC/Notes, not in a Kind folder of Project DOC",
-        "fix": "auto"
-      },
-      {
-        "code": "id_mismatch",
-        "path": "Projects/DOC/Issues/DOC-4 Wrong id.md",
-        "message": "DOC-4 has frontmatter id \"DOC-9\"; its identity is its filename prefix DOC-4",
-        "fix": "auto"
-      },
-      {
-        "code": "missing_key",
-        "path": "Projects/DOC/Issues/DOC-5 Missing keys.md",
-        "message": "DOC-5 has no id, so it reads as \"DOC-5\" from its filename",
-        "fix": "auto"
-      },
-      {
-        "code": "missing_key",
-        "path": "Projects/DOC/Issues/DOC-5 Missing keys.md",
-        "message": "DOC-5 has no title, so it reads as \"Missing keys\" from its filename",
-        "fix": "auto"
-      },
-      {
-        "code": "missing_key",
-        "path": "Projects/DOC/Issues/DOC-5 Missing keys.md",
-        "message": "DOC-5 has no kind, so it reads as \"issue\" from its folder",
-        "fix": "auto"
-      },
-      {
-        "code": "invalid_label",
-        "path": "Projects/DOC/Issues/DOC-6 Labels.md",
-        "message": "DOC-6 has the label \"Needs Triage!\", which is not a valid Label even lowercased",
-        "fix": "auto"
-      },
-      {
-        "code": "duplicate_label",
-        "path": "Projects/DOC/Issues/DOC-6 Labels.md",
-        "message": "DOC-6 has the label \"bug\" 2 times, ignoring case",
-        "fix": "auto"
-      },
-      {
-        "code": "missing_comments_marker",
-        "path": "Projects/DOC/Issues/DOC-7 Marker gone.md",
-        "message": "DOC-7 has no <!-- otman:comments --> line, so its comments are read from the last ## Comments heading",
-        "fix": "auto"
-      },
-      {
-        "code": "missing_comments_marker",
-        "path": "Projects/DOC/Issues/DOC-8 Stray text.md",
-        "message": "DOC-8 has no <!-- otman:comments --> line, so its comments are read from the last ## Comments heading",
-        "fix": "none"
-      },
-      {
-        "code": "malformed_frontmatter",
-        "path": "Projects/DOC/Issues/DOC-9 Flow style.md",
-        "message": "cannot read the frontmatter of Projects/DOC/Issues/DOC-9 Flow style.md: the frontmatter is flow-style YAML",
-        "fix": "none"
-      },
-      {
-        "code": "invalid_status",
-        "path": "Projects/DOC/Issues/DOC-10 Bad status.md",
-        "message": "DOC-10 has status \"maybe\", not open or closed",
-        "fix": "none"
-      },
-      {
-        "code": "duplicate_comments_markers",
-        "path": "Projects/DOC/Issues/DOC-11 Two markers.md",
-        "message": "DOC-11 has 2 <!-- otman:comments --> lines, so its comments are read from the first",
-        "fix": "none"
-      },
-      {
-        "code": "dangling_link",
-        "path": "Projects/DOC/Issues/DOC-12 Dangling links.md",
-        "message": "DOC-12 parent link [[DOC-3 Moved elsewhere]] matches no Item in Project DOC",
-        "fix": "auto"
-      },
-      {
-        "code": "dangling_link",
-        "path": "Projects/DOC/Issues/DOC-12 Dangling links.md",
-        "message": "DOC-12 blocked_by link [[Nothing matches]] matches no Item in Project DOC",
-        "fix": "none"
-      },
-      {
-        "code": "malformed_value",
-        "path": "Projects/DOC/Issues/DOC-13 Malformed assignee.md",
-        "message": "the assignee value of DOC-13 is a list or mapping, not a name, so it reads as absent",
-        "fix": "none"
-      },
-      {
-        "code": "ambiguous_link",
-        "path": "Projects/DOC/Issues/DOC-14 Ambiguous parent.md",
-        "message": "DOC-14 parent link [[DOC-16 Clean]] matches 2 Items: Projects/DOC/Issues/DOC-16 Clean.md, Projects/DOC/Notes/DOC-16 Clean.md",
-        "fix": "none"
-      },
-      {
-        "code": "unexpected_folder",
-        "path": "Projects/DOC/Notes/DOC-16 Clean.md",
-        "message": "DOC-16 is in Projects/DOC/Notes, not in a Kind folder of Project DOC",
-        "fix": "none"
       }
     ],
     "fixed": []
@@ -266,30 +188,16 @@ Nothing wrong here.
 
 <!-- otman:comments -->
 ## Comments
--- vault/Projects/DOC/Issues/DOC-17 Fresh.md --
+-- vault/Projects/DOC/Issues/DOC-17 Renamed by hand.md --
 ---
 id: DOC-17
-title: Fresh
-aliases:
-  - Fresh
+title: Retyped by hand
 kind: issue
 status: open
-author: talvor
-parent: null
-blocked_by: []
-labels: []
 assignee: null
 created: 2026-01-02T03:04:05Z
 updated: 2026-01-02T03:04:05Z
 ---
-## Summary
-
-<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->
-
-## Acceptance criteria
-
-<!-- A checklist that tells anyone, human or agent, when this is done. -->
-- [ ] 
 
 <!-- otman:comments -->
 ## Comments

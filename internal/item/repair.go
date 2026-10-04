@@ -39,10 +39,9 @@ func (r Repairs) Any() bool {
 }
 
 // Repair applies r to Item file, whose identity and Kind folder are d, and
-// reports the file's bytes after it and whether they changed. As a write
-// does, it heals the lossless Drift of a file it changes (see rewrite), and
-// sets its updated time to now. A repair that changes nothing returns the
-// file unchanged.
+// reports the file's bytes after it and whether they changed. It changes
+// only what r asks for, and sets the updated time to now. A repair that
+// changes nothing returns the file unchanged.
 func Repair(file []byte, d Derived, r Repairs, now time.Time) ([]byte, bool, error) {
 	var edits []frontmatter.Edit
 	if r.ID {
@@ -72,7 +71,7 @@ func Repair(file []byte, d Derived, r Repairs, now time.Time) ([]byte, bool, err
 	if r.Marker {
 		transform = RestoreMarker
 	}
-	return rewrite(file, d, edits, transform, now)
+	return rewrite(file, d, edits, transform, now, false)
 }
 
 // RestorableMarker reports whether file, an Item file with frontmatter, has
