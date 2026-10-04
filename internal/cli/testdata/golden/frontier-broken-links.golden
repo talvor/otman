@@ -138,7 +138,7 @@ exit: 4
   "schema_version": 1,
   "error": {
     "code": "malformed_relation",
-    "message": "the blocked_by of REL-32 is \"[[REL-5 Old groundwork]]\", not a list of wikilinks, so it is ignored",
+    "message": "the blocked_by of REL-32 is \"[[REL-5 Old groundwork]]\", not a list of wikilinks",
     "details": {
       "id": "REL-32",
       "key": "blocked_by",

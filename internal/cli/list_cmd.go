@@ -280,8 +280,9 @@ func (q *itemQuery) resolveSelectors(s resolved, v *vault.Vault, f listFlags) (c
 }
 
 // related reports whether the Item file f, parsed as p, passes --parent
-// and --blocked-by. A relation link ambiguous between the selector and
-// other Items fails rather than give a partial answer.
+// and --blocked-by. A malformed value of the relation a selector filters
+// on, or a link of it ambiguous between the selector and other Items,
+// fails rather than give a partial answer.
 func (q itemQuery) related(f vault.ItemFile, p item.Parsed, links itemLinks) (bool, error) {
 	for _, x := range []struct {
 		key    string
@@ -290,12 +291,41 @@ func (q itemQuery) related(f vault.ItemFile, p item.Parsed, links itemLinks) (bo
 		if x.target == nil {
 			continue
 		}
+		for _, bad := range p.BadRelations {
+			if bad.Key == x.key {
+				return false, graphError(badRelation(f, bad))
+			}
+		}
 		found, err := matchingLinks(f, x.key, relationLinks(p, x.key), links, *x.target)
 		if err != nil || len(found) == 0 {
 			return false, err
 		}
 	}
 	return true, nil
+}
+
+// clearOfBlockers reports whether the Item file f, parsed as p, passes the
+// no-open-blockers rule of frontier, using open for the blockers already
+// read. Every blocked_by link of f must resolve and every blocker must be
+// readable, or it fails rather than guess: a blocker it cannot see is
+// never taken as closed.
+func (q itemQuery) clearOfBlockers(v *vault.Vault, links itemLinks, open openByPath, f vault.ItemFile, p item.Parsed) (bool, error) {
+	if !q.unblocked {
+		return true, nil
+	}
+	blockers, err := resolveLinks(links, f, p, "blocked_by")
+	if err != nil {
+		return false, err
+	}
+	free := true
+	for _, b := range blockers {
+		isOpen, err := open.isOpen(v, f, b)
+		if err != nil {
+			return false, err
+		}
+		free = free && !isOpen
+	}
+	return free, nil
 }
 
 // listScope is the keys of the Projects a list spans, in key order: the
@@ -323,15 +353,16 @@ func listScope(v *vault.Vault, sel config.Value) ([]string, []output.Problem, er
 // because it drifted: its frontmatter cannot be read, or only its status,
 // missing or neither open nor closed, kept it from --state open or closed.
 // --state all keeps any status. It adds the Labels of every Item it reads,
-// kept or not, to inUse. With q.unblocked it fails on a blocker of an Item
-// it would otherwise keep that it cannot resolve or read.
+// kept or not, to inUse. It checks the blockers of an Item, under
+// q.unblocked, only once every other filter keeps it, so broken blocker
+// links of Items left out anyway do not matter.
 func listProject(v *vault.Vault, key string, q itemQuery, inUse labelSet) ([]itemSummary, []output.Problem, error) {
 	files, err := v.ItemFiles(key)
 	if err != nil {
 		return nil, nil, ioError(err)
 	}
 	links := newItemLinks(files)
-	blockers := blockerStatus{}
+	open := openByPath{}
 	var found []itemSummary
 	var warnings []output.Problem
 	for _, f := range files {
@@ -354,19 +385,16 @@ func listProject(v *vault.Vault, key string, q itemQuery, inUse labelSet) ([]ite
 		} else if !ok {
 			continue
 		}
-		if q.state == "all" || (s.Status != nil && *s.Status == q.state) {
-			if q.unblocked {
-				if blocked, err := blockers.blocked(v, links, f, p); err != nil {
-					return nil, nil, err
-				} else if blocked {
-					continue
-				}
+		if q.state != "all" && (s.Status == nil || *s.Status != q.state) {
+			if s.Status == nil || (*s.Status != item.Open && *s.Status != item.Closed) {
+				warnings = append(warnings, invalidStatus(s))
 			}
-			found = append(found, s)
 			continue
 		}
-		if s.Status == nil || (*s.Status != item.Open && *s.Status != item.Closed) {
-			warnings = append(warnings, invalidStatus(s))
+		if ok, err := q.clearOfBlockers(v, links, open, f, p); err != nil {
+			return nil, nil, err
+		} else if ok {
+			found = append(found, s)
 		}
 	}
 	return found, warnings, nil

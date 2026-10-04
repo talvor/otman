@@ -27,9 +27,10 @@ var frontierFiles = map[string]string{
 		`parent: "[[REL-2 Wikilink scanner]]"`, "labels: [docs]"),
 }
 
-// frontier lists the open, unassigned Items with no open blockers. A
-// closed blocker no longer blocks, so closing the last open blocker of an
-// Item puts it on the frontier, and claiming an Item takes it off.
+// frontier lists the Frontier: the open, unclaimed Items with no open
+// blockers. A closed blocker no longer blocks, so closing the last open
+// blocker of an Item puts it on the Frontier, and claiming an Item takes
+// it off.
 func TestFrontier(t *testing.T) {
 	me := map[string]string{"OTM_ACTOR": "talvor"}
 	runGolden(t, goldenCase{
@@ -48,9 +49,9 @@ func TestFrontier(t *testing.T) {
 	})
 }
 
-// --parent keeps the ready direct children of REF, never grandchildren,
-// and sets the Project scope as it does for list. --kind, --label and
-// --search narrow the frontier, which pages like list.
+// --parent lists the Frontier of REF, among its direct children and never
+// its grandchildren, and sets the Project scope as it does for list.
+// --kind, --label and --search narrow the Frontier, which pages like list.
 func TestFrontierParentAndFilters(t *testing.T) {
 	runGolden(t, goldenCase{
 		name:    "frontier-parent",
@@ -121,7 +122,7 @@ func TestFrontierBrokenLinks(t *testing.T) {
 	})
 }
 
-// frontier's readiness rules are fixed: --state, --assignee, --unassigned
+// The rules of the Frontier are fixed: --state, --assignee, --unassigned
 // and --blocked-by are not its flags, so each exits 2 before the Vault is
 // read, as do the invalid values list rejects.
 func TestFrontierRejectedFlags(t *testing.T) {
@@ -158,6 +159,26 @@ func TestFrontierScope(t *testing.T) {
 			{args: []string{"frontier", "--all-projects", "--project", "REL", "--json"}},
 			{args: []string{"frontier", "--all-projects", "--parent", "REL-1", "--json"}},
 			{args: []string{"frontier", "--parent", "REL-1"}, tty: true},
+		},
+	})
+}
+
+// Under --parent the parent of every Item is a relevant relation, so an
+// Item whose parent is malformed fails frontier with exit 4 rather than
+// be silently left out: it may be a child of REF. Without --parent its
+// parent does not matter.
+func TestFrontierMalformedParent(t *testing.T) {
+	runGolden(t, goldenCase{
+		name:    "frontier-malformed-parent",
+		fixture: "relations",
+		files: withREL(map[string]string{
+			"vault/Projects/REL/Issues/REL-37 Listed parent.md": frontierItem("REL-37", "Listed parent",
+				`parent: ["[[REL-1 Relations spec]]"]`),
+		}),
+		steps: []step{
+			{args: []string{"frontier", "--parent", "REL-1", "--json"}},
+			{args: []string{"frontier", "--parent", "REL-1"}, tty: true},
+			{args: []string{"frontier", "--kind", "issue"}, tty: true},
 		},
 	})
 }
