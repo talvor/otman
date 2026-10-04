@@ -9,8 +9,9 @@ import (
 	"github.com/talvor/otman/internal/item"
 )
 
-// Snapshot is what otman last wrote for an Item: its filename, title, Kind
-// and folder (ADR 0005). doctor compares it with the file to tell which
+// Snapshot is what otman last wrote for each side of an Item: its
+// filename, title, Kind and folder (ADR 0005; see recordSnapshot for which
+// sides a write records). doctor compares it with the file to tell which
 // side of a title/filename or Kind/folder disagreement changed.
 type Snapshot struct {
 	Filename string
