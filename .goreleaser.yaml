@@ -1,0 +1,33 @@
+# GoReleaser config. The release workflow (.github/workflows/release.yml) runs
+# this on every pushed vX.Y.Z tag; `make release` runs a local snapshot dry run.
+version: 2
+
+builds:
+  - main: ./cmd/otman
+    binary: otman
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X github.com/talvor/otman/internal/cli.Version={{.Tag}}
+    goos: [linux, darwin]
+    goarch: [amd64, arm64]
+
+archives:
+  - formats: [tar.gz]
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+
+release:
+  # Tags with a pre-release suffix, such as v2.0.0-rc.1, become GitHub pre-releases.
+  prerelease: auto

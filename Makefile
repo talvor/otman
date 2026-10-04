@@ -3,7 +3,7 @@ PKG     := ./cmd/otman
 DIST    := dist
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 LDFLAGS := -s -w -X github.com/talvor/otman/internal/cli.Version=$(VERSION)
-PLATFORMS := linux/amd64 linux/arm64 darwin/amd64 darwin/arm64
+GORELEASER ?= goreleaser
 
 export CGO_ENABLED := 0
 
@@ -47,13 +47,8 @@ tidy: ## Tidy go.mod and go.sum
 
 check: lint test ## Run everything CI runs
 
-release: ## Build static binaries for linux and darwin on amd64 and arm64
-	@for p in $(PLATFORMS); do \
-		os=$${p%/*}; arch=$${p#*/}; \
-		echo "building $(DIST)/$(BINARY)-$$os-$$arch"; \
-		GOOS=$$os GOARCH=$$arch go build -trimpath -ldflags "$(LDFLAGS)" \
-			-o $(DIST)/$(BINARY)-$$os-$$arch $(PKG) || exit 1; \
-	done
+release: ## Dry-run a release: GoReleaser snapshot build of every archive into dist/
+	$(GORELEASER) release --snapshot --clean
 
 install: ## Install otman into GOBIN
 	go install -trimpath -ldflags "$(LDFLAGS)" $(PKG)

@@ -10,6 +10,8 @@ otman is a single static Go binary. Install it with Go:
 go install github.com/talvor/otman/cmd/otman@latest
 ```
 
+To install a specific release, use its tag instead of `latest`, or download a prebuilt archive from the GitHub Release. See [Releasing](#releasing).
+
 You can also build it from a clone with `make build`, which writes `dist/otman`, or with `make install`, which installs it into `GOBIN`.
 
 ## Setup
@@ -84,3 +86,25 @@ otman never picks a Project for you. With no Project selected, commands that nee
 - **git:** `.otman/` contains its own `.gitignore` of `*`, so it never reaches git.
 
 Each device rebuilds its database from the Vault when the database is missing.
+
+## Releasing
+
+Releases are published by [GoReleaser](https://goreleaser.com) when a SemVer tag is pushed. The `release` workflow runs the tests, then creates a GitHub Release with static linux and darwin binaries for amd64 and arm64 as `tar.gz` archives, a `checksums.txt` and a changelog generated from the commits. The binaries report the tag: `otman --version` from a `v1.4.2` binary prints `otman version v1.4.2` in the human format.
+
+The person releasing chooses the version:
+
+- **MAJOR** for breaking changes to the CLI or its output contract.
+- **MINOR** for new commands or flags that stay backward compatible.
+- **PATCH** for fixes.
+
+To release, tag a commit on `main` and push the tag. The workflow releases any pushed `v*.*.*` tag, so tagging only `main` is a convention, not something it enforces:
+
+```sh
+git tag -a vX.Y.Z -m vX.Y.Z && git push origin vX.Y.Z
+```
+
+A tag with a pre-release suffix, such as `v2.0.0-rc.1` or `v2.0.0-beta.1`, is published as a GitHub pre-release.
+
+Once the tag is pushed, `go install github.com/talvor/otman/cmd/otman@vX.Y.Z` installs that version.
+
+To dry-run a release locally, run `make release`. It runs `goreleaser release --snapshot --clean`, which builds every archive and `checksums.txt` into `dist/` without publishing anything. `--clean` first deletes all of `dist/`, including the output of `make build` and `make cover`. It needs `goreleaser` on your `PATH`, or set `GORELEASER` to its path. `goreleaser check` validates `.goreleaser.yaml`.
