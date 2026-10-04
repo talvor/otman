@@ -46,10 +46,13 @@ type Vault struct {
 	lock *os.File
 	db   *sql.DB
 
-	// Fault is a test-only hook into journaled operations: it is called
-	// before journal step i with i, and with the number of steps after
-	// the last one, and an error from it aborts the operation there, as
-	// a crash would.
+	// Fault is a test-only fault injector for journaled operations, such
+	// as a retitle: it is called before journal step i with i, and with
+	// the number of steps after the last one, and an error from it aborts
+	// the operation there, as a crash would, leaving the journal for the
+	// next command to finish. nil injects nothing. Open resumes pending
+	// journals before the caller can set it, so a resume is never
+	// interrupted.
 	Fault func(step int) error
 }
 

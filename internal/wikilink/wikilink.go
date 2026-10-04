@@ -1,7 +1,8 @@
 // Package wikilink finds Obsidian wikilinks in Markdown and resolves them
-// the way Obsidian does. It recognises [[target]], [[target|alias]],
-// [[target#heading]], ![[embed]] and path-qualified targets, and skips
-// links inside fenced and inline code. It is pure: no file system.
+// the way Obsidian does. It recognises [[target]], [[target|alias]], the
+// [[target\|alias]] of a table, [[target#heading]], ![[embed]] and
+// path-qualified targets, and skips links inside code: fenced and
+// indented code blocks and inline code spans. It is pure: no file system.
 package wikilink
 
 import (
@@ -24,8 +25,8 @@ type Link struct {
 	// "^block"; HasHeading reports whether there is a #.
 	Heading    string
 	HasHeading bool
-	// Alias is the text after the first |; HasAlias reports whether there
-	// is a |.
+	// Alias is the text after the first |, or the \| a table escapes
+	// it as; HasAlias reports whether there is one.
 	Alias    string
 	HasAlias bool
 }
@@ -71,7 +72,10 @@ func parseAt(text string, i int) (Link, bool) {
 	l.End = open + end + 2
 	ref := inner
 	if before, alias, ok := strings.Cut(inner, "|"); ok {
-		ref, l.Alias, l.HasAlias = before, alias, true
+		// In a table Obsidian writes the separator as \|, so a pipe
+		// does not end the cell; the backslash belongs to it, not to the
+		// target or heading.
+		ref, l.Alias, l.HasAlias = strings.TrimSuffix(before, `\`), alias, true
 	}
 	if target, heading, ok := strings.Cut(ref, "#"); ok {
 		ref, l.Heading, l.HasHeading = target, heading, true
@@ -84,7 +88,7 @@ func parseAt(text string, i int) (Link, bool) {
 }
 
 // Scan returns the wikilinks of a Markdown text in order, leaving out
-// those inside fenced code blocks and inline code spans.
+// those inside fenced and indented code blocks and inline code spans.
 func Scan(text string) []Link {
 	var links []Link
 	for _, r := range proseRanges(text) {
@@ -150,8 +154,8 @@ func Rewrite(text string, retarget func(Link) (string, bool)) string {
 // span is the byte range [from, to) of a text.
 type span struct{ from, to int }
 
-// proseRanges are the stretches of text outside fenced code blocks and
-// inline code spans, in order. A link must lie inside one of them.
+// proseRanges are the stretches of text outside code blocks and inline
+// code spans, in order. A link must lie inside one of them.
 func proseRanges(text string) []span {
 	var prose []span
 	for _, b := range textBlocks(text) {
@@ -160,12 +164,23 @@ func proseRanges(text string) []span {
 	return prose
 }
 
-// textBlocks are the stretches of text outside fenced code blocks, split
-// at blank lines, since an inline code span never crosses a blank line.
+// textBlocks are the stretches of text outside fenced and indented code
+// blocks, split at blank lines, since an inline code span never crosses a
+// blank line.
+//
+// An indented code block is recognised conservatively: a line indented
+// four or more columns that follows a blank line, or starts the text,
+// outside a list, and the lines after it up to the next non-blank line
+// indented less. An indented line straight after a paragraph line
+// continues the paragraph, and one in a list may be the list item's
+// content, so both stay text.
 func textBlocks(text string) []span {
 	var blocks []span
-	var fence string // the open fence's run of ` or ~; "" outside a fence
-	start := 0       // where the current block began
+	var fence string   // the open fence's run of ` or ~; "" outside a fence
+	indented := false  // inside an indented code block
+	afterBlank := true // the previous line was blank, or there was none
+	inList := false    // a list may still be open
+	start := 0         // where the current block began
 	offset := 0
 	flush := func(end int) {
 		if end > start {
@@ -175,6 +190,12 @@ func textBlocks(text string) []span {
 	for line := range strings.Lines(text) {
 		next := offset + len(line)
 		content := strings.TrimRight(line, "\r\n")
+		blank := strings.TrimSpace(content) == ""
+		if indented && (blank || indent(content) >= 4) {
+			start, offset = next, next
+			continue
+		}
+		indented = false
 		switch {
 		case fence != "":
 			if closesFence(content, fence) {
@@ -185,16 +206,65 @@ func textBlocks(text string) []span {
 			flush(offset)
 			fence = openingFence(content)
 			start = next
-		case strings.TrimSpace(content) == "":
+		case blank:
 			flush(offset)
 			start = next
+		case indent(content) >= 4 && afterBlank && !inList:
+			flush(offset)
+			indented = true
+			start = next
+		case listItem(content):
+			inList = true
+		case afterBlank && indent(content) < 4:
+			inList = false // a paragraph after a blank line ends any list
 		}
+		afterBlank = blank
 		offset = next
 	}
-	if fence == "" {
+	if fence == "" && !indented {
 		flush(len(text))
 	}
 	return blocks
+}
+
+// indent is the width of the leading spaces and tabs of line, a tab
+// advancing to the next multiple of four columns.
+func indent(line string) int {
+	n := 0
+	for _, c := range line {
+		switch c {
+		case ' ':
+			n++
+		case '\t':
+			n += 4 - n%4
+		default:
+			return n
+		}
+	}
+	return n
+}
+
+// listItem reports whether line starts a list item: a bullet (-, + or *)
+// or an ordered marker (up to nine digits and . or )) followed by a space,
+// a tab or the end of the line.
+func listItem(line string) bool {
+	s := strings.TrimLeft(line, " \t")
+	marker := 0
+	switch {
+	case s == "":
+		return false
+	case s[0] == '-' || s[0] == '+' || s[0] == '*':
+		marker = 1
+	default:
+		for marker < len(s) && marker < 9 && s[marker] >= '0' && s[marker] <= '9' {
+			marker++
+		}
+		if marker == 0 || marker == len(s) || (s[marker] != '.' && s[marker] != ')') {
+			return false
+		}
+		marker++
+	}
+	return marker == len(s) || s[marker] == ' ' || s[marker] == '\t'
 }
 
 // openingFence is the run of three or more backticks or tildes that opens

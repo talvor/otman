@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -36,24 +37,16 @@ var retConfig = map[string]string{
 }
 
 // withRET returns retConfig plus extra files.
-func withRET(extra map[string]string) map[string]string {
-	files := map[string]string{}
-	for p, c := range retConfig {
-		files[p] = c
-	}
-	for p, c := range extra {
-		files[p] = c
-	}
-	return files
-}
+func withRET(extra map[string]string) map[string]string { return withConfig(retConfig, extra) }
 
 // A retitle rewrites every wikilink to the Item across the Vault, in
 // frontmatter relations and in bodies and comments, including the Item's
-// own. Only the target changes: the alias, heading, block reference and
-// embed marker are kept, a ".md" extension is kept, and a path keeps its
-// form, naming the new filename. Links inside fenced and inline code, in
-// frontmatter keys that are not relations, in hidden folders and to other
-// notes are left alone, and so are the linking files' updated times.
+// own. Only the target changes: the alias, heading, block reference,
+// embed marker and a table's escaped \| are kept, a ".md" extension is
+// kept, and a path keeps its form, naming the new filename. Links inside
+// fenced, indented and inline code, in frontmatter keys that are not
+// relations, in hidden folders and to other notes are left alone, and so
+// are the linking files' updated times.
 func TestRetitleLinks(t *testing.T) {
 	runGolden(t, goldenCase{
 		name:    "item-retitle-links",
@@ -338,5 +331,84 @@ func TestRetitleAbandonJournal(t *testing.T) {
 	code, stdout, stderr := runFault(vault, nil, "view", "RET-1", "--json")
 	if code != 0 || strings.Contains(stdout, "resumed_operation") || !strings.Contains(stdout, "RET-1 New title rewritten.md") {
 		t.Fatalf("view after abandoning: exit %d, stdout %s, stderr %s", code, stdout, stderr)
+	}
+}
+
+// issuesListing is the names the RET Issues folder of vault lists,
+// spelled as the folder stores them.
+func issuesListing(t *testing.T, vault string) []string {
+	t.Helper()
+	entries, err := os.ReadDir(filepath.Join(vault, "Projects", "RET", "Issues"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var names []string
+	for _, e := range entries {
+		names = append(names, e.Name())
+	}
+	return names
+}
+
+// A retitle that changes only the case of the filename renames the file
+// on any file system. On a case-insensitive one, such as macOS's, the old
+// and new names reach the same file, so the target is not taken: the
+// file is renamed so its name changes case. Here a hard link stands in
+// for the second name a case-insensitive file system gives the file, so
+// the test means the same on a case-sensitive one. An interrupted
+// case-only retitle resumes the same way.
+func TestRetitleCaseOnly(t *testing.T) {
+	const oldName, newName = "RET-1 Old title.md", "RET-1 Old Title.md"
+	checkRenamed := func(t *testing.T, vault string) {
+		t.Helper()
+		names := issuesListing(t, vault)
+		if !slices.Contains(names, newName) || slices.Contains(names, oldName) {
+			t.Errorf("Issues lists %q, want %q in place of %q", names, newName, oldName)
+		}
+		b, err := os.ReadFile(filepath.Join(vault, "Projects", "RET", "Issues", newName))
+		if err != nil || !strings.Contains(string(b), "\ntitle: Old Title\n") {
+			t.Errorf("the renamed file does not carry the new title: %v\n%s", err, b)
+		}
+	}
+	args := []string{"edit", "Projects/RET/Issues/" + oldName, "--title", "Old Title", "--json"}
+
+	t.Run("case only", func(t *testing.T) {
+		vault := retitleVault(t)
+		if code, _, stderr := runFault(vault, nil, args...); code != 0 {
+			t.Fatalf("case-only retitle: exit %d: %s", code, stderr)
+		}
+		checkRenamed(t, vault)
+	})
+
+	// sameFileVault is the retitle fixture with the new name linked to
+	// the old one's file.
+	sameFileVault := func(t *testing.T) string {
+		t.Helper()
+		vault := retitleVault(t)
+		issues := filepath.Join(vault, "Projects", "RET", "Issues")
+		if err := os.Link(filepath.Join(issues, oldName), filepath.Join(issues, newName)); err != nil {
+			t.Skipf("cannot hard-link: %v", err)
+		}
+		return vault
+	}
+	t.Run("same file", func(t *testing.T) {
+		vault := sameFileVault(t)
+		if code, _, stderr := runFault(vault, nil, args...); code != 0 {
+			t.Fatalf("case-only retitle: exit %d: %s", code, stderr)
+		}
+		checkRenamed(t, vault)
+	})
+	for n := 0; n <= 2; n++ {
+		t.Run(fmt.Sprintf("same file, resumed from step %d", n), func(t *testing.T) {
+			vault := sameFileVault(t)
+			fired := false
+			if code, _, stderr := runFault(vault, crashAt(n, &fired), args...); code != 1 || !fired {
+				t.Fatalf("interrupted retitle: exit %d: %s", code, stderr)
+			}
+			code, stdout, stderr := runFault(vault, nil, "list", "--json")
+			if code != 0 || !strings.Contains(stdout, `"code": "resumed_operation"`) {
+				t.Fatalf("list after the crash: exit %d, stdout %s, stderr %s", code, stdout, stderr)
+			}
+			checkRenamed(t, vault)
+		})
 	}
 }

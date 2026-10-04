@@ -26,6 +26,14 @@ A fenced [[RET-1 Old title]] stays.
 A tilde fence [[RET-1 Old title|too]] stays.
 ~~~
 
+An indented code block:
+
+    An indented [[RET-1 Old title]] stays.
+
+- In a list, an indented line
+
+    [[RET-1 New title rewritten|listed]] is content, rewritten.
+
 After the code, [[RET-1 New title rewritten]] is rewritten.
 -- stderr --
 warning[resumed_operation]: finished an interrupted retitle of RET-1: Projects/RET/Issues/RET-1 Old title.md → Projects/RET/Issues/RET-1 New title rewritten.md
@@ -90,7 +98,7 @@ exit: 0
           }
         ],
         "path": "Projects/RET/Issues/RET-2 Every link form.md",
-        "rev": "e7ae2c5b9f11"
+        "rev": "90fbbc2a35c2"
       },
       {
         "id": "RET-3",
@@ -102,7 +110,7 @@ exit: 0
         "parent": null,
         "blocked_by": [],
         "path": "Projects/RET/Issues/RET-3 Code links.md",
-        "rev": "998bde5c063a"
+        "rev": "99886bbdf3ab"
       },
       {
         "id": "RET-4",
@@ -185,7 +193,7 @@ items[4]:
       RET-1,Projects/RET/Issues/RET-1 New title rewritten.md,true
       RET-3,Projects/RET/Issues/RET-3 Links in code.md,true
     path: Projects/RET/Issues/RET-2 Every link form.md
-    rev: fdcf3f0d76d2
+    rev: 9b5cb1eec556
   - id: RET-3
     title: Links in code
     kind: issue
@@ -195,7 +203,7 @@ items[4]:
     parent: null
     blocked_by[0]:
     path: Projects/RET/Issues/RET-3 Links in code.md
-    rev: d84c4bd08e64
+    rev: ccba4063dde3
   - id: RET-4
     title: Path links
     kind: spec
@@ -341,6 +349,10 @@ updated: 2026-01-01T10:00:00Z
 - two on a line: [[RET-1 New title rewritten]], [[RET-1 New title rewritten|again]]
 - not this one: [[RET-1 Old title extra]], [[RET-10 Old title]], [[RET-3 Links in code]]
 
+| in a table | escaped alias |
+| --- | --- |
+| row | [[RET-1 New title rewritten\|tbl]] and [[RET-1 New title rewritten#Notes\|notes]] |
+
 <!-- otman:comments -->
 ## Comments
 
@@ -371,6 +383,14 @@ A fenced [[RET-1 Old title]] stays.
 ~~~
 A tilde fence [[RET-1 Old title|too]] stays.
 ~~~
+
+An indented code block:
+
+    An indented [[RET-1 Old title]] stays.
+
+- In a list, an indented line
+
+    [[RET-1 New title rewritten|listed]] is content, rewritten.
 
 After the code, [[RET-1 New title rewritten]] is rewritten.
 

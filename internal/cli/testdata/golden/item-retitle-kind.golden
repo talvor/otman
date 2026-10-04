@@ -153,6 +153,10 @@ updated: 2026-01-01T10:00:00Z
 - two on a line: [[RET-1 Moved and renamed]], [[RET-1 Moved and renamed|again]]
 - not this one: [[RET-1 Old title extra]], [[RET-10 Old title]], [[RET-3 Links in code]]
 
+| in a table | escaped alias |
+| --- | --- |
+| row | [[RET-1 Moved and renamed\|tbl]] and [[RET-1 Moved and renamed#Notes\|notes]] |
+
 <!-- otman:comments -->
 ## Comments
 
@@ -183,6 +187,14 @@ A fenced [[RET-1 Old title]] stays.
 ~~~
 A tilde fence [[RET-1 Old title|too]] stays.
 ~~~
+
+An indented code block:
+
+    An indented [[RET-1 Old title]] stays.
+
+- In a list, an indented line
+
+    [[RET-1 Moved and renamed|listed]] is content, rewritten.
 
 After the code, [[RET-1 Moved and renamed]] is rewritten.
 

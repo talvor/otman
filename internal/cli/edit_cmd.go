@@ -175,9 +175,9 @@ func (a *app) edit(cmd *cobra.Command, ref string, f editFlags) error {
 		}
 		switch to := path.Join(dir, name); {
 		case to != file.Path:
-			operation := "move"
+			operation := vault.MoveOperation
 			if name != file.Name() {
-				operation = "retitle"
+				operation = vault.RetitleOperation
 			}
 			if file, data, err = v.RenameItem(file, to, data, operation); err != nil {
 				return renameError(file, err)
@@ -185,7 +185,7 @@ func (a *app) edit(cmd *cobra.Command, ref string, f editFlags) error {
 			changed = true
 		case changed:
 			if err := v.WriteItemFile(file, data); err != nil {
-				return ioError(err)
+				return writeError(file, err)
 			}
 		}
 		summary, ws, err := summarize(v, file, data)
@@ -208,18 +208,19 @@ func (a *app) edit(cmd *cobra.Command, ref string, f editFlags) error {
 func renameError(f vault.ItemFile, err error) error {
 	var lr *vault.LinkRewriteError
 	var unsafe *frontmatter.UnsafeError
-	if errors.As(err, &lr) && errors.As(err, &unsafe) {
+	var c *vault.JournalConflictError
+	switch {
+	case errors.As(err, &lr) && errors.As(err, &unsafe):
 		e := unsafeWrite(lr.Path, unsafe.Reason,
 			"make the frontmatter of "+lr.Path+" plain block-style YAML between --- lines, then retry")
 		e.Message = "cannot rename " + f.ID() + ": refusing to rewrite " + lr.Path + ", which links to it: " + unsafe.Reason
 		e.Details["item"] = f.ID()
 		return e
+	case errors.As(err, &c):
+		return journalError(c)
+	default:
+		return writeError(f, err)
 	}
-	var c *vault.JournalConflictError
-	if errors.As(err, &c) {
-		return journalError(err)
-	}
-	return writeError(f, err)
 }
 
 // checkTitle validates a new title: a single line, not blank. The title

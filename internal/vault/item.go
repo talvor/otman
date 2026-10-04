@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"sort"
 	"time"
 
@@ -152,7 +153,7 @@ func (v *Vault) CreateItem(key string, n NewItem) (ItemFile, []byte, error) {
 
 // ReadItemFile returns the bytes of an Item file.
 func (v *Vault) ReadItemFile(f ItemFile) ([]byte, error) {
-	return os.ReadFile(filepath.Join(v.Root, filepath.FromSlash(f.Path)))
+	return os.ReadFile(v.abs(f.Path))
 }
 
 // WriteItemFile replaces the bytes of an Item file atomically and records
@@ -185,7 +186,7 @@ func (v *Vault) ItemAt(p string) (ItemFile, bool, error) {
 	if !ok {
 		return ItemFile{}, false, nil
 	}
-	fi, err := os.Stat(filepath.Join(v.Root, filepath.FromSlash(p)))
+	fi, err := os.Stat(v.abs(p))
 	if errors.Is(err, os.ErrNotExist) {
 		return ItemFile{}, false, nil
 	}
@@ -211,18 +212,51 @@ func (f ItemFile) KindPath(kind item.Kind) string {
 }
 
 // checkMove fails with a *TargetExistsError when moving Item file f to
-// the Vault-relative path to would replace another file.
+// the Vault-relative path to would replace another file. A target that
+// is f itself under another name, as a case-only rename finds it on a
+// case-insensitive file system, is not another file.
 func (v *Vault) checkMove(f ItemFile, to string) error {
 	if to == f.Path {
 		return nil
 	}
-	_, err := os.Lstat(filepath.Join(v.Root, filepath.FromSlash(to)))
+	_, err := os.Lstat(v.abs(to))
 	switch {
 	case err == nil:
+		same, err := v.sameFile(f.Path, to)
+		if err != nil || same {
+			return err
+		}
 		return &TargetExistsError{Target: to}
 	case errors.Is(err, os.ErrNotExist):
 		return nil
 	default:
 		return err
 	}
+}
+
+// sameFile reports whether the Vault-relative paths a and b name the same
+// file, as two spellings of one name do on a case-insensitive file
+// system.
+func (v *Vault) sameFile(a, b string) (bool, error) {
+	fa, err := os.Lstat(v.abs(a))
+	if err != nil {
+		return false, err
+	}
+	fb, err := os.Lstat(v.abs(b))
+	if err != nil {
+		return false, err
+	}
+	return os.SameFile(fa, fb), nil
+}
+
+// listed reports whether the folder of the Vault-relative path p lists an
+// entry spelled exactly as p's name, which a case-insensitive file system
+// does not tell from os.Lstat.
+func (v *Vault) listed(p string) (bool, error) {
+	entries, err := os.ReadDir(filepath.Dir(v.abs(p)))
+	if err != nil {
+		return false, err
+	}
+	name := path.Base(p)
+	return slices.ContainsFunc(entries, func(e fs.DirEntry) bool { return e.Name() == name }), nil
 }

@@ -1,3 +1,10 @@
+// These tests are a deliberate, known exception to the rule that tests
+// never reach into packages or the db schema (spec #14, Testing
+// Decisions): they read snapshots below the CLI, through vault.Open and
+// Vault.Snapshot, and arrange the db with raw SQL. Snapshots have no CLI
+// reader until doctor exists; once it lands, these tests move to the CLI
+// seam and read snapshots through it.
+
 package cli_test
 
 import (
@@ -13,8 +20,7 @@ import (
 )
 
 // snapshotOf opens dir, a Vault, and returns the snapshot of Item
-// <key>-<n>, or nil when the db has none. doctor is its only reader, so
-// until it exists the test reads the db through the vault package.
+// <key>-<n>, or nil when the db has none.
 func snapshotOf(t *testing.T, dir, key string, n int) *vault.Snapshot {
 	t.Helper()
 	v, _, err := vault.Open(dir, 0)
@@ -38,13 +44,13 @@ func checkSnapshot(t *testing.T, got *vault.Snapshot, filename, title, kind, fol
 		t.Fatalf("no snapshot, want %s", filename)
 	}
 	if got.Filename != filename || got.Title == nil || *got.Title != title ||
-		got.Kind == nil || *got.Kind != kind || got.Folder != folder {
+		got.Kind == nil || string(*got.Kind) != kind || got.Folder != folder {
 		t.Errorf("snapshot %s, %v, %v, %s; want %s, %s, %s, %s",
 			got.Filename, deref(got.Title), deref(got.Kind), got.Folder, filename, title, kind, folder)
 	}
 }
 
-func deref(s *string) any {
+func deref[T any](s *T) any {
 	if s == nil {
 		return nil
 	}
@@ -111,6 +117,31 @@ func TestSnapshots(t *testing.T) {
 	}
 	run("list")
 	checkSnapshot(t, snapshotOf(t, dir, "RET", 3), "RET-3 Code links.md", "Code links", "issue", "Projects/RET/Issues")
+}
+
+// A crash can land between a journal step's file change and the snapshot
+// it records. The resume that finds the step already applied records the
+// snapshot then, so the snapshot still holds what otman wrote.
+func TestSnapshotsResumeAppliedSteps(t *testing.T) {
+	dir := retitleVault(t)
+	if code, _, stderr := runFault(dir, crashAt(retitleSteps, nil), retitleArgs...); code != 1 {
+		t.Fatalf("interrupted retitle: exit %d: %s", code, stderr)
+	}
+	// Every step was applied, but none of their snapshots reached the db.
+	db, err := sql.Open("sqlite", filepath.Join(dir, ".otman", "otman.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec("DELETE FROM snapshots"); err != nil {
+		t.Fatal(err)
+	}
+	db.Close()
+
+	if code, stdout, stderr := runFault(dir, nil, "list", "--json"); code != 0 || !strings.Contains(stdout, "resumed_operation") {
+		t.Fatalf("list after the crash: exit %d, stdout %s, stderr %s", code, stdout, stderr)
+	}
+	checkSnapshot(t, snapshotOf(t, dir, "RET", 1), "RET-1 New title rewritten.md", "New title: rewritten", "issue", "Projects/RET/Issues")
+	checkSnapshot(t, snapshotOf(t, dir, "RET", 2), "RET-2 Every link form.md", "Every link form", "issue", "Projects/RET/Issues")
 }
 
 // A db from before snapshots (schema version 1) is migrated, not rebuilt:

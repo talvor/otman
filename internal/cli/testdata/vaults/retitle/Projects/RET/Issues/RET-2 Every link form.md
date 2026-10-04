@@ -30,6 +30,10 @@ updated: 2026-01-01T10:00:00Z
 - two on a line: [[RET-1 Old title]], [[RET-1 Old title|again]]
 - not this one: [[RET-1 Old title extra]], [[RET-10 Old title]], [[RET-3 Links in code]]
 
+| in a table | escaped alias |
+| --- | --- |
+| row | [[RET-1 Old title\|tbl]] and [[RET-1 Old title#Notes\|notes]] |
+
 <!-- otman:comments -->
 ## Comments
 

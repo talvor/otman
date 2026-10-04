@@ -27,7 +27,7 @@ const JournalDir = "journal"
 // operation interrupted part-way is finished by the next otman command.
 type Journal struct {
 	Version   int    `json:"version"`
-	Operation string `json:"operation"` // "retitle", or "move" for a Kind change alone
+	Operation string `json:"operation"` // RetitleOperation or MoveOperation
 	Item      string `json:"item"`      // the Item's ID
 	From      string `json:"from"`      // the Item file's Vault-relative path before
 	To        string `json:"to"`        // and after
@@ -36,6 +36,15 @@ type Journal struct {
 
 // journalVersion is the Version of the journals otman writes.
 const journalVersion = 1
+
+// The journaled operations.
+const (
+	// RetitleOperation renames an Item file for a new title, and moves it
+	// too when its Kind changes as well.
+	RetitleOperation = "retitle"
+	// MoveOperation moves an Item file to another Kind's folder alone.
+	MoveOperation = "move"
+)
 
 // Step is one file change of a journaled operation. Each step checks the
 // file's rev before it acts, so replaying a journal skips the steps
@@ -69,8 +78,12 @@ type JournalConflictError struct {
 	Reason    string
 }
 
-func (e *JournalConflictError) Error() string {
-	return "the pending " + e.Operation + " of " + e.Item + " in " + e.Journal + " cannot rewrite " + e.Path + ": " + e.Reason
+func (e *JournalConflictError) Error() string { return "cannot rewrite " + e.Path + ": " + e.Pending() }
+
+// Pending is why the journal stopped, without the file in question: "the
+// pending <operation> of <item> in <journal> cannot continue: <reason>".
+func (e *JournalConflictError) Pending() string {
+	return "the pending " + e.Operation + " of " + e.Item + " in " + e.Journal + " cannot continue: " + e.Reason
 }
 
 // LinkRewriteError refuses a rename because the file at Path links to the
@@ -94,8 +107,8 @@ func (e *LinkRewriteError) Unwrap() error { return e.Err }
 // before anything is written: a target that exists fails with a
 // *TargetExistsError and a file whose links cannot be rewritten with a
 // *LinkRewriteError. It then runs through a journal. operation names it in
-// the journal, such as "retitle". RenameItem returns the moved Item file
-// and its final bytes.
+// the journal: RetitleOperation or MoveOperation. RenameItem returns the
+// moved Item file and its final bytes.
 func (v *Vault) RenameItem(f ItemFile, to string, data []byte, operation string) (ItemFile, []byte, error) {
 	if err := v.checkMove(f, to); err != nil {
 		return f, nil, err
@@ -197,9 +210,7 @@ func (v *Vault) notes() ([]string, error) {
 // journalDir is the file-system path of .otman/journal.
 func (v *Vault) journalDir() string { return filepath.Join(v.Root, StateDir, JournalDir) }
 
-// run writes journal j, applies its steps in order and removes it. The
-// test-only Fault hook is consulted before each step and once after the
-// last, before the journal is removed.
+// run writes journal j, applies its steps in order and removes it.
 func (v *Vault) run(j Journal) error {
 	b, err := json.MarshalIndent(j, "", "  ")
 	if err != nil {
@@ -216,18 +227,16 @@ func (v *Vault) run(j Journal) error {
 	if err := fsutil.WriteFile(filepath.Join(dir, name), append(b, '\n')); err != nil {
 		return err
 	}
-	return v.finish(name, j, v.Fault)
+	return v.finish(name, j)
 }
 
 // finish applies the steps of journal j, stored in the journal folder as
-// name, and removes it, along with the folder once it is empty. fault,
-// when not nil, is called before step i with i, and after the last step
-// with len(j.Steps); an error from it aborts the operation there, as a
-// crash would, leaving the journal pending.
-func (v *Vault) finish(name string, j Journal, fault func(step int) error) error {
+// name, and removes it, along with the folder once it is empty. It
+// consults v.Fault, when set, around the steps.
+func (v *Vault) finish(name string, j Journal) error {
 	for i, s := range j.Steps {
-		if fault != nil {
-			if err := fault(i); err != nil {
+		if v.Fault != nil {
+			if err := v.Fault(i); err != nil {
 				return err
 			}
 		}
@@ -240,8 +249,8 @@ func (v *Vault) finish(name string, j Journal, fault func(step int) error) error
 			return err
 		}
 	}
-	if fault != nil {
-		if err := fault(len(j.Steps)); err != nil {
+	if v.Fault != nil {
+		if err := v.Fault(len(j.Steps)); err != nil {
 			return err
 		}
 	}
@@ -263,29 +272,9 @@ func (v *Vault) finish(name string, j Journal, fault func(step int) error) error
 // applyStep applies one step, or skips it when it was already applied.
 // Content the step does not expect stops it with a *JournalConflictError.
 func (v *Vault) applyStep(s Step) error {
-	conflict := func(p, reason string) error { return &JournalConflictError{Path: p, Reason: reason} }
-	changed := "its rev is %s, not the %s the operation expects; it has changed since the operation began"
 	switch s.Action {
 	case renameStep:
-		src, srcErr := os.ReadFile(v.abs(s.Path))
-		_, dstErr := os.Lstat(v.abs(s.To))
-		switch {
-		case srcErr == nil && errors.Is(dstErr, os.ErrNotExist):
-			if rev := item.Rev(src); rev != s.PreRev {
-				return conflict(s.Path, fmt.Sprintf(changed, rev, s.PreRev))
-			}
-			return v.renameFile(s.Path, s.To, src)
-		case errors.Is(srcErr, os.ErrNotExist) && dstErr == nil:
-			return nil // renamed already
-		case srcErr == nil && dstErr == nil:
-			return conflict(s.To, "it already exists, so "+s.Path+" cannot be renamed to it")
-		case errors.Is(srcErr, os.ErrNotExist) && errors.Is(dstErr, os.ErrNotExist):
-			return conflict(s.Path, "it is missing, and so is "+s.To)
-		case srcErr != nil:
-			return srcErr
-		default:
-			return dstErr
-		}
+		return v.applyRename(s)
 	case writeStep:
 		cur, err := os.ReadFile(v.abs(s.Path))
 		if errors.Is(err, os.ErrNotExist) {
@@ -296,15 +285,93 @@ func (v *Vault) applyStep(s Step) error {
 		}
 		switch rev := item.Rev(cur); rev {
 		case s.PostRev:
-			return nil // written already
+			// Written already, but a crash may have come before the
+			// snapshot was recorded.
+			return v.recordSnapshot(s.Path, s.Content)
 		case s.PreRev:
 			return v.writeFile(s.Path, s.Content)
 		default:
-			return conflict(s.Path, fmt.Sprintf(changed, rev, s.PreRev))
+			return changed(s.Path, rev, s.PreRev)
 		}
 	}
 	return fmt.Errorf("unknown journal step %q", s.Action)
 }
+
+// applyRename applies a rename step, or skips it when it was already
+// applied.
+func (v *Vault) applyRename(s Step) error {
+	from := s.Path
+	if _, err := os.Lstat(v.abs(caseTemp(s.To))); err == nil {
+		from = caseTemp(s.To) // a case-only rename stopped between its moves
+	}
+	src, srcErr := os.ReadFile(v.abs(from))
+	_, dstErr := os.Lstat(v.abs(s.To))
+	free := errors.Is(dstErr, os.ErrNotExist)
+	if srcErr == nil && dstErr == nil {
+		// On a case-insensitive file system a case-only rename finds one
+		// file under both names; it is applied once the folder no longer
+		// lists the old spelling.
+		same, err := v.sameFile(from, s.To)
+		if err != nil {
+			return err
+		}
+		if same {
+			pending, err := v.listed(from)
+			if err != nil {
+				return err
+			}
+			if !pending {
+				return v.renamed(s)
+			}
+			free = true
+		}
+	}
+	switch {
+	case srcErr == nil && free:
+		if rev := item.Rev(src); rev != s.PreRev {
+			return changed(s.Path, rev, s.PreRev)
+		}
+		return v.renameFile(from, s.To, src)
+	case errors.Is(srcErr, os.ErrNotExist) && dstErr == nil:
+		return v.renamed(s)
+	case srcErr == nil && dstErr == nil:
+		return conflict(s.To, "it already exists, so "+s.Path+" cannot be renamed to it")
+	case errors.Is(srcErr, os.ErrNotExist) && free:
+		return conflict(s.Path, "it is missing, and so is "+s.To)
+	case srcErr != nil:
+		return srcErr
+	default:
+		return dstErr
+	}
+}
+
+// renamed finishes rename step s found already applied: a crash may have
+// come before the moved Item's snapshot was recorded, so it is recorded
+// again, unless the file has been written since, when the write step
+// after it records it.
+func (v *Vault) renamed(s Step) error {
+	data, err := os.ReadFile(v.abs(s.To))
+	if err != nil || item.Rev(data) != s.PreRev {
+		return err
+	}
+	return v.recordSnapshot(s.To, data)
+}
+
+// conflict is the *JournalConflictError of a step stopped at the
+// Vault-relative path p for reason; finish names the journal.
+func conflict(p, reason string) error { return &JournalConflictError{Path: p, Reason: reason} }
+
+// changed is the conflict of a step whose file at p has rev, not the
+// want it expects.
+func changed(p, rev, want string) error {
+	return conflict(p, fmt.Sprintf(
+		"its rev is %s, not the %s the operation expects; it has changed since the operation began", rev, want))
+}
+
+// caseTemp is the hidden name, beside to, that a case-only rename moves
+// the file through when renaming it straight to to does not change its
+// spelling.
+func caseTemp(to string) string { return path.Join(path.Dir(to), "."+path.Base(to)+".rename") }
 
 // renameFile renames the file at the Vault-relative path from, whose bytes
 // are data, to the path to, creating its folder, and records the moved
@@ -319,6 +386,27 @@ func (v *Vault) renameFile(from, to string, data []byte) error {
 	}
 	if err := os.Rename(src, dst); err != nil {
 		return err
+	}
+	// Where both names reach one file, as a case-only rename finds it on
+	// a case-insensitive file system, renaming may change nothing; moving
+	// the file aside first changes its spelling.
+	if stale, err := v.listed(from); err != nil {
+		return err
+	} else if stale {
+		tmp := v.abs(caseTemp(to))
+		if err := os.Rename(src, tmp); err != nil {
+			return err
+		}
+		if err := os.Rename(tmp, dst); err != nil {
+			return err
+		}
+		// A rename onto another hard link to the same file changes
+		// nothing either, leaving the spare link to remove.
+		if _, err := os.Lstat(tmp); err == nil {
+			if err := os.Remove(tmp); err != nil {
+				return err
+			}
+		}
 	}
 	if err := fsutil.SyncDir(filepath.Dir(dst)); err != nil {
 		return err
@@ -362,7 +450,7 @@ func (v *Vault) resume() ([]output.Problem, error) {
 			return nil, &JournalConflictError{Journal: rel, Operation: "operation", Item: "an unknown Item",
 				Path: rel, Reason: reason}
 		}
-		if err := v.finish(e.Name(), j, nil); err != nil {
+		if err := v.finish(e.Name(), j); err != nil {
 			return nil, err
 		}
 		warnings = append(warnings, output.Warning("resumed_operation",

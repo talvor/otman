@@ -14,9 +14,9 @@ import (
 // side of a title/filename or Kind/folder disagreement changed.
 type Snapshot struct {
 	Filename string
-	Title    *string // nil when the file had no title
-	Kind     *string // nil when the file had no kind
-	Folder   string  // Vault-relative, slash-separated
+	Title    *string    // nil when the file had no title
+	Kind     *item.Kind // nil when the file had no kind
+	Folder   string     // Vault-relative, slash-separated
 }
 
 // Snapshot returns the snapshot of Item <key>-<n>, and false when otman
@@ -36,7 +36,8 @@ func (v *Vault) Snapshot(key string, n int) (Snapshot, bool, error) {
 		s.Title = &title.String
 	}
 	if kind.Valid {
-		s.Kind = &kind.String
+		k := item.Kind(kind.String)
+		s.Kind = &k
 	}
 	return s, true, nil
 }
