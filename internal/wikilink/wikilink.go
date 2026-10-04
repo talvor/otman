@@ -110,6 +110,43 @@ func Scan(text string) []Link {
 	return links
 }
 
+// Retarget is the text of link l, found in text, with its target replaced
+// by target. The embed marker, the heading, the alias and any spacing
+// around the target are kept byte for byte.
+func Retarget(text string, l Link, target string) string {
+	s := text[l.Start:l.End]
+	open := 2
+	if l.Embed {
+		open = 3
+	}
+	// The target is the trimmed text before any # or |; only spacing can
+	// come before it.
+	at := open + strings.Index(s[open:], l.Target)
+	return s[:at] + target + s[at+len(l.Target):]
+}
+
+// Rewrite returns text with the target of every link Scan finds replaced
+// by what retarget returns for it; a link retarget declines, by returning
+// false, is left alone, as are links inside code.
+func Rewrite(text string, retarget func(Link) (string, bool)) string {
+	var b strings.Builder
+	last := 0
+	for _, l := range Scan(text) {
+		target, ok := retarget(l)
+		if !ok {
+			continue
+		}
+		b.WriteString(text[last:l.Start])
+		b.WriteString(Retarget(text, l, target))
+		last = l.End
+	}
+	if last == 0 {
+		return text
+	}
+	b.WriteString(text[last:])
+	return b.String()
+}
+
 // span is the byte range [from, to) of a text.
 type span struct{ from, to int }
 

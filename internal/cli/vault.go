@@ -39,7 +39,25 @@ func (a *app) openVault(s resolved) (*vault.Vault, []output.Problem, error) {
 		return nil, nil, invalid("vault_not_directory", "Vault path "+path+" is not a directory", details,
 			"point otman at your Vault directory with 'otman config set vault PATH'")
 	case err != nil:
-		return nil, nil, ioError(err)
+		return nil, nil, journalError(err)
 	}
+	v.Fault = a.opts.Fault
 	return v, append(append([]output.Problem{}, s.Warnings...), warnings...), nil
+}
+
+// journalError is the failure for err, from a journaled operation: an
+// unsafe_write for a journal stopped by content it did not expect, and an
+// io_error for anything else.
+func journalError(err error) error {
+	var c *vault.JournalConflictError
+	if !errors.As(err, &c) {
+		return ioError(err)
+	}
+	e := unsafeWrite(c.Path, "the pending "+c.Operation+" of "+c.Item+" in "+c.Journal+" cannot continue: "+c.Reason,
+		"restore "+c.Path+" to what the operation expects, or delete "+c.Journal+
+			" to abandon the rest of the operation, then retry")
+	e.Details["journal"] = c.Journal
+	e.Details["operation"] = c.Operation
+	e.Details["item"] = c.Item
+	return e
 }

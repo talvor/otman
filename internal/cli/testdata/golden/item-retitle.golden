@@ -1,0 +1,150 @@
+$ otman edit OTM-1 --title Detect: sync collisions?
+tty: true
+exit: 0
+-- stdout --
+Edited OTM-1 · Detect: sync collisions?
+Projects/OTM/Issues/OTM-1 Detect sync collisions.md
+-- stderr --
+
+$ otman view OTM-1 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-1",
+      "title": "Detect: sync collisions?",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": "agent-b",
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-1 Detect sync collisions.md",
+      "rev": "7e08ae21d198",
+      "author": "talvor",
+      "body": "Detect duplicate numbers and report both paths.\n\n## Comments\n\nThis body has its own Comments heading; the marker is the boundary.",
+      "created": "2026-01-01T10:00:00Z",
+      "updated": "2026-01-02T03:04:05Z",
+      "comments": [
+        {
+          "author": "talvor",
+          "created": "2026-01-01T10:30:00Z",
+          "body": "Reproduced with a copied note."
+        },
+        {
+          "author": "agent-b",
+          "created": "2026-01-01T11:00:00Z",
+          "body": "Fixed in the scanner.\n\n### A heading inside the comment\nstays part of it."
+        }
+      ],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Detect sync collisions.md --
+---
+id: OTM-1
+title: 'Detect: sync collisions?'
+aliases:
+  - 'Detect: sync collisions?'
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: agent-b
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+Detect duplicate numbers and report both paths.
+
+## Comments
+
+This body has its own Comments heading; the marker is the boundary.
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+Reproduced with a copied note.
+
+### 2026-01-01T11:00:00Z · agent-b
+Fixed in the scanner.
+
+### A heading inside the comment
+stays part of it.
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/OTM/Specs/
+-- vault/Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md --
+---
+id: OTM-2
+title: 'Item file format: frontmatter and body'
+aliases:
+  - 'Item file format: frontmatter and body'
+kind: spec
+status: closed
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T09:00:00Z
+updated: 2026-01-01T09:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/WEB/
+vault/Projects/WEB/PRDs/
+-- vault/Projects/WEB/PRDs/WEB-1 Landing page.md --
+---
+id: WEB-1
+title: Landing page
+aliases:
+  - Landing page
+kind: prd
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T08:00:00Z
+updated: 2026-01-01T08:00:00Z
+---
+Explain otman in one screen.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/WEB/WEB.md --
+---
+name: otman website
+kind: project
+---

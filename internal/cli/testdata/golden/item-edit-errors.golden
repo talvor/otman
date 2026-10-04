@@ -4,7 +4,7 @@ exit: 2
 -- stdout --
 -- stderr --
 error[empty_edit]: edit needs something to change
-hint: pass --add-label, --assignee, --body, --body-file, --clear-assignee, --clear-body, --kind, --remove-label
+hint: pass --add-label, --assignee, --body, --body-file, --clear-assignee, --clear-body, --kind, --remove-label, --title
 
 $ otman edit OTM-1 --if-rev 0123456789ab --json
 exit: 2
@@ -16,7 +16,7 @@ exit: 2
     "code": "empty_edit",
     "message": "edit needs something to change",
     "details": null,
-    "hint": "pass --add-label, --assignee, --body, --body-file, --clear-assignee, --clear-body, --kind, --remove-label"
+    "hint": "pass --add-label, --assignee, --body, --body-file, --clear-assignee, --clear-body, --kind, --remove-label, --title"
   }
 }
 

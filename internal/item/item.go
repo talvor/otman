@@ -506,7 +506,9 @@ func AppendComment(file []byte, c Comment, now time.Time) ([]byte, error) {
 
 // Update is an edit to an Item file. A nil field is left alone.
 type Update struct {
-	Kind *Kind
+	// Title sets the title, and replaces the old title among the aliases.
+	Title *string
+	Kind  *Kind
 	// Body replaces the main body; "" clears it.
 	Body *string
 	// Assignee sets the assignee; ClearAssignee clears it.
@@ -539,6 +541,12 @@ var ErrNoMarker = errors.New("the Item has no " + CommentsMarker + " line")
 // even when update would change nothing.
 func Apply(file []byte, update Update, now time.Time) (out []byte, changed bool, err error) {
 	var edits []frontmatter.Edit
+	if update.Title != nil {
+		edits = append(edits, frontmatter.Edit{Key: "title", Value: str(*update.Title)})
+		if aliases := aliasesFor(file, *update.Title); aliases != nil {
+			edits = append(edits, frontmatter.Edit{Key: "aliases", Value: aliases})
+		}
+	}
 	if update.Kind != nil {
 		edits = append(edits, frontmatter.Edit{Key: "kind", Value: str(string(*update.Kind))})
 	}
@@ -591,6 +599,111 @@ func rewrite(file []byte, edits []frontmatter.Edit, transform func([]byte) ([]by
 	}
 	out, err = apply(edits)
 	return out, err == nil, err
+}
+
+// aliasesFor is the aliases list of file with its current title replaced
+// by title, the way Render pairs them, or nil when the list does not hold
+// the current title, or is not a list, and so is left alone. Other
+// entries are kept as they are.
+func aliasesFor(file []byte, title string) *yaml.Node {
+	old, aliases := frontmatterValue(file, "title"), frontmatterValue(file, "aliases")
+	if old == nil || scalar(old) == nil || aliases == nil || aliases.Kind != yaml.SequenceNode {
+		return nil
+	}
+	from := *scalar(old)
+	if from == title {
+		return nil
+	}
+	has := func(s string) bool {
+		return slices.ContainsFunc(aliases.Content, func(c *yaml.Node) bool {
+			v := scalar(c)
+			return v != nil && *v == s
+		})
+	}
+	if !has(from) {
+		return nil
+	}
+	out := *aliases
+	out.Content = nil
+	replaced := has(title) // the title is already an alias: drop the old one
+	for _, c := range aliases.Content {
+		switch v := scalar(c); {
+		case v == nil || *v != from:
+			out.Content = append(out.Content, c)
+		case !replaced:
+			out.Content = append(out.Content, str(title))
+			replaced = true
+		}
+	}
+	return &out
+}
+
+// RetargetLinks rewrites the wikilinks of file that retarget accepts: the
+// relation values in its frontmatter (parent and the entries of
+// blocked_by) and every link in the text after it, comments included.
+// retarget is given a link's target as written and returns the new one,
+// or false to leave the link alone. Only the target changes; the alias,
+// heading and embed marker are kept, links inside code are left alone,
+// and updated is not touched, since the file's own content has not
+// changed. Relation keys are spliced (ADR 0006), so a file whose
+// relations need rewriting but cannot be spliced fails with a
+// *frontmatter.UnsafeError. A file with nothing to rewrite is returned
+// unchanged.
+func RetargetLinks(file []byte, retarget func(target string) (string, bool)) ([]byte, error) {
+	link := func(l wikilink.Link) (string, bool) {
+		if l.Target == "" {
+			return "", false
+		}
+		return retarget(l.Target)
+	}
+	relation := func(n *yaml.Node) (*yaml.Node, bool) {
+		s := scalar(n)
+		if s == nil {
+			return nil, false
+		}
+		l, ok := wikilink.Parse(*s)
+		if !ok {
+			return nil, false
+		}
+		target, ok := link(l)
+		if !ok {
+			return nil, false
+		}
+		return quoted(wikilink.Retarget(*s, l, target)), true
+	}
+	var edits []frontmatter.Edit
+	if v := frontmatterValue(file, "parent"); v != nil {
+		if n, ok := relation(v); ok {
+			edits = append(edits, frontmatter.Edit{Key: "parent", Value: n})
+		}
+	}
+	if v := frontmatterValue(file, "blocked_by"); v != nil && v.Kind == yaml.SequenceNode {
+		out, changed := *v, false
+		out.Content = make([]*yaml.Node, len(v.Content))
+		for i, c := range v.Content {
+			out.Content[i] = c
+			if n, ok := relation(c); ok {
+				out.Content[i], changed = n, true
+			}
+		}
+		if changed {
+			edits = append(edits, frontmatter.Edit{Key: "blocked_by", Value: &out})
+		}
+	}
+	out := file
+	if len(edits) > 0 {
+		var err error
+		if out, err = frontmatter.Splice(file, edits); err != nil {
+			return nil, err
+		}
+	}
+	_, rest, _ := frontmatter.Split(out)
+	text := wikilink.Rewrite(string(rest), link)
+	if text == string(rest) {
+		return out, nil
+	}
+	head := len(out) - len(rest)
+	return append(out[:head:head], text...), nil
 }
 
 // replaceBody replaces the body of file, which has frontmatter, with body

@@ -1,0 +1,251 @@
+$ otman edit RET-1 --kind prd --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "RET-1",
+      "title": "Old title",
+      "kind": "prd",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/RET/PRDs/RET-1 Old title.md",
+      "rev": "2d4119fe3192"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman view RET-4 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "RET-4",
+      "title": "Path links",
+      "kind": "spec",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": {
+        "id": "RET-1",
+        "path": "Projects/RET/PRDs/RET-1 Old title.md",
+        "resolved": true
+      },
+      "blocked_by": [],
+      "path": "Projects/RET/Specs/RET-4 Path links.md",
+      "rev": "022bff101be1",
+      "author": "talvor",
+      "body": "- full path: [[Projects/RET/PRDs/RET-1 Old title]]\n- full path with extension and alias: [[Projects/RET/PRDs/RET-1 Old title.md|alias]]\n- rooted: [[/Projects/RET/PRDs/RET-1 Old title]]\n- suffix with heading: [[PRDs/RET-1 Old title#Notes]]\n- suffix embed: ![[PRDs/RET-1 Old title.md]]\n- wrong folder, not a match: [[Specs/RET-1 Old title]]",
+      "created": "2026-01-01T10:00:00Z",
+      "updated": "2026-01-01T10:00:00Z",
+      "comments": [],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman edit RET-1 --title Moved and renamed --kind spec
+tty: true
+exit: 0
+-- stdout --
+Edited RET-1 · Moved and renamed
+Projects/RET/Specs/RET-1 Moved and renamed.md
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "RET"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/.trash/
+-- vault/.trash/Deleted.md --
+A hidden folder: [[RET-1 Old title]] is left alone.
+vault/Notes/
+-- vault/Notes/Broken frontmatter.md --
+---
+title: [unclosed
+---
+The body of a note with unreadable frontmatter still links to [[RET-1 Moved and renamed]].
+-- vault/Notes/Daily.md --
+A daily note outside Projects: [[RET-1 Moved and renamed|today]].
+Windows line endings stay.
+vault/Projects/
+vault/Projects/OTH/
+vault/Projects/OTH/Issues/
+-- vault/Projects/OTH/Issues/OTH-1 Elsewhere.md --
+---
+id: OTH-1
+title: Elsewhere
+aliases:
+  - Elsewhere
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+Another Project links to [[RET-1 Moved and renamed]] too.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTH/OTH.md --
+---
+name: Other
+kind: project
+---
+vault/Projects/RET/
+vault/Projects/RET/Issues/
+-- vault/Projects/RET/Issues/RET-2 Every link form.md --
+---
+id: RET-2
+title: Every link form
+aliases:
+  - Every link form
+kind: issue
+status: open
+author: talvor
+parent: "[[RET-1 Moved and renamed]]"
+blocked_by:
+  - "[[RET-1 Moved and renamed|the old one]]"
+  - "[[RET-3 Links in code]]"
+labels: []
+assignee: null
+# related is not a relation, so its link is left alone
+related: "[[RET-1 Old title]]"
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+- plain: [[RET-1 Moved and renamed]]
+- alias: [[RET-1 Moved and renamed|the first]]
+- heading: [[RET-1 Moved and renamed#Notes]]
+- heading and alias: [[RET-1 Moved and renamed#Notes|notes]]
+- block: [[RET-1 Moved and renamed#^block1]]
+- embed: ![[RET-1 Moved and renamed]]
+- embed with heading: ![[RET-1 Moved and renamed#Notes]]
+- extension: [[RET-1 Moved and renamed.md]]
+- other case: [[RET-1 Moved and renamed]]
+- spaced: [[ RET-1 Moved and renamed |spaced]]
+- two on a line: [[RET-1 Moved and renamed]], [[RET-1 Moved and renamed|again]]
+- not this one: [[RET-1 Old title extra]], [[RET-10 Old title]], [[RET-3 Links in code]]
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+Blocked on [[RET-1 Moved and renamed]].
+-- vault/Projects/RET/Issues/RET-3 Links in code.md --
+---
+id: RET-3
+title: Links in code
+aliases:
+  - Links in code
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+Inline code `[[RET-1 Old title]]` and ``code with ` and [[RET-1 Old title]]`` stay.
+
+```markdown
+A fenced [[RET-1 Old title]] stays.
+```
+
+~~~
+A tilde fence [[RET-1 Old title|too]] stays.
+~~~
+
+After the code, [[RET-1 Moved and renamed]] is rewritten.
+
+<!-- otman:comments -->
+## Comments
+vault/Projects/RET/PRDs/
+-- vault/Projects/RET/RET.md --
+---
+name: Retitles
+kind: project
+---
+Start at [[RET-1 Moved and renamed]].
+vault/Projects/RET/Specs/
+-- vault/Projects/RET/Specs/RET-1 Moved and renamed.md --
+---
+id: RET-1
+title: Moved and renamed
+aliases:
+  - Moved and renamed
+  - The first one
+kind: spec
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+Links to itself: [[RET-1 Moved and renamed#Notes|the notes]] and [[#Notes]].
+
+## Notes
+
+Nothing yet. ^block1
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+Renamed from [[RET-1 Moved and renamed]] soon.
+-- vault/Projects/RET/Specs/RET-4 Path links.md --
+---
+id: RET-4
+title: Path links
+aliases:
+  - Path links
+kind: spec
+status: open
+author: talvor
+parent: "[[Projects/RET/Specs/RET-1 Moved and renamed|the parent]]"
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+- full path: [[Projects/RET/Specs/RET-1 Moved and renamed]]
+- full path with extension and alias: [[Projects/RET/Specs/RET-1 Moved and renamed.md|alias]]
+- rooted: [[/Projects/RET/Specs/RET-1 Moved and renamed]]
+- suffix with heading: [[Specs/RET-1 Moved and renamed#Notes]]
+- suffix embed: ![[Specs/RET-1 Moved and renamed.md]]
+- wrong folder, not a match: [[Specs/RET-1 Old title]]
+
+<!-- otman:comments -->
+## Comments

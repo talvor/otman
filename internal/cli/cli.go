@@ -35,6 +35,13 @@ type Options struct {
 	// LockTimeout bounds the wait for .otman/lock; zero means
 	// vault.DefaultLockTimeout. Tests shorten it.
 	LockTimeout time.Duration
+
+	// Fault is a test-only fault injector for journaled operations, such
+	// as a retitle: it is called before journal step N with N, and with
+	// the number of steps after the last one, and an error from it aborts
+	// the operation there, as a crash would, leaving the journal for the
+	// next command to finish. nil injects nothing.
+	Fault func(step int) error
 }
 
 // app is the state of one run, shared by every command.
