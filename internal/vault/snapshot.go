@@ -9,8 +9,9 @@ import (
 	"github.com/talvor/otman/internal/item"
 )
 
-// Snapshot is what otman last wrote for an Item: its filename, title, Kind
-// and folder (ADR 0005). doctor compares it with the file to tell which
+// Snapshot is what otman last wrote for each side of an Item: its
+// filename, title, Kind and folder (ADR 0005; see recordSnapshot for which
+// sides a write records). doctor compares it with the file to tell which
 // side of a title/filename or Kind/folder disagreement changed.
 type Snapshot struct {
 	Filename string
@@ -42,23 +43,65 @@ func (v *Vault) Snapshot(key string, n int) (Snapshot, bool, error) {
 	return s, true, nil
 }
 
-// recordSnapshot stores what otman just wrote at the Vault-relative path
-// p, data, as the snapshot of the Item p names. Every write of an Item
-// file goes through it; a file that is not an Item file is ignored.
-func (v *Vault) recordSnapshot(p string, data []byte) error {
-	key, n, ok := itemPath(p)
+// SetSnapshot replaces the snapshot of Item <key>-<n> with s, or removes it
+// when s is nil. doctor uses it to keep the snapshot of Drift it leaves
+// unrepaired, so that a later run can still tell which side changed.
+func (v *Vault) SetSnapshot(key string, n int, s *Snapshot) error {
+	return inImmediateTx(v.db, func(tx *sql.Tx) error {
+		if s == nil {
+			_, err := tx.Exec(`DELETE FROM snapshots WHERE key = ? AND number = ?`, key, n)
+			return err
+		}
+		var kind *string
+		if s.Kind != nil {
+			k := string(*s.Kind)
+			kind = &k
+		}
+		_, err := tx.Exec(`INSERT OR REPLACE INTO snapshots (key, number, filename, title, kind, folder)
+			VALUES (?, ?, ?, ?, ?, ?)`, key, n, s.Filename, s.Title, kind, s.Folder)
+		return err
+	})
+}
+
+// recordSnapshot records the snapshot of the Item that a write leaves at
+// the Vault-relative path to, data, moved from from. prev is the file's
+// bytes before the write, or nil when they are not known or the file is
+// new. Where an earlier snapshot exists and prev is known, a write records
+// only the sides it changed: a title, Kind, filename or folder it left
+// alone keeps the snapshot it had, so a hand edit it did not make still
+// shows as Drift. Otherwise the write records what it leaves. A file that is
+// not an Item file is ignored.
+func (v *Vault) recordSnapshot(from, to string, prev, data []byte) error {
+	key, n, ok := itemPath(to)
 	if !ok {
 		return nil
 	}
 	parsed := item.Parse(data)
+	s := Snapshot{Filename: path.Base(to), Title: parsed.Title, Kind: parsed.Kind, Folder: path.Dir(to)}
+	last, hasLast, err := v.Snapshot(key, n)
+	if err != nil {
+		return err
+	}
+	if hasLast && prev != nil {
+		before := item.Parse(prev)
+		if item.Same(before.Title, parsed.Title) {
+			s.Title = last.Title
+		}
+		if item.Same(before.Kind, parsed.Kind) {
+			s.Kind = last.Kind
+		}
+		if from == to {
+			s.Filename, s.Folder = last.Filename, last.Folder
+		}
+	}
 	var kind *string
-	if parsed.Kind != nil {
-		k := string(*parsed.Kind)
+	if s.Kind != nil {
+		k := string(*s.Kind)
 		kind = &k
 	}
 	return inImmediateTx(v.db, func(tx *sql.Tx) error {
 		_, err := tx.Exec(`INSERT OR REPLACE INTO snapshots (key, number, filename, title, kind, folder)
-			VALUES (?, ?, ?, ?, ?, ?)`, key, n, path.Base(p), parsed.Title, kind, path.Dir(p))
+			VALUES (?, ?, ?, ?, ?, ?)`, key, n, s.Filename, s.Title, kind, s.Folder)
 		return err
 	})
 }

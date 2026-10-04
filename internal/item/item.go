@@ -543,7 +543,7 @@ func SetStatus(file []byte, d Derived, status string, comment *Comment, now time
 	if comment != nil {
 		transform = func(b []byte) ([]byte, error) { return appendComment(b, *comment) }
 	}
-	return rewrite(file, d, []frontmatter.Edit{{Key: "status", Value: str(status)}}, transform, now)
+	return rewrite(file, d, []frontmatter.Edit{{Key: "status", Value: str(status)}}, transform, now, true)
 }
 
 // AppendComment appends c at the end of an Item file's comments section
@@ -553,7 +553,7 @@ func SetStatus(file []byte, d Derived, status string, comment *Comment, now time
 // with ErrDuplicateMarkers, and one otman could not rewrite with a
 // *frontmatter.UnsafeError.
 func AppendComment(file []byte, d Derived, c Comment, now time.Time) ([]byte, error) {
-	out, _, err := rewrite(file, d, nil, func(b []byte) ([]byte, error) { return appendComment(b, c) }, now)
+	out, _, err := rewrite(file, d, nil, func(b []byte) ([]byte, error) { return appendComment(b, c) }, now, true)
 	return out, err
 }
 
@@ -631,16 +631,16 @@ func Apply(file []byte, d Derived, update Update, now time.Time) (out []byte, ch
 	if body := update.Body; body != nil {
 		transform = func(b []byte) ([]byte, error) { return replaceBody(b, *body) }
 	}
-	return rewrite(file, d, edits, transform, now)
+	return rewrite(file, d, edits, transform, now, true)
 }
 
 // rewrite splices edits into file, then applies transform to the text
 // when it is not nil. When that changes the file, it does so again with
 // updated set to now and, unless edits set them, the lossless Drift of
-// the file healed: the identity keys restored from d (see healEdits) and
-// the labels lowercased and deduped where nothing else is lost (see
-// healLabels). A write that changes nothing heals nothing.
-func rewrite(file []byte, d Derived, edits []frontmatter.Edit, transform func([]byte) ([]byte, error), now time.Time) ([]byte, bool, error) {
+// the file healed when heal is set: the identity keys restored from d (see
+// healEdits) and the labels lowercased and deduped where nothing else is
+// lost (see healLabels). A write that changes nothing heals nothing.
+func rewrite(file []byte, d Derived, edits []frontmatter.Edit, transform func([]byte) ([]byte, error), now time.Time, heal bool) ([]byte, bool, error) {
 	apply := func(edits []frontmatter.Edit) ([]byte, error) {
 		out, err := frontmatter.Splice(file, edits)
 		if err != nil || transform == nil {
@@ -654,10 +654,12 @@ func rewrite(file []byte, d Derived, edits []frontmatter.Edit, transform func([]
 	}
 	// The full slice expression makes append copy rather than write into
 	// the caller's backing array.
-	edits = append(edits[:len(edits):len(edits)], healEdits(file, d, edits)...)
+	if heal {
+		edits = append(edits[:len(edits):len(edits)], healEdits(file, d, edits)...)
+	}
 	edits = append(edits, frontmatter.Edit{Key: "updated", Value: timestamp(now)})
-	if heal := healLabels(file); heal != nil && !sets(edits, "labels") {
-		edits = append(edits, *heal)
+	if h := healLabels(file); heal && h != nil && !sets(edits, "labels") {
+		edits = append(edits, *h)
 	}
 	out, err = apply(edits)
 	return out, err == nil, err
@@ -718,40 +720,7 @@ func RetargetLinks(file []byte, retarget func(target string) (string, bool)) ([]
 		}
 		return retarget(l.Target)
 	}
-	relation := func(n *yaml.Node) (*yaml.Node, bool) {
-		s := scalar(n)
-		if s == nil {
-			return nil, false
-		}
-		l, ok := wikilink.Parse(*s)
-		if !ok {
-			return nil, false
-		}
-		target, ok := link(l)
-		if !ok {
-			return nil, false
-		}
-		return quoted(wikilink.Retarget(*s, l, target)), true
-	}
-	var edits []frontmatter.Edit
-	if v := frontmatterValue(file, "parent"); v != nil {
-		if n, ok := relation(v); ok {
-			edits = append(edits, frontmatter.Edit{Key: "parent", Value: n})
-		}
-	}
-	if v := frontmatterValue(file, "blocked_by"); v != nil && v.Kind == yaml.SequenceNode {
-		out, changed := *v, false
-		out.Content = make([]*yaml.Node, len(v.Content))
-		for i, c := range v.Content {
-			out.Content[i] = c
-			if n, ok := relation(c); ok {
-				out.Content[i], changed = n, true
-			}
-		}
-		if changed {
-			edits = append(edits, frontmatter.Edit{Key: "blocked_by", Value: &out})
-		}
-	}
+	edits := retargetRelations(file, func(_ string, l wikilink.Link) (string, bool) { return link(l) })
 	out := file
 	if len(edits) > 0 {
 		var err error
@@ -766,6 +735,48 @@ func RetargetLinks(file []byte, retarget func(target string) (string, bool)) ([]
 	}
 	head := len(out) - len(rest)
 	return append(out[:head:head], text...), nil
+}
+
+// retargetRelations are the edits that retarget the relation wikilinks of
+// file's frontmatter, parent and the entries of blocked_by, for which link
+// returns a new target. A value that is not a wikilink, or that link leaves
+// alone, is not edited.
+func retargetRelations(file []byte, link func(key string, l wikilink.Link) (string, bool)) []frontmatter.Edit {
+	relation := func(key string, n *yaml.Node) (*yaml.Node, bool) {
+		s := scalar(n)
+		if s == nil {
+			return nil, false
+		}
+		l, ok := wikilink.Parse(*s)
+		if !ok {
+			return nil, false
+		}
+		target, ok := link(key, l)
+		if !ok {
+			return nil, false
+		}
+		return quoted(wikilink.Retarget(*s, l, target)), true
+	}
+	var edits []frontmatter.Edit
+	if v := frontmatterValue(file, "parent"); v != nil {
+		if n, ok := relation("parent", v); ok {
+			edits = append(edits, frontmatter.Edit{Key: "parent", Value: n})
+		}
+	}
+	if v := frontmatterValue(file, "blocked_by"); v != nil && v.Kind == yaml.SequenceNode {
+		out, changed := *v, false
+		out.Content = make([]*yaml.Node, len(v.Content))
+		for i, c := range v.Content {
+			out.Content[i] = c
+			if n, ok := relation("blocked_by", c); ok {
+				out.Content[i], changed = n, true
+			}
+		}
+		if changed {
+			edits = append(edits, frontmatter.Edit{Key: "blocked_by", Value: &out})
+		}
+	}
+	return edits
 }
 
 // Derived is what an Item file's name and folder say about it, which a
@@ -1060,6 +1071,14 @@ func frontmatterValue(file []byte, key string) *yaml.Node {
 		}
 	}
 	return nil
+}
+
+// Same reports whether a and b are both nil or both hold the same value.
+func Same[T comparable](a, b *T) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	return *a == *b
 }
 
 // TruncateText cuts s to at most limit Unicode characters, reporting
