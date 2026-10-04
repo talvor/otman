@@ -75,6 +75,16 @@ func Repair(file []byte, d Derived, r Repairs, now time.Time) ([]byte, bool, err
 	return rewrite(file, d, edits, transform, now, false)
 }
 
+// Renumber rewrites Item file, renamed to the identity d, for its new
+// number: it resets the frontmatter id to d.ID and appends c, the comment
+// that records the old number, setting the updated time to now. Nothing
+// else is healed. It fails as AppendComment does.
+func Renumber(file []byte, d Derived, c Comment, now time.Time) ([]byte, error) {
+	edits := []frontmatter.Edit{{Key: "id", Value: str(d.ID)}}
+	out, _, err := rewrite(file, d, edits, func(b []byte) ([]byte, error) { return appendComment(b, c) }, now, false)
+	return out, err
+}
+
 // RestorableMarker reports whether file, an Item file with frontmatter, has
 // no comments marker line but a "## Comments" heading whose trailing text
 // parses as comments, so that RestoreMarker can put the marker back without

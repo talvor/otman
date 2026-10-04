@@ -20,7 +20,8 @@ dangling_link Projects/DOC/Issues/DOC-12 Dangling links.md: DOC-12 parent link [
 dangling_link Projects/DOC/Issues/DOC-12 Dangling links.md: DOC-12 blocked_by link [[Nothing matches]] matches no Item in Project DOC (fix: none)
 malformed_value Projects/DOC/Issues/DOC-13 Malformed assignee.md: the assignee value of DOC-13 is a list or mapping, not a name, so it reads as absent (fix: none)
 ambiguous_link Projects/DOC/Issues/DOC-14 Ambiguous parent.md: DOC-14 parent link [[DOC-16 Clean]] matches 2 Items: Projects/DOC/Issues/DOC-16 Clean.md, Projects/DOC/Notes/DOC-16 Clean.md (fix: none)
-unexpected_folder Projects/DOC/Notes/DOC-16 Clean.md: DOC-16 is in Projects/DOC/Notes, not in a Kind folder of Project DOC (fix: none)
+duplicate_number Projects/DOC/Notes/DOC-16 Clean.md: DOC-16 is also the number of Projects/DOC/Issues/DOC-16 Clean.md, which keeps it as the Item first by filename (fix: auto)
+unexpected_folder Projects/DOC/Notes/DOC-16 Clean.md: DOC-16 is in Projects/DOC/Notes, not in a Kind folder of Project DOC (fix: auto)
 id_mismatch Projects/OTH/Issues/OTH-1 Mismatch.md: OTH-1 has frontmatter id "OTH-2"; its identity is its filename prefix OTH-1 (fix: auto)
 -- stderr --
 
@@ -66,21 +67,15 @@ exit: 4
         "path": "Projects/DOC/Issues/DOC-13 Malformed assignee.md",
         "message": "the assignee value of DOC-13 is a list or mapping, not a name, so it reads as absent",
         "fix": "none"
-      },
-      {
-        "code": "ambiguous_link",
-        "path": "Projects/DOC/Issues/DOC-14 Ambiguous parent.md",
-        "message": "DOC-14 parent link [[DOC-16 Clean]] matches 2 Items: Projects/DOC/Issues/DOC-16 Clean.md, Projects/DOC/Notes/DOC-16 Clean.md",
-        "fix": "none"
-      },
-      {
-        "code": "unexpected_folder",
-        "path": "Projects/DOC/Notes/DOC-16 Clean.md",
-        "message": "DOC-16 is in Projects/DOC/Notes, not in a Kind folder of Project DOC",
-        "fix": "none"
       }
     ],
     "fixed": [
+      {
+        "code": "duplicate_number",
+        "path": "Projects/DOC/Notes/DOC-16 Clean.md",
+        "old": "DOC-16",
+        "new": "DOC-17"
+      },
       {
         "code": "title_drift",
         "path": "Projects/DOC/Issues/DOC-1 Old name.md",
@@ -146,6 +141,12 @@ exit: 4
         "path": "Projects/DOC/Issues/DOC-12 Dangling links.md",
         "old": "\"[[DOC-3 Moved elsewhere]]\"",
         "new": "\"[[DOC-3 Outside a Kind folder]]\""
+      },
+      {
+        "code": "unexpected_folder",
+        "path": "Projects/DOC/Notes/DOC-17 Clean.md",
+        "old": "\"Projects/DOC/Notes\"",
+        "new": "\"Projects/DOC/Issues\""
       },
       {
         "code": "id_mismatch",
@@ -280,6 +281,24 @@ Nothing wrong here.
 
 <!-- otman:comments -->
 ## Comments
+-- vault/Projects/DOC/Issues/DOC-17 Clean.md --
+---
+id: DOC-17
+title: Clean
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+A copy of DOC-16, made by hand.
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-02T03:04:05Z · talvor
+Renumbered from DOC-16 by otman doctor
 -- vault/Projects/DOC/Issues/DOC-2 Kind drift.md --
 ---
 id: DOC-2
@@ -379,21 +398,6 @@ The frontmatter is flow style.
 <!-- otman:comments -->
 ## Comments
 vault/Projects/DOC/Notes/
--- vault/Projects/DOC/Notes/DOC-16 Clean.md --
----
-id: DOC-16
-title: Clean
-kind: issue
-status: open
-labels: []
-assignee: null
-created: 2026-01-01T10:00:00Z
-updated: 2026-01-01T11:00:00Z
----
-A copy of DOC-16, made by hand.
-
-<!-- otman:comments -->
-## Comments
 vault/Projects/DOC/PRDs/
 -- vault/Projects/DOC/PRDs/DOC-3 Outside a Kind folder.md --
 ---

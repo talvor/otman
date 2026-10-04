@@ -332,15 +332,16 @@ func TestDoctorBlockedRepairStaysFinding(t *testing.T) {
 }
 
 // A title that differs only in case from another Item's filename on the
-// same number is a target that is taken. --fix leaves the Item as a
-// finding instead of aborting the run.
+// same number is a target that is taken, once the duplicate rules leave
+// it there: an Item whose frontmatter cannot be read is never renumbered.
+// --fix leaves the Item as a finding instead of aborting the run.
 func TestDoctorDuplicateCaseTarget(t *testing.T) {
 	runGolden(t, goldenCase{
 		name: "doctor-duplicate-case-target", fixture: "doctor", files: doctorConfig,
 		steps: []step{
 			{write: map[string]string{
 				"vault/Projects/DOC/Issues/DOC-37 Foo.md": doctorItemText("DOC-37", "foo", ""),
-				"vault/Projects/DOC/Issues/DOC-37 foo.md": doctorItemText("DOC-37", "Other", ""),
+				"vault/Projects/DOC/Issues/DOC-37 foo.md": "---\n{id: DOC-37, title: Other}\n---\n",
 			}, args: []string{"doctor", "--fix", "--prefer", "frontmatter", "--json"}},
 		},
 	})

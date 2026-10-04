@@ -46,25 +46,31 @@ exit: 4
         "fix": "none"
       },
       {
-        "code": "ambiguous_link",
-        "path": "Projects/DOC/Issues/DOC-14 Ambiguous parent.md",
-        "message": "DOC-14 parent link [[DOC-16 Clean]] matches 2 Items: Projects/DOC/Issues/DOC-16 Clean.md, Projects/DOC/Notes/DOC-16 Clean.md",
-        "fix": "none"
-      },
-      {
-        "code": "unexpected_folder",
-        "path": "Projects/DOC/Notes/DOC-16 Clean.md",
-        "message": "DOC-16 is in Projects/DOC/Notes, not in a Kind folder of Project DOC",
-        "fix": "none"
-      },
-      {
         "code": "title_drift",
         "path": "Projects/DOC/Issues/DOC-37 Foo.md",
         "message": "DOC-37 has title \"foo\", but its filename says \"Foo\"",
         "fix": "none"
+      },
+      {
+        "code": "duplicate_number",
+        "path": "Projects/DOC/Issues/DOC-37 foo.md",
+        "message": "DOC-37 is also the number of Projects/DOC/Issues/DOC-37 Foo.md, which keeps it as the Item created earlier",
+        "fix": "none"
+      },
+      {
+        "code": "malformed_frontmatter",
+        "path": "Projects/DOC/Issues/DOC-37 foo.md",
+        "message": "cannot read the frontmatter of Projects/DOC/Issues/DOC-37 foo.md: the frontmatter is flow-style YAML",
+        "fix": "none"
       }
     ],
     "fixed": [
+      {
+        "code": "duplicate_number",
+        "path": "Projects/DOC/Notes/DOC-16 Clean.md",
+        "old": "DOC-16",
+        "new": "DOC-38"
+      },
       {
         "code": "title_drift",
         "path": "Projects/DOC/Issues/DOC-1 Old name.md",
@@ -132,10 +138,10 @@ exit: 4
         "new": "\"[[DOC-3 Outside a Kind folder]]\""
       },
       {
-        "code": "title_drift",
-        "path": "Projects/DOC/Issues/DOC-37 foo.md",
-        "old": "\"DOC-37 foo.md\"",
-        "new": "\"DOC-37 Other.md\""
+        "code": "unexpected_folder",
+        "path": "Projects/DOC/Notes/DOC-38 Clean.md",
+        "old": "\"Projects/DOC/Notes\"",
+        "new": "\"Projects/DOC/Issues\""
       }
     ]
   },
@@ -277,19 +283,28 @@ updated: 2026-01-02T03:04:05Z
 
 <!-- otman:comments -->
 ## Comments
--- vault/Projects/DOC/Issues/DOC-37 Other.md --
+-- vault/Projects/DOC/Issues/DOC-37 foo.md --
 ---
-id: DOC-37
-title: Other
+{id: DOC-37, title: Other}
+---
+-- vault/Projects/DOC/Issues/DOC-38 Clean.md --
+---
+id: DOC-38
+title: Clean
 kind: issue
 status: open
+labels: []
 assignee: null
-created: 2026-01-02T03:04:05Z
+created: 2026-01-01T10:00:00Z
 updated: 2026-01-02T03:04:05Z
 ---
+A copy of DOC-16, made by hand.
 
 <!-- otman:comments -->
 ## Comments
+
+### 2026-01-02T03:04:05Z · talvor
+Renumbered from DOC-16 by otman doctor
 -- vault/Projects/DOC/Issues/DOC-4 Wrong id.md --
 ---
 id: DOC-4
@@ -376,21 +391,6 @@ The frontmatter is flow style.
 <!-- otman:comments -->
 ## Comments
 vault/Projects/DOC/Notes/
--- vault/Projects/DOC/Notes/DOC-16 Clean.md --
----
-id: DOC-16
-title: Clean
-kind: issue
-status: open
-labels: []
-assignee: null
-created: 2026-01-01T10:00:00Z
-updated: 2026-01-01T11:00:00Z
----
-A copy of DOC-16, made by hand.
-
-<!-- otman:comments -->
-## Comments
 vault/Projects/DOC/PRDs/
 -- vault/Projects/DOC/PRDs/DOC-3 Outside a Kind folder.md --
 ---

@@ -14,6 +14,13 @@ item:
   rev: f9e4cf0a3295
 changed: true
 -- stderr --
+warning:
+  code: duplicate_number
+  message: "DOC-16 is the number of 2 Items: Projects/DOC/Issues/DOC-16 Clean.md, Projects/DOC/Notes/DOC-16 Clean.md"
+  details:
+    id: DOC-16
+    paths[2]: Projects/DOC/Issues/DOC-16 Clean.md,Projects/DOC/Notes/DOC-16 Clean.md
+  hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ write "vault/Projects/DOC/Issues/DOC-17 Hand edit.md"
 
@@ -42,6 +49,13 @@ warning:
     path: Projects/DOC/Issues/DOC-17 Hand edit.md
     title: Retyped by hand
   hint: otman shows the frontmatter title; 'otman doctor --fix --prefer frontmatter|file' settles which is right
+warning:
+  code: duplicate_number
+  message: "DOC-16 is the number of 2 Items: Projects/DOC/Issues/DOC-16 Clean.md, Projects/DOC/Notes/DOC-16 Clean.md"
+  details:
+    id: DOC-16
+    paths[2]: Projects/DOC/Issues/DOC-16 Clean.md,Projects/DOC/Notes/DOC-16 Clean.md
+  hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ rm "vault/Projects/DOC/Issues/DOC-17 Hand edit.md"
 

@@ -1,0 +1,179 @@
+$ write "vault/Projects/DUP/Issues/DUP-3 Flow.md"
+
+$ write "vault/Projects/DUP/Issues/DUP-5 No date.md"
+
+$ otman doctor --fix
+exit: 4
+-- stdout --
+findings[2]{code,path,message,fix}:
+  duplicate_number,Projects/DUP/Issues/DUP-3 Flow.md,"DUP-3 is also the number of Projects/DUP/Issues/DUP-3 Links.md, which keeps it as the Item created earlier",none
+  malformed_frontmatter,Projects/DUP/Issues/DUP-3 Flow.md,"cannot read the frontmatter of Projects/DUP/Issues/DUP-3 Flow.md: the frontmatter is flow-style YAML",none
+fixed[3]{code,path,old,new}:
+  duplicate_number,Projects/DUP/Issues/DUP-1 First take.md,DUP-1,DUP-6
+  duplicate_number,Projects/DUP/Specs/DUP-2 Tie b.md,DUP-2,DUP-7
+  duplicate_number,Projects/DUP/Issues/DUP-5 No date.md,DUP-5,DUP-8
+-- stderr --
+
+$ otman doctor --json
+exit: 4
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "findings": [
+      {
+        "code": "duplicate_number",
+        "path": "Projects/DUP/Issues/DUP-3 Flow.md",
+        "message": "DUP-3 is also the number of Projects/DUP/Issues/DUP-3 Links.md, which keeps it as the Item created earlier",
+        "fix": "none"
+      },
+      {
+        "code": "malformed_frontmatter",
+        "path": "Projects/DUP/Issues/DUP-3 Flow.md",
+        "message": "cannot read the frontmatter of Projects/DUP/Issues/DUP-3 Flow.md: the frontmatter is flow-style YAML",
+        "fix": "none"
+      }
+    ],
+    "fixed": []
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "DUP"
+actor = "talvor"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Notes/
+-- vault/Notes/Daily.md --
+Daily note: see [[DUP-7 Tie b#Heading]] and [[DUP-2 Tie a]].
+vault/Projects/
+vault/Projects/DUP/
+-- vault/Projects/DUP/DUP.md --
+---
+name: Duplicates
+kind: project
+---
+vault/Projects/DUP/Issues/
+-- vault/Projects/DUP/Issues/DUP-1 Second take.md --
+---
+id: DUP-1
+title: Second take
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T09:00:00Z
+updated: 2026-01-01T09:00:00Z
+---
+Made on the desktop, earlier.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DUP/Issues/DUP-2 Tie a.md --
+---
+id: DUP-2
+title: Tie a
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DUP/Issues/DUP-3 Flow.md --
+---
+{id: DUP-3, title: Flow}
+---
+-- vault/Projects/DUP/Issues/DUP-3 Links.md --
+---
+id: DUP-3
+title: Links
+kind: issue
+status: open
+parent: "[[DUP-6 First take]]"
+blocked_by:
+  - "[[DUP-7 Tie b]]"
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+Follows [[DUP-6 First take|the first take]] and [[DUP-1 Second take]].
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DUP/Issues/DUP-5 Later.md --
+---
+id: DUP-5
+title: Later
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DUP/Issues/DUP-6 First take.md --
+---
+id: DUP-6
+title: First take
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+Made on the laptop, later.
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-02T03:04:05Z · talvor
+Renumbered from DUP-1 by otman doctor
+-- vault/Projects/DUP/Issues/DUP-8 No date.md --
+---
+id: DUP-8
+title: No date
+kind: issue
+status: open
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-02T03:04:05Z · talvor
+Renumbered from DUP-5 by otman doctor
+vault/Projects/DUP/Specs/
+-- vault/Projects/DUP/Specs/DUP-7 Tie b.md --
+---
+id: DUP-7
+title: Tie b
+kind: spec
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-02T03:04:05Z · talvor
+Renumbered from DUP-2 by otman doctor

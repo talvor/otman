@@ -2,6 +2,7 @@ $ otman doctor --fix --prefer file
 tty: true
 exit: 4
 -- stdout --
+fixed duplicate_number Projects/DOC/Notes/DOC-16 Clean.md: DOC-16 → DOC-17
 fixed title_drift Projects/DOC/Issues/DOC-1 Old name.md: "New name" → "Old name"
 fixed kind_drift Projects/DOC/Issues/DOC-2 Kind drift.md: "spec" → "issue"
 fixed unexpected_folder Projects/DOC/Notes/DOC-3 Outside a Kind folder.md: "Projects/DOC/Notes" → "Projects/DOC/PRDs"
@@ -13,28 +14,25 @@ fixed invalid_label Projects/DOC/Issues/DOC-6 Labels.md: "Needs Triage!" → "ne
 fixed duplicate_label Projects/DOC/Issues/DOC-6 Labels.md: "BUG", "bug" → "BUG"
 fixed missing_comments_marker Projects/DOC/Issues/DOC-7 Marker gone.md: (no marker) → restored before ## Comments
 fixed dangling_link Projects/DOC/Issues/DOC-12 Dangling links.md: "[[DOC-3 Moved elsewhere]]" → "[[DOC-3 Outside a Kind folder]]"
+fixed unexpected_folder Projects/DOC/Notes/DOC-17 Clean.md: "Projects/DOC/Notes" → "Projects/DOC/Issues"
 missing_comments_marker Projects/DOC/Issues/DOC-8 Stray text.md: DOC-8 has no <!-- otman:comments --> line, so its comments are read from the last ## Comments heading (fix: none)
 malformed_frontmatter Projects/DOC/Issues/DOC-9 Flow style.md: cannot read the frontmatter of Projects/DOC/Issues/DOC-9 Flow style.md: the frontmatter is flow-style YAML (fix: none)
 invalid_status Projects/DOC/Issues/DOC-10 Bad status.md: DOC-10 has status "maybe", not open or closed (fix: none)
 duplicate_comments_markers Projects/DOC/Issues/DOC-11 Two markers.md: DOC-11 has 2 <!-- otman:comments --> lines, so its comments are read from the first (fix: none)
 dangling_link Projects/DOC/Issues/DOC-12 Dangling links.md: DOC-12 blocked_by link [[Nothing matches]] matches no Item in Project DOC (fix: none)
 malformed_value Projects/DOC/Issues/DOC-13 Malformed assignee.md: the assignee value of DOC-13 is a list or mapping, not a name, so it reads as absent (fix: none)
-ambiguous_link Projects/DOC/Issues/DOC-14 Ambiguous parent.md: DOC-14 parent link [[DOC-16 Clean]] matches 2 Items: Projects/DOC/Issues/DOC-16 Clean.md, Projects/DOC/Notes/DOC-16 Clean.md (fix: none)
-unexpected_folder Projects/DOC/Notes/DOC-16 Clean.md: DOC-16 is in Projects/DOC/Notes, not in a Kind folder of Project DOC (fix: none)
 -- stderr --
 
 $ otman doctor
 exit: 4
 -- stdout --
-findings[8]{code,path,message,fix}:
+findings[6]{code,path,message,fix}:
   missing_comments_marker,Projects/DOC/Issues/DOC-8 Stray text.md,"DOC-8 has no <!-- otman:comments --> line, so its comments are read from the last ## Comments heading",none
   malformed_frontmatter,Projects/DOC/Issues/DOC-9 Flow style.md,"cannot read the frontmatter of Projects/DOC/Issues/DOC-9 Flow style.md: the frontmatter is flow-style YAML",none
   invalid_status,Projects/DOC/Issues/DOC-10 Bad status.md,"DOC-10 has status \"maybe\", not open or closed",none
   duplicate_comments_markers,Projects/DOC/Issues/DOC-11 Two markers.md,"DOC-11 has 2 <!-- otman:comments --> lines, so its comments are read from the first",none
   dangling_link,Projects/DOC/Issues/DOC-12 Dangling links.md,"DOC-12 blocked_by link [[Nothing matches]] matches no Item in Project DOC",none
   malformed_value,Projects/DOC/Issues/DOC-13 Malformed assignee.md,"the assignee value of DOC-13 is a list or mapping, not a name, so it reads as absent",none
-  ambiguous_link,Projects/DOC/Issues/DOC-14 Ambiguous parent.md,"DOC-14 parent link [[DOC-16 Clean]] matches 2 Items: Projects/DOC/Issues/DOC-16 Clean.md, Projects/DOC/Notes/DOC-16 Clean.md",none
-  unexpected_folder,Projects/DOC/Notes/DOC-16 Clean.md,"DOC-16 is in Projects/DOC/Notes, not in a Kind folder of Project DOC",none
 fixed[0]:
 -- stderr --
 
@@ -159,6 +157,24 @@ Nothing wrong here.
 
 <!-- otman:comments -->
 ## Comments
+-- vault/Projects/DOC/Issues/DOC-17 Clean.md --
+---
+id: DOC-17
+title: Clean
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+A copy of DOC-16, made by hand.
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-02T03:04:05Z · talvor
+Renumbered from DOC-16 by otman doctor
 -- vault/Projects/DOC/Issues/DOC-2 Kind drift.md --
 ---
 id: DOC-2
@@ -258,21 +274,6 @@ The frontmatter is flow style.
 <!-- otman:comments -->
 ## Comments
 vault/Projects/DOC/Notes/
--- vault/Projects/DOC/Notes/DOC-16 Clean.md --
----
-id: DOC-16
-title: Clean
-kind: issue
-status: open
-labels: []
-assignee: null
-created: 2026-01-01T10:00:00Z
-updated: 2026-01-01T11:00:00Z
----
-A copy of DOC-16, made by hand.
-
-<!-- otman:comments -->
-## Comments
 vault/Projects/DOC/PRDs/
 -- vault/Projects/DOC/PRDs/DOC-3 Outside a Kind folder.md --
 ---

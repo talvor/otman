@@ -61,6 +61,18 @@ exit: 0
         "path": "Projects/REL/Issues/REL-23 Unreadable.md"
       },
       "hint": "fix the YAML between the --- lines in Projects/REL/Issues/REL-23 Unreadable.md"
+    },
+    {
+      "code": "duplicate_number",
+      "message": "REL-7 is the number of 2 Items: Projects/REL/Issues/REL-7 Twin.md, Projects/REL/Specs/REL-7 Twin.md",
+      "details": {
+        "id": "REL-7",
+        "paths": [
+          "Projects/REL/Issues/REL-7 Twin.md",
+          "Projects/REL/Specs/REL-7 Twin.md"
+        ]
+      },
+      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }
@@ -98,6 +110,18 @@ exit: 0
         "path": "Projects/REL/Issues/REL-23 Unreadable.md"
       },
       "hint": "fix the YAML between the --- lines in Projects/REL/Issues/REL-23 Unreadable.md"
+    },
+    {
+      "code": "duplicate_number",
+      "message": "REL-7 is the number of 2 Items: Projects/REL/Issues/REL-7 Twin.md, Projects/REL/Specs/REL-7 Twin.md",
+      "details": {
+        "id": "REL-7",
+        "paths": [
+          "Projects/REL/Issues/REL-7 Twin.md",
+          "Projects/REL/Specs/REL-7 Twin.md"
+        ]
+      },
+      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }
@@ -183,6 +207,8 @@ REL-36  issue  open    -         Lost parent
 -- stderr --
 warning[malformed_frontmatter]: cannot read the frontmatter of Projects/REL/Issues/REL-23 Unreadable.md: the frontmatter is not valid YAML: yaml: line 1: did not find expected ',' or ']'
 hint: fix the YAML between the --- lines in Projects/REL/Issues/REL-23 Unreadable.md
+warning[duplicate_number]: REL-7 is the number of 2 Items: Projects/REL/Issues/REL-7 Twin.md, Projects/REL/Specs/REL-7 Twin.md
+hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 == tree ==
 config/

@@ -155,7 +155,7 @@ func (v *Vault) adopt() error {
 	}
 	highest := make(map[string]int, len(keys))
 	for _, k := range keys {
-		files, err := v.ItemFiles(k)
+		files, err := v.itemFiles(k)
 		if err != nil {
 			return err
 		}

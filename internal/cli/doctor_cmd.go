@@ -175,6 +175,51 @@ func (a *app) runDoctor(v *vault.Vault, s resolved, ref string, sel config.Value
 		if err != nil {
 			return res, ws, ioError(err)
 		}
+		// Duplicate numbers are settled first, so that a misplaced Item
+		// whose number is taken in its own Project can then move there.
+		renumbers, err := planRenumbers(v, all)
+		if err != nil {
+			return res, ws, ioError(err)
+		}
+		dups := map[string]doctorFinding{} // by path
+		vacating := map[string]bool{}      // the paths --fix renumbers away
+		renumbered := false
+		narrowed := only != nil
+		var onlyPath string
+		if narrowed {
+			onlyPath = only[0].Path
+		}
+		for _, r := range renumbers {
+			if narrowed && r.file.Path != onlyPath {
+				continue
+			}
+			if !f.fix || !r.rewritable {
+				dups[r.file.Path] = r.finding()
+				vacating[r.file.Path] = r.rewritable
+				continue
+			}
+			moved, err := a.renumber(v, s, r)
+			if err != nil {
+				// The Item may be part-way through its journal, so it is
+				// left for the next run.
+				ws = append(ws, repairBlocked(r.file, err))
+				res.Findings = append(res.Findings, r.finding())
+				if narrowed {
+					only = []vault.ItemFile{}
+				}
+				continue
+			}
+			renumbered = true
+			res.Fixed = append(res.Fixed, doctorFix{Code: "duplicate_number", Path: r.file.Path, Old: r.file.ID(), New: moved.ID()})
+			if narrowed {
+				only = []vault.ItemFile{moved}
+			}
+		}
+		if renumbered {
+			if all, err = v.ItemFiles(key); err != nil {
+				return res, ws, ioError(err)
+			}
+		}
 		targets := all
 		if only != nil {
 			targets = only
@@ -190,7 +235,10 @@ func (a *app) runDoctor(v *vault.Vault, s resolved, ref string, sel config.Value
 			} else if ok {
 				snap = &got
 			}
-			pl := planDoctor(v, file, data, all, snap, f.prefer)
+			pl := planDoctor(v, file, data, all, snap, f.prefer, vacating)
+			if fd, ok := dups[file.Path]; ok {
+				res.Findings = append(res.Findings, fd)
+			}
 			if !f.fix {
 				for _, fd := range pl.findings {
 					res.Findings = append(res.Findings, fd.doctorFinding)
@@ -212,6 +260,18 @@ func (a *app) runDoctor(v *vault.Vault, s resolved, ref string, sel config.Value
 				if all, err = v.ItemFiles(key); err != nil {
 					return res, ws, ioError(err)
 				}
+			}
+		}
+		if ref == "" {
+			// A file under the Project's folder whose prefix names no
+			// Project is no Item, so it is only reported.
+			strays, err := v.StrayFiles(key)
+			if err != nil {
+				return res, ws, ioError(err)
+			}
+			for _, file := range strays {
+				pr := strayItem(file)
+				res.Findings = append(res.Findings, doctorFinding{Code: pr.Code, Path: file.Path, Message: pr.Message, Fix: "none"})
 			}
 		}
 	}
@@ -260,8 +320,9 @@ func (fd *planned) set(fix, old, new string) {
 // planDoctor finds the Drift of Item file f, whose bytes are data, among
 // the Items of its Project, all, and plans how --fix repairs it. snap is
 // the snapshot of f, nil when the db has none, and prefer settles the
-// findings that need a choice.
-func planDoctor(v *vault.Vault, f vault.ItemFile, data []byte, all []vault.ItemFile, snap *vault.Snapshot, prefer string) doctorPlan {
+// findings that need a choice. vacating holds the paths that --fix
+// renumbers away before it gets to f, which a move may then take.
+func planDoctor(v *vault.Vault, f vault.ItemFile, data []byte, all []vault.ItemFile, snap *vault.Snapshot, prefer string, vacating map[string]bool) doctorPlan {
 	var pl doctorPlan
 	p := item.Parse(data)
 	d := f.Derived()
@@ -342,7 +403,7 @@ func planDoctor(v *vault.Vault, f vault.ItemFile, data []byte, all []vault.ItemF
 				fd.set(kindFix, quoteArg(string(*p.Kind)), quoteArg(string(kind)))
 				pl.repairs.Kind = &kind
 			}
-		case "unexpected_folder":
+		case "unexpected_folder", "misplaced_item":
 			if p.Kind != nil {
 				kind := *p.Kind
 				moveKind = &kind
@@ -407,7 +468,7 @@ func planDoctor(v *vault.Vault, f vault.ItemFile, data []byte, all []vault.ItemF
 		if renameTitle {
 			name = item.Filename(f.Key, f.Number, *p.Title)
 		}
-		if to := path.Join(dir, name); v.CheckMove(f, to) != nil {
+		if to := path.Join(dir, name); !movable(v, f, to, vacating) {
 			for _, fd := range moves {
 				fd.Fix, fd.applied = "none", false
 			}
@@ -425,6 +486,19 @@ func planDoctor(v *vault.Vault, f vault.ItemFile, data []byte, all []vault.ItemF
 		}
 	}
 	return pl
+}
+
+// movable reports whether Item file f can move to the Vault-relative path
+// to: nothing else is there, or what is there is in vacating, renumbered
+// away before f moves. When f is in vacating itself, it moves under a new
+// number above every number on disk, so no file is in its way.
+func movable(v *vault.Vault, f vault.ItemFile, to string, vacating map[string]bool) bool {
+	if vacating[f.Path] {
+		return true
+	}
+	err := v.CheckMove(f, to)
+	var exists *vault.TargetExistsError
+	return err == nil || errors.As(err, &exists) && vacating[exists.Target]
 }
 
 // sideOf says which side of a disagreement wins and how it was settled. A

@@ -1,0 +1,144 @@
+$ otman doctor DUP-1 Second take.md
+exit: 0
+-- stdout --
+findings[0]:
+fixed[0]:
+-- stderr --
+
+$ otman doctor Projects/DUP/Specs/DUP-2 Tie b.md --fix --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "findings": [],
+    "fixed": [
+      {
+        "code": "duplicate_number",
+        "path": "Projects/DUP/Specs/DUP-2 Tie b.md",
+        "old": "DUP-2",
+        "new": "DUP-6"
+      }
+    ]
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "DUP"
+actor = "talvor"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Notes/
+-- vault/Notes/Daily.md --
+Daily note: see [[DUP-6 Tie b#Heading]] and [[DUP-2 Tie a]].
+vault/Projects/
+vault/Projects/DUP/
+-- vault/Projects/DUP/DUP.md --
+---
+name: Duplicates
+kind: project
+---
+vault/Projects/DUP/Issues/
+-- vault/Projects/DUP/Issues/DUP-1 First take.md --
+---
+id: DUP-1
+title: First take
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+Made on the laptop, later.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DUP/Issues/DUP-1 Second take.md --
+---
+id: DUP-1
+title: Second take
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T09:00:00Z
+updated: 2026-01-01T09:00:00Z
+---
+Made on the desktop, earlier.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DUP/Issues/DUP-2 Tie a.md --
+---
+id: DUP-2
+title: Tie a
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DUP/Issues/DUP-3 Links.md --
+---
+id: DUP-3
+title: Links
+kind: issue
+status: open
+parent: "[[DUP-1 First take]]"
+blocked_by:
+  - "[[DUP-6 Tie b]]"
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+Follows [[DUP-1 First take|the first take]] and [[DUP-1 Second take]].
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DUP/Issues/DUP-5 Later.md --
+---
+id: DUP-5
+title: Later
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/DUP/Specs/
+-- vault/Projects/DUP/Specs/DUP-6 Tie b.md --
+---
+id: DUP-6
+title: Tie b
+kind: spec
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-02T03:04:05Z · talvor
+Renumbered from DUP-2 by otman doctor

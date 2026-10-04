@@ -46,6 +46,10 @@ type Vault struct {
 	lock *os.File
 	db   *sql.DB
 
+	// scanned holds the keys of the Projects whose Item files have been
+	// listed (see Scanned).
+	scanned map[string]bool
+
 	// Fault is a test-only fault injector for journaled operations, such
 	// as a retitle: it is called before journal step i with i, and with
 	// the number of steps after the last one, and an error from it aborts

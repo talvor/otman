@@ -14,6 +14,8 @@ warning[invalid_status]: OTM-6 has status "wip", not open or closed, so it is no
 hint: 'otman view OTM-6' shows it; run 'otman reopen OTM-6' or 'otman close OTM-6' to set it
 warning[malformed_frontmatter]: cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Unreadable.md: the frontmatter is not valid YAML: yaml: line 1: did not find expected ',' or ']'
 hint: fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Unreadable.md
+warning[duplicate_number]: OTM-4 is the number of 2 Items: Projects/OTM/Issues/OTM-4 Status bar.md, Projects/OTM/PRDs/OTM-4 Status bar copy.md
+hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ otman list --limit 2 --offset 2
 tty: true
@@ -31,6 +33,8 @@ warning[invalid_status]: OTM-6 has status "wip", not open or closed, so it is no
 hint: 'otman view OTM-6' shows it; run 'otman reopen OTM-6' or 'otman close OTM-6' to set it
 warning[malformed_frontmatter]: cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Unreadable.md: the frontmatter is not valid YAML: yaml: line 1: did not find expected ',' or ']'
 hint: fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Unreadable.md
+warning[duplicate_number]: OTM-4 is the number of 2 Items: Projects/OTM/Issues/OTM-4 Status bar.md, Projects/OTM/PRDs/OTM-4 Status bar copy.md
+hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ otman list --limit 2 --offset 4 --json
 exit: 0
@@ -84,6 +88,18 @@ exit: 0
         "path": "Projects/OTM/Issues/OTM-7 Unreadable.md"
       },
       "hint": "fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Unreadable.md"
+    },
+    {
+      "code": "duplicate_number",
+      "message": "OTM-4 is the number of 2 Items: Projects/OTM/Issues/OTM-4 Status bar.md, Projects/OTM/PRDs/OTM-4 Status bar copy.md",
+      "details": {
+        "id": "OTM-4",
+        "paths": [
+          "Projects/OTM/Issues/OTM-4 Status bar.md",
+          "Projects/OTM/PRDs/OTM-4 Status bar copy.md"
+        ]
+      },
+      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }
@@ -139,6 +155,13 @@ warning:
   details:
     path: Projects/OTM/Issues/OTM-7 Unreadable.md
   hint: fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Unreadable.md
+warning:
+  code: duplicate_number
+  message: "OTM-4 is the number of 2 Items: Projects/OTM/Issues/OTM-4 Status bar.md, Projects/OTM/PRDs/OTM-4 Status bar copy.md"
+  details:
+    id: OTM-4
+    paths[2]: Projects/OTM/Issues/OTM-4 Status bar.md,Projects/OTM/PRDs/OTM-4 Status bar copy.md
+  hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ otman list --offset 5 --json
 exit: 0
@@ -179,6 +202,18 @@ exit: 0
         "path": "Projects/OTM/Issues/OTM-7 Unreadable.md"
       },
       "hint": "fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Unreadable.md"
+    },
+    {
+      "code": "duplicate_number",
+      "message": "OTM-4 is the number of 2 Items: Projects/OTM/Issues/OTM-4 Status bar.md, Projects/OTM/PRDs/OTM-4 Status bar copy.md",
+      "details": {
+        "id": "OTM-4",
+        "paths": [
+          "Projects/OTM/Issues/OTM-4 Status bar.md",
+          "Projects/OTM/PRDs/OTM-4 Status bar copy.md"
+        ]
+      },
+      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }
@@ -196,6 +231,8 @@ warning[invalid_status]: OTM-6 has status "wip", not open or closed, so it is no
 hint: 'otman view OTM-6' shows it; run 'otman reopen OTM-6' or 'otman close OTM-6' to set it
 warning[malformed_frontmatter]: cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Unreadable.md: the frontmatter is not valid YAML: yaml: line 1: did not find expected ',' or ']'
 hint: fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Unreadable.md
+warning[duplicate_number]: OTM-4 is the number of 2 Items: Projects/OTM/Issues/OTM-4 Status bar.md, Projects/OTM/PRDs/OTM-4 Status bar copy.md
+hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ otman list --limit 9223372036854775807 --offset 6 --state all --all-projects --json
 exit: 0
@@ -285,6 +322,18 @@ exit: 0
         "path": "Projects/OTM/Issues/OTM-7 Unreadable.md"
       },
       "hint": "fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Unreadable.md"
+    },
+    {
+      "code": "duplicate_number",
+      "message": "OTM-4 is the number of 2 Items: Projects/OTM/Issues/OTM-4 Status bar.md, Projects/OTM/PRDs/OTM-4 Status bar copy.md",
+      "details": {
+        "id": "OTM-4",
+        "paths": [
+          "Projects/OTM/Issues/OTM-4 Status bar.md",
+          "Projects/OTM/PRDs/OTM-4 Status bar copy.md"
+        ]
+      },
+      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }
@@ -312,6 +361,8 @@ warning[invalid_status]: OTM-6 has status "wip", not open or closed, so it is no
 hint: 'otman view OTM-6' shows it; run 'otman reopen OTM-6' or 'otman close OTM-6' to set it
 warning[malformed_frontmatter]: cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Unreadable.md: the frontmatter is not valid YAML: yaml: line 1: did not find expected ',' or ']'
 hint: fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Unreadable.md
+warning[duplicate_number]: OTM-4 is the number of 2 Items: Projects/OTM/Issues/OTM-4 Status bar.md, Projects/OTM/PRDs/OTM-4 Status bar copy.md
+hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ otman list --limit 1 --all-projects --kind prd --json
 exit: 0
@@ -363,6 +414,18 @@ exit: 0
         "path": "Projects/OTM/Issues/OTM-7 Unreadable.md"
       },
       "hint": "fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Unreadable.md"
+    },
+    {
+      "code": "duplicate_number",
+      "message": "OTM-4 is the number of 2 Items: Projects/OTM/Issues/OTM-4 Status bar.md, Projects/OTM/PRDs/OTM-4 Status bar copy.md",
+      "details": {
+        "id": "OTM-4",
+        "paths": [
+          "Projects/OTM/Issues/OTM-4 Status bar.md",
+          "Projects/OTM/PRDs/OTM-4 Status bar copy.md"
+        ]
+      },
+      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }

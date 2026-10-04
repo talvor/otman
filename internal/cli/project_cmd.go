@@ -108,13 +108,16 @@ func projectNotFound(key string, details map[string]any) error {
 }
 
 // withVault opens the Vault s selects, runs fn and closes the Vault,
-// releasing the lock.
+// releasing the lock. Whatever fn emits warns about the duplicate numbers
+// of each Project whose Items it read.
 func (a *app) withVault(s resolved, fn func(*vault.Vault, []output.Problem) error) error {
 	v, warnings, err := a.openVault(s)
 	if err != nil {
 		return err
 	}
+	a.vault = v
 	err = fn(v, warnings)
+	a.vault = nil
 	if cerr := v.Close(); err == nil && cerr != nil {
 		err = ioError(cerr)
 	}

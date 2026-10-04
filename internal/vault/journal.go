@@ -27,7 +27,7 @@ const JournalDir = "journal"
 // operation interrupted part-way is finished by the next otman command.
 type Journal struct {
 	Version   int    `json:"version"`
-	Operation string `json:"operation"` // RetitleOperation or MoveOperation
+	Operation string `json:"operation"` // RetitleOperation, MoveOperation or RenumberOperation
 	Item      string `json:"item"`      // the Item's ID
 	From      string `json:"from"`      // the Item file's Vault-relative path before
 	To        string `json:"to"`        // and after
@@ -42,8 +42,12 @@ const (
 	// RetitleOperation renames an Item file for a new title, and moves it
 	// too when its Kind changes as well.
 	RetitleOperation = "retitle"
-	// MoveOperation moves an Item file to another Kind's folder alone.
+	// MoveOperation moves an Item file to another Kind's folder alone, or
+	// a misplaced one into its own Project.
 	MoveOperation = "move"
+	// RenumberOperation gives an Item file whose number another Item
+	// holds a new number.
+	RenumberOperation = "renumber"
 )
 
 // Step is one file change of a journaled operation. Each step checks the
@@ -123,7 +127,7 @@ func (e *AmbiguousLinkError) Error() string {
 // *LinkRewriteError and a link anywhere in a note, frontmatter included,
 // to another note that the new path would make ambiguous with an
 // *AmbiguousLinkError. It then runs through a journal. operation names it
-// in the journal: RetitleOperation or MoveOperation. RenameItem returns the
+// in the journal: RetitleOperation, MoveOperation or RenumberOperation. RenameItem returns the
 // moved Item file and its final bytes.
 func (v *Vault) RenameItem(f ItemFile, to string, data []byte, operation string) (ItemFile, []byte, error) {
 	if err := v.CheckMove(f, to); err != nil {

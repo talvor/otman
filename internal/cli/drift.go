@@ -73,6 +73,8 @@ func driftProblems(f vault.ItemFile, p item.Parsed) []output.Problem {
 	}
 	folder := path.Dir(f.Path)
 	switch {
+	case f.Misplaced():
+		ws = append(ws, misplacedItem(f, p.Kind))
 	case d.Kind == nil:
 		details := map[string]any{"id": f.ID(), "path": f.Path, "folder": folder}
 		hint := "move it into " + kindFolders(f.Key)
@@ -101,6 +103,31 @@ func driftProblems(f vault.ItemFile, p item.Parsed) []output.Problem {
 		ws = append(ws, w)
 	}
 	return ws
+}
+
+// misplacedItem warns that Item file f is filed under another Project's
+// folder, so it is read under the Project its prefix names. kind is its
+// Kind, nil when it has none, which names the folder it belongs in.
+func misplacedItem(f vault.ItemFile, kind *item.Kind) output.Problem {
+	details := map[string]any{"id": f.ID(), "path": f.Path, "project": f.Key, "folder_project": f.FolderKey()}
+	hint := "move it into " + kindFolders(f.Key)
+	if kind != nil {
+		details["expected"] = f.KindPath(*kind)
+		hint = "move it to " + f.KindPath(*kind) + ", or run 'otman doctor --fix'"
+	}
+	return output.Warning("misplaced_item",
+		f.ID()+" is in "+path.Dir(f.Path)+", a folder of Project "+f.FolderKey()+", so it is read as an Item of Project "+f.Key,
+		details, hint)
+}
+
+// strayItem is the finding for file f, filed under a Project's folder with
+// the prefix of a Project the Vault does not have. It is no Project's
+// Item, so nothing reads it and doctor only reports it.
+func strayItem(f vault.ItemFile) output.Problem {
+	return output.Warning("misplaced_item",
+		f.ID()+" is in "+path.Dir(f.Path)+", a folder of Project "+f.FolderKey()+", but there is no Project "+f.Key,
+		map[string]any{"id": f.ID(), "path": f.Path, "project": f.Key, "folder_project": f.FolderKey()},
+		"rename it to an Item of Project "+f.FolderKey()+", or create Project "+f.Key+" and move it there")
 }
 
 // markerProblem warns when Item file f, parsed as p, has no comments
