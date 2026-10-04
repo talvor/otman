@@ -1,29 +1,42 @@
 $ otman frontier --parent REL-1 --json
-exit: 4
+exit: 0
 -- stdout --
--- stderr --
 {
   "schema_version": 1,
-  "error": {
-    "code": "malformed_relation",
-    "message": "the parent of REL-37 is a list or mapping, not a wikilink",
-    "details": {
-      "id": "REL-37",
-      "key": "parent",
-      "path": "Projects/REL/Issues/REL-37 Listed parent.md",
-      "value": null
-    },
-    "hint": "write parent in Projects/REL/Issues/REL-37 Listed parent.md as quoted wikilinks, such as parent: \"[[REL-1 Title]]\", then retry"
-  }
+  "data": {
+    "items": [
+      {
+        "id": "REL-2",
+        "title": "Wikilink scanner",
+        "kind": "issue",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": {
+          "id": "REL-1",
+          "path": "Projects/REL/Specs/REL-1 Relations spec.md",
+          "resolved": true
+        },
+        "blocked_by": [],
+        "path": "Projects/REL/Issues/REL-2 Wikilink scanner.md",
+        "rev": "a7079c558988"
+      }
+    ],
+    "total": 1,
+    "count": 1,
+    "has_more": false
+  },
+  "warnings": []
 }
+-- stderr --
 
 $ otman frontier --parent REL-1
 tty: true
-exit: 4
+exit: 0
 -- stdout --
+ID     KIND   STATUS  ASSIGNEE  TITLE
+REL-2  issue  open    -         Wikilink scanner
 -- stderr --
-error[malformed_relation]: the parent of REL-37 is a list or mapping, not a wikilink
-hint: write parent in Projects/REL/Issues/REL-37 Listed parent.md as quoted wikilinks, such as parent: "[[REL-1 Title]]", then retry
 
 $ otman frontier --kind issue
 tty: true

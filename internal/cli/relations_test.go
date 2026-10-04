@@ -147,7 +147,6 @@ func TestRelationBrokenLinks(t *testing.T) {
 			{args: []string{"unblock", "REL-21", "--by", "Projects/REL/Specs/REL-7 Twin.md", "--json"}},
 			{args: []string{"block", "REL-6", "--by", "REL-7", "--json"}},
 			{args: []string{"list", "--blocked-by", "Projects/REL/Issues/REL-7 Twin.md", "--json"}},
-			{args: []string{"list", "--blocked-by", "Projects/REL/Issues/REL-7 Twin.md", "--search", "ambiguous", "--json"}},
 			{args: []string{"block", "REL-20", "--by", "REL-6", "--json"}},
 			{args: []string{"unblock", "REL-20", "--by", "REL-5"}, tty: true},
 			{args: []string{"parent", "set", "REL-20", "REL-1"}},

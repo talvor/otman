@@ -280,9 +280,8 @@ func (q *itemQuery) resolveSelectors(s resolved, v *vault.Vault, f listFlags) (c
 }
 
 // related reports whether the Item file f, parsed as p, passes --parent
-// and --blocked-by. A malformed value of the relation a selector filters
-// on, or a link of it ambiguous between the selector and other Items,
-// fails rather than give a partial answer.
+// and --blocked-by. A relation link ambiguous between the selector and
+// other Items fails rather than give a partial answer.
 func (q itemQuery) related(f vault.ItemFile, p item.Parsed, links itemLinks) (bool, error) {
 	for _, x := range []struct {
 		key    string
@@ -290,11 +289,6 @@ func (q itemQuery) related(f vault.ItemFile, p item.Parsed, links itemLinks) (bo
 	}{{"parent", q.parent}, {"blocked_by", q.blockedBy}} {
 		if x.target == nil {
 			continue
-		}
-		for _, bad := range p.BadRelations {
-			if bad.Key == x.key {
-				return false, graphError(badRelation(f, bad))
-			}
 		}
 		found, err := matchingLinks(f, x.key, relationLinks(p, x.key), links, *x.target)
 		if err != nil || len(found) == 0 {

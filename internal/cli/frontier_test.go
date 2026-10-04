@@ -163,10 +163,9 @@ func TestFrontierScope(t *testing.T) {
 	})
 }
 
-// Under --parent the parent of every Item is a relevant relation, so an
-// Item whose parent is malformed fails frontier with exit 4 rather than
-// be silently left out: it may be a child of REF. Without --parent its
-// parent does not matter.
+// --parent selects children as list does: an Item whose parent is
+// malformed is not a child of REF, so it is left out of the Frontier of
+// REF rather than fail it. Without --parent its parent does not matter.
 func TestFrontierMalformedParent(t *testing.T) {
 	runGolden(t, goldenCase{
 		name:    "frontier-malformed-parent",

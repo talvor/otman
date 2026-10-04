@@ -209,25 +209,6 @@ exit: 4
 {
   "schema_version": 1,
   "error": {
-    "code": "malformed_relation",
-    "message": "a blocked_by entry of REL-20 is \"REL-2\", not a wikilink",
-    "details": {
-      "id": "REL-20",
-      "key": "blocked_by",
-      "path": "Projects/REL/Issues/REL-20 Dangling.md",
-      "value": "REL-2"
-    },
-    "hint": "write blocked_by in Projects/REL/Issues/REL-20 Dangling.md as quoted wikilinks, such as blocked_by: [\"[[REL-1 Title]]\"], then retry"
-  }
-}
-
-$ otman list --blocked-by Projects/REL/Issues/REL-7 Twin.md --search ambiguous --json
-exit: 4
--- stdout --
--- stderr --
-{
-  "schema_version": 1,
-  "error": {
     "code": "ambiguous_link",
     "message": "REL-21 blocked_by link [[REL-7 Twin]] matches 2 Items: Projects/REL/Issues/REL-7 Twin.md, Projects/REL/Specs/REL-7 Twin.md",
     "details": {
