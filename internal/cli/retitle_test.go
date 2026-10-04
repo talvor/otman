@@ -135,6 +135,25 @@ func TestRetitleAmbiguousNewName(t *testing.T) {
 	}
 }
 
+// A retitle whose new filename another note already has, when some note
+// links to that other note by a target the new filename would also match,
+// fails with move_target_exists naming the other note and the linking
+// file. Nothing is written, and no journal is started.
+func TestRetitleAmbiguatesOtherLinks(t *testing.T) {
+	runGolden(t, goldenCase{
+		name:    "item-retitle-ambiguous",
+		fixture: "retitle",
+		files: withRET(map[string]string{
+			"vault/Archive/Issues/RET-1 Taken elsewhere.md": "A note that already has the name.\n",
+			"vault/Notes/Archive links.md":                  "See [[RET-1 Taken elsewhere|the archived one]].\n",
+		}),
+		steps: []step{
+			{args: []string{"edit", "RET-1", "--title", "Taken elsewhere", "--json"}},
+			{args: []string{"edit", "RET-1", "--title", "Taken elsewhere"}, tty: true},
+		},
+	})
+}
+
 // A blank or multi-line title fails with exit 2, and a retitle to the
 // current title is a no-op. A rename onto an existing file fails with
 // move_target_exists, and one that would have to rewrite a link in

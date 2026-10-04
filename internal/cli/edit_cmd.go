@@ -202,13 +202,15 @@ func (a *app) edit(cmd *cobra.Command, ref string, f editFlags) error {
 }
 
 // renameError is the failure of renaming Item file f: unsafe_write naming
-// a file whose links cannot be rewritten, unsafe_write for a journal
-// stopped by unexpected content, or whatever writeError makes of
+// a file whose links cannot be rewritten, move_target_exists naming the
+// note a link to which the new path would make ambiguous, unsafe_write
+// for a journal stopped by unexpected content, or whatever writeError makes of
 // anything else.
 func renameError(f vault.ItemFile, err error) error {
 	var lr *vault.LinkRewriteError
 	var unsafe *frontmatter.UnsafeError
 	var c *vault.JournalConflictError
+	var amb *vault.AmbiguousLinkError
 	switch {
 	case errors.As(err, &lr) && errors.As(err, &unsafe):
 		e := unsafeWrite(lr.Path, unsafe.Reason,
@@ -216,6 +218,11 @@ func renameError(f vault.ItemFile, err error) error {
 		e.Message = "cannot rename " + f.ID() + ": refusing to rewrite " + lr.Path + ", which links to it: " + unsafe.Reason
 		e.Details["item"] = f.ID()
 		return e
+	case errors.As(err, &amb):
+		return &Error{Exit: ExitConflict, Code: "move_target_exists",
+			Message: "cannot rename " + f.ID() + ": " + amb.Error(),
+			Details: map[string]any{"item": f.ID(), "path": amb.Path, "link": amb.Target, "target": amb.Note},
+			Hint:    "rename or move " + amb.Note + ", or name it by path in " + amb.Path + ", then retry"}
 	case errors.As(err, &c):
 		return journalError(c)
 	default:
