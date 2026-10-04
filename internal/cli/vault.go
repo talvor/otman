@@ -21,6 +21,7 @@ func (a *app) openVault(s resolved) (*vault.Vault, []output.Problem, error) {
 	path := s.Vault.Value
 	details := map[string]any{"path": path, "source": string(s.Vault.Source)}
 	v, warnings, err := vault.Open(path, a.opts.LockTimeout)
+	var conflict *vault.JournalConflictError
 	switch {
 	case errors.Is(err, vault.ErrLockTimeout):
 		timeout := a.opts.LockTimeout
@@ -38,8 +39,23 @@ func (a *app) openVault(s resolved) (*vault.Vault, []output.Problem, error) {
 	case errors.Is(err, vault.ErrNotDir):
 		return nil, nil, invalid("vault_not_directory", "Vault path "+path+" is not a directory", details,
 			"point otman at your Vault directory with 'otman config set vault PATH'")
+	case errors.As(err, &conflict):
+		return nil, nil, journalError(conflict)
 	case err != nil:
 		return nil, nil, ioError(err)
 	}
+	v.Fault = a.opts.Fault
 	return v, append(append([]output.Problem{}, s.Warnings...), warnings...), nil
+}
+
+// journalError is the unsafe_write for a journal stopped by content it
+// did not expect.
+func journalError(c *vault.JournalConflictError) error {
+	e := unsafeWrite(c.Path, c.Pending(),
+		"restore "+c.Path+" to what the operation expects, or delete "+c.Journal+
+			" to abandon the rest of the operation, then retry")
+	e.Details["journal"] = c.Journal
+	e.Details["operation"] = c.Operation
+	e.Details["item"] = c.Item
+	return e
 }

@@ -1,18 +1,22 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
+	"path"
 	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"github.com/talvor/otman/internal/frontmatter"
 	"github.com/talvor/otman/internal/item"
 	"github.com/talvor/otman/internal/output"
 	"github.com/talvor/otman/internal/vault"
 )
 
 type editFlags struct {
+	title         string
 	kind          string
 	body          string
 	bodyFile      string
@@ -27,11 +31,12 @@ type editFlags struct {
 func (a *app) newEditCmd() *cobra.Command {
 	var f editFlags
 	cmd := &cobra.Command{
-		Use:   "edit REF [--kind K] [--body T | --body-file P|- | --clear-body] [--assignee NAME|@me | --clear-assignee] [--add-label L]... [--remove-label L]... [--if-rev REV]",
-		Short: "Change an Item's Kind, body, assignee or Labels",
+		Use:   "edit REF [--title T] [--kind K] [--body T | --body-file P|- | --clear-body] [--assignee NAME|@me | --clear-assignee] [--add-label L]... [--remove-label L]... [--if-rev REV]",
+		Short: "Change an Item's title, Kind, body, assignee or Labels",
 		Args:  cobra.ExactArgs(1),
 	}
 	fl := cmd.Flags()
+	fl.StringVar(&f.title, "title", "", "retitle the Item, renaming its file and rewriting every link to it")
 	fl.StringVar(&f.kind, "kind", "", "change the Kind to issue, prd or spec, moving the file to its folder")
 	fl.StringVar(&f.body, "body", "", "replace the body, keeping the comments")
 	fl.StringVar(&f.bodyFile, "body-file", "", "replace the body with PATH, or with stdin for -")
@@ -69,6 +74,12 @@ func (a *app) edit(cmd *cobra.Command, ref string, f editFlags) error {
 			"pass "+strings.Join(changes, ", "))
 	}
 	var update item.Update
+	if fl.Changed("title") {
+		if err := checkTitle(f.title); err != nil {
+			return err
+		}
+		update.Title = &f.title
+	}
 	if fl.Changed("kind") {
 		kind, err := parseKind(f.kind)
 		if err != nil {
@@ -152,12 +163,28 @@ func (a *app) edit(cmd *cobra.Command, ref string, f editFlags) error {
 			}
 			warnings = append(warnings, newLabelWarnings(file.Key, added, inUse)...)
 		}
-		if changed {
-			to := file.Path
-			if update.Kind != nil && (before.Kind == nil || *before.Kind != *update.Kind) {
-				to = file.KindPath(*update.Kind)
+		// A retitle renames the file to the new title's projection, and a
+		// Kind change moves it to the new Kind's folder. A rename goes
+		// through the journal, rewriting every link to the Item.
+		dir, name := path.Dir(file.Path), file.Name()
+		if update.Kind != nil && (before.Kind == nil || *before.Kind != *update.Kind) {
+			dir = path.Dir(file.KindPath(*update.Kind))
+		}
+		if update.Title != nil {
+			name = item.Filename(file.Key, file.Number, *update.Title)
+		}
+		switch to := path.Join(dir, name); {
+		case to != file.Path:
+			operation := vault.MoveOperation
+			if name != file.Name() {
+				operation = vault.RetitleOperation
 			}
-			if file, err = v.MoveItemFile(file, to, data); err != nil {
+			if file, data, err = v.RenameItem(file, to, data, operation); err != nil {
+				return renameError(file, err)
+			}
+			changed = true
+		case changed:
+			if err := v.WriteItemFile(file, data); err != nil {
 				return writeError(file, err)
 			}
 		}
@@ -172,4 +199,47 @@ func (a *app) edit(cmd *cobra.Command, ref string, f editFlags) error {
 		}
 		return a.emit(mutationResult{summary, changed, human}, warnings)
 	})
+}
+
+// renameError is the failure of renaming Item file f: unsafe_write naming
+// a file whose links cannot be rewritten, move_target_exists naming the
+// note a link to which the new path would make ambiguous, unsafe_write
+// for a journal stopped by unexpected content, or whatever writeError makes of
+// anything else.
+func renameError(f vault.ItemFile, err error) error {
+	var lr *vault.LinkRewriteError
+	var unsafe *frontmatter.UnsafeError
+	var c *vault.JournalConflictError
+	var amb *vault.AmbiguousLinkError
+	switch {
+	case errors.As(err, &lr) && errors.As(err, &unsafe):
+		e := unsafeWrite(lr.Path, unsafe.Reason,
+			"make the frontmatter of "+lr.Path+" plain block-style YAML between --- lines, then retry")
+		e.Message = "cannot rename " + f.ID() + ": refusing to rewrite " + lr.Path + ", which links to it: " + unsafe.Reason
+		e.Details["item"] = f.ID()
+		return e
+	case errors.As(err, &amb):
+		return &Error{Exit: ExitConflict, Code: "move_target_exists",
+			Message: "cannot rename " + f.ID() + ": " + amb.Error(),
+			Details: map[string]any{"item": f.ID(), "path": amb.Path, "link": amb.Target, "target": amb.Note},
+			Hint:    "rename or move " + amb.Note + ", or name it by path in " + amb.Path + ", then retry"}
+	case errors.As(err, &c):
+		return journalError(c)
+	default:
+		return writeError(f, err)
+	}
+}
+
+// checkTitle validates a new title: a single line, not blank. The title
+// keeps the exact text; only the filename is a projection.
+func checkTitle(title string) error {
+	if strings.TrimSpace(title) == "" {
+		return invalid("invalid_arguments", "--title cannot be empty",
+			map[string]any{"flag": "--title"}, "pass the Item's new title with --title")
+	}
+	if !singleLine(title) {
+		return invalid("invalid_arguments", "--title must be a single line of UTF-8 text",
+			map[string]any{"flag": "--title"}, "")
+	}
+	return nil
 }

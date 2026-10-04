@@ -45,12 +45,23 @@ type Vault struct {
 	Root string
 	lock *os.File
 	db   *sql.DB
+
+	// Fault is a test-only fault injector for journaled operations, such
+	// as a retitle: it is called before journal step i with i, and with
+	// the number of steps after the last one, and an error from it aborts
+	// the operation there, as a crash would, leaving the journal for the
+	// next command to finish. nil injects nothing. Open resumes pending
+	// journals before the caller can set it, so a resume is never
+	// interrupted.
+	Fault func(step int) error
 }
 
 // Open bootstraps .otman/ if needed, takes the lock, opens the db
-// (rebuilding it from the markdown if it is missing or fails quick_check)
-// and adopts Project folders into it. It is the first step of every Vault
-// operation. The warnings report anything otman repaired on the way.
+// (rebuilding it from the markdown if it is missing or fails quick_check),
+// adopts Project folders into it and finishes any pending journal. It is
+// the first step of every Vault operation. The warnings report anything
+// otman repaired or finished on the way; a journal it cannot finish fails
+// with a *JournalConflictError.
 //
 // Every Vault command holds the lock for its whole run, so a writer's
 // scan, allocation and write are serialised against every other otman
@@ -88,7 +99,8 @@ func Open(root string, lockTimeout time.Duration) (*Vault, []output.Problem, err
 }
 
 // bootstrap runs under the lock: it writes .otman/.gitignore if it is
-// missing, opens the db and adopts Project folders.
+// missing, opens the db, adopts Project folders and resumes pending
+// journals.
 func (v *Vault) bootstrap() ([]output.Problem, error) {
 	state := filepath.Join(v.Root, StateDir)
 	gitignore := filepath.Join(state, ".gitignore")
@@ -107,7 +119,11 @@ func (v *Vault) bootstrap() ([]output.Problem, error) {
 	if err := v.adopt(); err != nil {
 		return nil, err
 	}
-	return warnings, nil
+	resumed, err := v.resume()
+	if err != nil {
+		return nil, err
+	}
+	return append(warnings, resumed...), nil
 }
 
 // Close releases the db connection and the lock.

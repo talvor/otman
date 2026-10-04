@@ -29,6 +29,8 @@ type step struct {
 	dir string
 	// rm lists files to delete before the step, relative to $WORK.
 	rm []string
+	// fault is the run's fault injector, such as crashAt(n).
+	fault func(step int) error
 }
 
 // goldenCase copies a testdata/vaults fixture to $WORK/vault, gives the run a
@@ -93,6 +95,7 @@ func runGolden(t *testing.T, gc goldenCase) {
 			Stderr: &stderr,
 			Now:    func() time.Time { return fixedNow },
 			IsTTY:  s.tty,
+			Fault:  s.fault,
 		})
 
 		shown := make([]string, len(s.args))
@@ -108,6 +111,9 @@ func runGolden(t *testing.T, gc goldenCase) {
 		}
 		if s.tty {
 			fmt.Fprintf(&transcript, "tty: true\n")
+		}
+		if s.fault != nil {
+			fmt.Fprintf(&transcript, "fault: injected\n")
 		}
 		fmt.Fprintf(&transcript, "exit: %d\n", code)
 		fmt.Fprintf(&transcript, "-- stdout --\n%s", ensureNewline(stdout.String()))

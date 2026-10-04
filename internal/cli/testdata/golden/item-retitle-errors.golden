@@ -1,0 +1,319 @@
+$ otman edit RET-1 --title ""
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[invalid_arguments]: --title cannot be empty
+hint: pass the Item's new title with --title
+
+$ otman edit RET-1 --title    --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "--title cannot be empty",
+    "details": {
+      "flag": "--title"
+    },
+    "hint": "pass the Item's new title with --title"
+  }
+}
+
+$ otman edit RET-1 --title Two
+lines
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_arguments
+  message: "--title must be a single line of UTF-8 text"
+  details:
+    flag: "--title"
+  hint: null
+
+$ otman edit RET-1 --title Old title --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "RET-1",
+      "title": "Old title",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/RET/Issues/RET-1 Old title.md",
+      "rev": "3f69c66bd025"
+    },
+    "changed": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman edit RET-5 --title Taken --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "move_target_exists",
+    "message": "cannot move Projects/RET/Issues/RET-5 Free.md: Projects/RET/Issues/RET-5 Taken.md already exists",
+    "details": {
+      "path": "Projects/RET/Issues/RET-5 Free.md",
+      "target": "Projects/RET/Issues/RET-5 Taken.md"
+    },
+    "hint": "move or rename the file in the way, then retry"
+  }
+}
+
+$ otman edit RET-1 --title Blocked by a flow-style link --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "unsafe_write",
+    "message": "cannot rename RET-1: refusing to rewrite Projects/RET/Issues/RET-6 Flow style.md, which links to it: the frontmatter is flow-style YAML",
+    "details": {
+      "item": "RET-1",
+      "path": "Projects/RET/Issues/RET-6 Flow style.md",
+      "reason": "the frontmatter is flow-style YAML"
+    },
+    "hint": "make the frontmatter of Projects/RET/Issues/RET-6 Flow style.md plain block-style YAML between --- lines, then retry"
+  }
+}
+
+$ otman edit RET-1 --title Blocked by a flow-style link
+tty: true
+exit: 4
+-- stdout --
+-- stderr --
+error[unsafe_write]: cannot rename RET-1: refusing to rewrite Projects/RET/Issues/RET-6 Flow style.md, which links to it: the frontmatter is flow-style YAML
+hint: make the frontmatter of Projects/RET/Issues/RET-6 Flow style.md plain block-style YAML between --- lines, then retry
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "RET"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/.trash/
+-- vault/.trash/Deleted.md --
+A hidden folder: [[RET-1 Old title]] is left alone.
+vault/Notes/
+-- vault/Notes/Broken frontmatter.md --
+---
+title: [unclosed
+---
+The body of a note with unreadable frontmatter still links to [[RET-1 Old title]].
+-- vault/Notes/Daily.md --
+A daily note outside Projects: [[RET-1 Old title|today]].
+Windows line endings stay.
+vault/Projects/
+vault/Projects/OTH/
+vault/Projects/OTH/Issues/
+-- vault/Projects/OTH/Issues/OTH-1 Elsewhere.md --
+---
+id: OTH-1
+title: Elsewhere
+aliases:
+  - Elsewhere
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+Another Project links to [[RET-1 Old title]] too.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTH/OTH.md --
+---
+name: Other
+kind: project
+---
+vault/Projects/RET/
+vault/Projects/RET/Issues/
+-- vault/Projects/RET/Issues/RET-1 Old title.md --
+---
+id: RET-1
+title: Old title
+aliases:
+  - Old title
+  - The first one
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+Links to itself: [[RET-1 Old title#Notes|the notes]] and [[#Notes]].
+
+## Notes
+
+Nothing yet. ^block1
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+Renamed from [[RET-1 Old title]] soon.
+-- vault/Projects/RET/Issues/RET-2 Every link form.md --
+---
+id: RET-2
+title: Every link form
+aliases:
+  - Every link form
+kind: issue
+status: open
+author: talvor
+parent: "[[RET-1 Old title]]"
+blocked_by:
+  - "[[RET-1 Old title|the old one]]"
+  - "[[RET-3 Links in code]]"
+labels: []
+assignee: null
+# related is not a relation, so its link is left alone
+related: "[[RET-1 Old title]]"
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+- plain: [[RET-1 Old title]]
+- alias: [[RET-1 Old title|the first]]
+- heading: [[RET-1 Old title#Notes]]
+- heading and alias: [[RET-1 Old title#Notes|notes]]
+- block: [[RET-1 Old title#^block1]]
+- embed: ![[RET-1 Old title]]
+- embed with heading: ![[RET-1 Old title#Notes]]
+- extension: [[RET-1 Old title.md]]
+- other case: [[ret-1 old title]]
+- spaced: [[ RET-1 Old title |spaced]]
+- two on a line: [[RET-1 Old title]], [[RET-1 Old title|again]]
+- not this one: [[RET-1 Old title extra]], [[RET-10 Old title]], [[RET-3 Links in code]]
+
+| in a table | escaped alias |
+| --- | --- |
+| row | [[RET-1 Old title\|tbl]] and [[RET-1 Old title#Notes\|notes]] |
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+Blocked on [[RET-1 Old title]].
+-- vault/Projects/RET/Issues/RET-3 Links in code.md --
+---
+id: RET-3
+title: Links in code
+aliases:
+  - Links in code
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+Inline code `[[RET-1 Old title]]` and ``code with ` and [[RET-1 Old title]]`` stay.
+
+```markdown
+A fenced [[RET-1 Old title]] stays.
+```
+
+~~~
+A tilde fence [[RET-1 Old title|too]] stays.
+~~~
+
+An indented code block:
+
+    An indented [[RET-1 Old title]] stays.
+
+- In a list, an indented line
+
+    [[RET-1 Old title|listed]] is content, rewritten.
+
+After the code, [[RET-1 Old title]] is rewritten.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/RET/Issues/RET-5 Free.md --
+---
+id: RET-5
+title: Free
+kind: issue
+status: open
+parent: null
+blocked_by: []
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/RET/Issues/RET-5 Taken.md/
+-- vault/Projects/RET/Issues/RET-5 Taken.md/keep --
+a folder in the way of the rename
+-- vault/Projects/RET/Issues/RET-6 Flow style.md --
+---
+{id: RET-6, title: Flow style, kind: issue, status: open, parent: "[[RET-1 Old title]]"}
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/RET/RET.md --
+---
+name: Retitles
+kind: project
+---
+Start at [[RET-1 Old title]].
+vault/Projects/RET/Specs/
+-- vault/Projects/RET/Specs/RET-4 Path links.md --
+---
+id: RET-4
+title: Path links
+aliases:
+  - Path links
+kind: spec
+status: open
+author: talvor
+parent: "[[Projects/RET/Issues/RET-1 Old title|the parent]]"
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+- full path: [[Projects/RET/Issues/RET-1 Old title]]
+- full path with extension and alias: [[Projects/RET/Issues/RET-1 Old title.md|alias]]
+- rooted: [[/Projects/RET/Issues/RET-1 Old title]]
+- suffix with heading: [[Issues/RET-1 Old title#Notes]]
+- suffix embed: ![[Issues/RET-1 Old title.md]]
+- wrong folder, not a match: [[Specs/RET-1 Old title]]
+
+<!-- otman:comments -->
+## Comments

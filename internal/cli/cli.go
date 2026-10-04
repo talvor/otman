@@ -35,6 +35,9 @@ type Options struct {
 	// LockTimeout bounds the wait for .otman/lock; zero means
 	// vault.DefaultLockTimeout. Tests shorten it.
 	LockTimeout time.Duration
+
+	// Fault is the test-only vault.Vault.Fault of the run's Vault.
+	Fault func(step int) error
 }
 
 // app is the state of one run, shared by every command.

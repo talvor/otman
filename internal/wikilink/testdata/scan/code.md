@@ -33,5 +33,22 @@ Mismatched runs: ``[[OTM-5 Between mismatched runs]]` stays text.
 
 ``` not a fence when the info string has a backtick ` [[OTM-6 Not fenced]]
 
+Indented code after a blank line:
+
+    [[OTM-80 Indented code]] is code,
+
+    and stays code across a blank line [[OTM-81 Still indented]].
+	[[OTM-82 Tab indented]] is code too.
+Unindented again, [[OTM-7 After indented code]] links.
+A paragraph continues onto an indented line
+    [[OTM-8 Paragraph continuation]], which links.
+
+- A list item's content
+
+    [[OTM-9 List content]] is indented, but links.
+  - nested
+
+        [[OTM-10 Nested list content]] links too.
+
 ~~~
 an unclosed fence runs to the end [[OTM-97 Unclosed]]

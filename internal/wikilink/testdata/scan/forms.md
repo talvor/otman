@@ -17,3 +17,4 @@ Two on one line: [[OTM-6 One]][[OTM-7 Two]] then ![[OTM-8 Three]].
 > In a quote: [[OTM-10 Quoted]]
 | In | a table |
 | -- | [[OTM-11 Tabled]] |
+| Escaped | [[OTM-12 Tabled\|alias]] and [[OTM-13 Tabled#H\|h]] |

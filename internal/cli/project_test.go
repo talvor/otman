@@ -17,16 +17,7 @@ import (
 var vaultConfig = map[string]string{"config/otman/config.toml": "vault = \"$WORK/vault\"\n"}
 
 // withFiles returns vaultConfig plus extra files.
-func withFiles(extra map[string]string) map[string]string {
-	files := map[string]string{}
-	for p, c := range vaultConfig {
-		files[p] = c
-	}
-	for p, c := range extra {
-		files[p] = c
-	}
-	return files
-}
+func withFiles(extra map[string]string) map[string]string { return withConfig(vaultConfig, extra) }
 
 const webNote = "---\nname: otman website\nkind: project\n---\n"
 

@@ -116,7 +116,7 @@ func isDir(p string) (bool, error) {
 func (v *Vault) loadProject(key string) (Project, []output.Problem, error) {
 	p := Project{Key: key, Path: path.Join(ProjectsDir, key)}
 	note := path.Join(p.Path, key+".md")
-	b, err := os.ReadFile(filepath.Join(v.Root, filepath.FromSlash(note)))
+	b, err := os.ReadFile(v.abs(note))
 	if errors.Is(err, os.ErrNotExist) {
 		return p, []output.Problem{output.Warning("missing_project_note",
 			"Project "+key+" has no Project note "+note,

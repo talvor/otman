@@ -6,7 +6,6 @@ import (
 	"io/fs"
 	"os"
 	"path"
-	"path/filepath"
 
 	"github.com/talvor/otman/internal/item"
 )
@@ -32,7 +31,7 @@ func (v *Vault) Template(key string, kind item.Kind) (Template, error) {
 		path.Join(ProjectsDir, key, TemplatesDir, name),
 		path.Join(vaultTemplatesDir, name),
 	} {
-		b, err := os.ReadFile(filepath.Join(v.Root, filepath.FromSlash(p)))
+		b, err := os.ReadFile(v.abs(p))
 		if errors.Is(err, fs.ErrNotExist) {
 			continue
 		}

@@ -12,9 +12,10 @@ import (
 	_ "modernc.org/sqlite" // registers the cgo-free "sqlite" driver
 )
 
-// schemaVersion is stored in PRAGMA user_version. A db with any other
-// version is rebuilt, which is safe because the db is disposable.
-const schemaVersion = 1
+// schemaVersion is stored in PRAGMA user_version. A db at an older
+// version in migrations is migrated; one at any other version is rebuilt,
+// which is safe because the db is disposable.
+const schemaVersion = 2
 
 // schema is the per-device db. projects is the registry of Projects seen on
 // this device, each with its high-water mark: the highest Item number it
@@ -24,8 +25,28 @@ CREATE TABLE projects (
 	key        TEXT PRIMARY KEY,
 	high_water INTEGER NOT NULL DEFAULT 0
 );
+%s
 PRAGMA user_version = %d;
-`, schemaVersion)
+`, snapshotsTable, schemaVersion)
+
+// snapshotsTable holds, per Item, the filename, title, Kind and folder
+// otman last wrote (ADR 0005), so doctor can tell which side of a
+// disagreement changed. title and kind are NULL when the file had none.
+const snapshotsTable = `
+CREATE TABLE snapshots (
+	key      TEXT NOT NULL,
+	number   INTEGER NOT NULL,
+	filename TEXT NOT NULL,
+	title    TEXT,
+	kind     TEXT,
+	folder   TEXT NOT NULL,
+	PRIMARY KEY (key, number)
+);`
+
+// migrations bring a db at the version they are keyed by up to the next.
+var migrations = map[int]string{
+	1: snapshotsTable + "\nPRAGMA user_version = 2;",
+}
 
 // openDB opens the db at path with one connection. A missing db is created;
 // one that fails quick_check or has an unknown schema is deleted and
@@ -64,7 +85,8 @@ func openDB(path string) (*sql.DB, []output.Problem, error) {
 		"nothing to do; the db is a per-device cache rebuilt from the markdown")}, nil
 }
 
-// unusableReason returns why the db is unusable, or "" when it is sound.
+// unusableReason returns why the db is unusable, or "" when it is sound,
+// migrating a db at an older schema version on the way.
 func unusableReason(db *sql.DB) string {
 	var result string
 	if err := db.QueryRow("PRAGMA quick_check").Scan(&result); err != nil {
@@ -77,8 +99,18 @@ func unusableReason(db *sql.DB) string {
 	if err := db.QueryRow("PRAGMA user_version").Scan(&version); err != nil {
 		return "cannot read schema version: " + err.Error()
 	}
-	if version != schemaVersion {
-		return fmt.Sprintf("unknown schema version %d", version)
+	for version != schemaVersion {
+		step, ok := migrations[version]
+		if !ok {
+			return fmt.Sprintf("unknown schema version %d", version)
+		}
+		if err := inImmediateTx(db, func(tx *sql.Tx) error {
+			_, err := tx.Exec(step)
+			return err
+		}); err != nil {
+			return fmt.Sprintf("cannot migrate schema version %d: %v", version, err)
+		}
+		version++
 	}
 	return ""
 }

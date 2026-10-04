@@ -3,6 +3,7 @@ package cli_test
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -18,14 +19,12 @@ var otmConfig = map[string]string{
 }
 
 // withOTM returns otmConfig plus extra files.
-func withOTM(extra map[string]string) map[string]string {
-	files := map[string]string{}
-	for p, c := range otmConfig {
-		files[p] = c
-	}
-	for p, c := range extra {
-		files[p] = c
-	}
+func withOTM(extra map[string]string) map[string]string { return withConfig(otmConfig, extra) }
+
+// withConfig returns the files of config plus extra files.
+func withConfig(config, extra map[string]string) map[string]string {
+	files := maps.Clone(config)
+	maps.Copy(files, extra)
 	return files
 }
 

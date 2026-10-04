@@ -8,8 +8,8 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/talvor/otman/internal/fsutil"
@@ -148,18 +148,31 @@ func (v *Vault) CreateItem(key string, n NewItem) (ItemFile, []byte, error) {
 		return ItemFile{}, nil, err
 	}
 	f.Path = path.Join(ProjectsDir, key, n.Kind.Folder(), name)
-	return f, data, nil
+	return f, data, v.recordSnapshot(f.Path, data)
 }
 
 // ReadItemFile returns the bytes of an Item file.
 func (v *Vault) ReadItemFile(f ItemFile) ([]byte, error) {
-	return os.ReadFile(filepath.Join(v.Root, filepath.FromSlash(f.Path)))
+	return os.ReadFile(v.abs(f.Path))
 }
 
-// WriteItemFile replaces the bytes of an Item file atomically.
+// WriteItemFile replaces the bytes of an Item file atomically and records
+// its snapshot.
 func (v *Vault) WriteItemFile(f ItemFile, data []byte) error {
-	return fsutil.WriteFile(filepath.Join(v.Root, filepath.FromSlash(f.Path)), data)
+	return v.writeFile(f.Path, data)
 }
+
+// writeFile replaces the bytes of the file at the Vault-relative path p
+// atomically and, when it is an Item file, records its snapshot.
+func (v *Vault) writeFile(p string, data []byte) error {
+	if err := fsutil.WriteFile(v.abs(p), data); err != nil {
+		return err
+	}
+	return v.recordSnapshot(p, data)
+}
+
+// abs is the file-system path of the Vault-relative path p.
+func (v *Vault) abs(p string) string { return filepath.Join(v.Root, filepath.FromSlash(p)) }
 
 // ItemAt returns the Item file at the Vault-relative path p, and false
 // when p is not an Item file: outside Projects/<KEY>/, in Templates/,
@@ -169,15 +182,11 @@ func (v *Vault) ItemAt(p string) (ItemFile, bool, error) {
 	if path.IsAbs(p) || p != path.Clean(p) {
 		return ItemFile{}, false, nil
 	}
-	parts := strings.Split(p, "/")
-	if len(parts) < 3 || parts[0] != ProjectsDir || !ValidKey(parts[1]) || parts[2] == TemplatesDir {
+	key, n, ok := itemPath(p)
+	if !ok {
 		return ItemFile{}, false, nil
 	}
-	key, n, _, ok := item.ParseFilename(parts[len(parts)-1])
-	if !ok || key != parts[1] {
-		return ItemFile{}, false, nil
-	}
-	fi, err := os.Stat(filepath.Join(v.Root, filepath.FromSlash(p)))
+	fi, err := os.Stat(v.abs(p))
 	if errors.Is(err, os.ErrNotExist) {
 		return ItemFile{}, false, nil
 	}
@@ -203,14 +212,20 @@ func (f ItemFile) KindPath(kind item.Kind) string {
 }
 
 // checkMove fails with a *TargetExistsError when moving Item file f to
-// the Vault-relative path to would replace another file.
+// the Vault-relative path to would replace another file. A target that
+// is f itself under another name, as a case-only rename finds it on a
+// case-insensitive file system, is not another file.
 func (v *Vault) checkMove(f ItemFile, to string) error {
 	if to == f.Path {
 		return nil
 	}
-	_, err := os.Lstat(filepath.Join(v.Root, filepath.FromSlash(to)))
+	_, err := os.Lstat(v.abs(to))
 	switch {
 	case err == nil:
+		same, err := v.sameFile(f.Path, to)
+		if err != nil || same {
+			return err
+		}
 		return &TargetExistsError{Target: to}
 	case errors.Is(err, os.ErrNotExist):
 		return nil
@@ -219,37 +234,29 @@ func (v *Vault) checkMove(f ItemFile, to string) error {
 	}
 }
 
-// MoveItemFile replaces the bytes of Item file f atomically and then
-// renames it to the Vault-relative path to, creating its folder. A crash
-// between the two leaves the new bytes at the old path. It fails with a
-// *TargetExistsError, before writing anything, when to is another file.
-func (v *Vault) MoveItemFile(f ItemFile, to string, data []byte) (ItemFile, error) {
-	if err := v.checkMove(f, to); err != nil {
-		return f, err
+// sameFile reports whether the Vault-relative paths a and b name the same
+// file, as two spellings of one name do on a case-insensitive file
+// system.
+func (v *Vault) sameFile(a, b string) (bool, error) {
+	fa, err := os.Lstat(v.abs(a))
+	if err != nil {
+		return false, err
 	}
-	if err := v.WriteItemFile(f, data); err != nil {
-		return f, err
+	fb, err := os.Lstat(v.abs(b))
+	if err != nil {
+		return false, err
 	}
-	if to == f.Path {
-		return f, nil
+	return os.SameFile(fa, fb), nil
+}
+
+// listed reports whether the folder of the Vault-relative path p lists an
+// entry spelled exactly as p's name, which a case-insensitive file system
+// does not tell from os.Lstat.
+func (v *Vault) listed(p string) (bool, error) {
+	entries, err := os.ReadDir(filepath.Dir(v.abs(p)))
+	if err != nil {
+		return false, err
 	}
-	from := filepath.Join(v.Root, filepath.FromSlash(f.Path))
-	target := filepath.Join(v.Root, filepath.FromSlash(to))
-	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
-		return f, err
-	}
-	if err := fsutil.SyncDir(filepath.Dir(filepath.Dir(target))); err != nil {
-		return f, err
-	}
-	if err := os.Rename(from, target); err != nil {
-		return f, err
-	}
-	if err := fsutil.SyncDir(filepath.Dir(target)); err != nil {
-		return f, err
-	}
-	if err := fsutil.SyncDir(filepath.Dir(from)); err != nil {
-		return f, err
-	}
-	f.Path = to
-	return f, nil
+	name := path.Base(p)
+	return slices.ContainsFunc(entries, func(e fs.DirEntry) bool { return e.Name() == name }), nil
 }
