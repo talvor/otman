@@ -26,7 +26,9 @@ type listFlags struct {
 	allProjects   bool
 	parent        string
 	blockedBy     string
-	paging        *paging
+	// unblocked is set by frontier, which has no flag for it.
+	unblocked bool
+	paging    *paging
 }
 
 // listStates are the values of list --state.
@@ -98,6 +100,9 @@ type itemQuery struct {
 	// parent keeps only the direct children of an Item, and blockedBy
 	// only the Items it blocks; nil for no such filter.
 	parent, blockedBy *vault.ItemFile
+	// unblocked keeps only Items with no open blockers. Every blocked_by
+	// link of an Item it would keep must resolve.
+	unblocked bool
 }
 
 // match reports whether the Item summarised by s, with body, passes every
@@ -135,7 +140,8 @@ func (q itemQuery) match(s itemSummary, body string) bool {
 // query validates the filter flags. The caller resolves --assignee, which
 // may name the actor.
 func (f listFlags) query(cmd *cobra.Command) (itemQuery, error) {
-	q := itemQuery{state: f.state, unassigned: f.unassigned, unlabeled: f.unlabeled, search: strings.ToLower(f.search)}
+	q := itemQuery{state: f.state, unassigned: f.unassigned, unlabeled: f.unlabeled,
+		search: strings.ToLower(f.search), unblocked: f.unblocked}
 	if !slices.Contains(listStates, f.state) {
 		return itemQuery{}, invalid("invalid_state", "unknown state "+quoteArg(f.state),
 			map[string]any{"state": f.state, "allowed": listStates}, "use --state open, closed or all")
@@ -292,6 +298,30 @@ func (q itemQuery) related(f vault.ItemFile, p item.Parsed, links itemLinks) (bo
 	return true, nil
 }
 
+// clearOfBlockers reports whether the Item file f, parsed as p, passes the
+// no-open-blockers rule of frontier, using open for the blockers already
+// read. Every blocked_by link of f must resolve and every blocker must be
+// readable, or it fails rather than guess: a blocker it cannot see is
+// never taken as closed.
+func (q itemQuery) clearOfBlockers(v *vault.Vault, links itemLinks, open openByPath, f vault.ItemFile, p item.Parsed) (bool, error) {
+	if !q.unblocked {
+		return true, nil
+	}
+	blockers, err := resolveLinks(links, f, p, "blocked_by")
+	if err != nil {
+		return false, err
+	}
+	free := true
+	for _, b := range blockers {
+		isOpen, err := open.isOpen(v, f, b)
+		if err != nil {
+			return false, err
+		}
+		free = free && !isOpen
+	}
+	return free, nil
+}
+
 // listScope is the keys of the Projects a list spans, in key order: the
 // selected Project, which must exist, or every Project when sel is unset.
 func listScope(v *vault.Vault, sel config.Value) ([]string, []output.Problem, error) {
@@ -317,13 +347,16 @@ func listScope(v *vault.Vault, sel config.Value) ([]string, []output.Problem, er
 // because it drifted: its frontmatter cannot be read, or only its status,
 // missing or neither open nor closed, kept it from --state open or closed.
 // --state all keeps any status. It adds the Labels of every Item it reads,
-// kept or not, to inUse.
+// kept or not, to inUse. It checks the blockers of an Item, under
+// q.unblocked, only once every other filter keeps it, so broken blocker
+// links of Items left out anyway do not matter.
 func listProject(v *vault.Vault, key string, q itemQuery, inUse labelSet) ([]itemSummary, []output.Problem, error) {
 	files, err := v.ItemFiles(key)
 	if err != nil {
 		return nil, nil, ioError(err)
 	}
 	links := newItemLinks(files)
+	open := openByPath{}
 	var found []itemSummary
 	var warnings []output.Problem
 	for _, f := range files {
@@ -346,12 +379,16 @@ func listProject(v *vault.Vault, key string, q itemQuery, inUse labelSet) ([]ite
 		} else if !ok {
 			continue
 		}
-		if q.state == "all" || (s.Status != nil && *s.Status == q.state) {
-			found = append(found, s)
+		if q.state != "all" && (s.Status == nil || *s.Status != q.state) {
+			if s.Status == nil || (*s.Status != item.Open && *s.Status != item.Closed) {
+				warnings = append(warnings, invalidStatus(s))
+			}
 			continue
 		}
-		if s.Status == nil || (*s.Status != item.Open && *s.Status != item.Closed) {
-			warnings = append(warnings, invalidStatus(s))
+		if ok, err := q.clearOfBlockers(v, links, open, f, p); err != nil {
+			return nil, nil, err
+		} else if ok {
+			found = append(found, s)
 		}
 	}
 	return found, warnings, nil

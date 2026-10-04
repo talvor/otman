@@ -1,0 +1,391 @@
+$ otman frontier --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "dangling_link",
+    "message": "REL-30 blocked_by link [[REL-99 Gone]] matches no Item in Project REL",
+    "details": {
+      "id": "REL-30",
+      "key": "blocked_by",
+      "link": "[[REL-99 Gone]]",
+      "path": "Projects/REL/Issues/REL-30 Dangling blocker.md"
+    },
+    "hint": "fix or remove the link in Projects/REL/Issues/REL-30 Dangling blocker.md, then retry"
+  }
+}
+
+$ otman frontier
+tty: true
+exit: 4
+-- stdout --
+-- stderr --
+error[dangling_link]: REL-30 blocked_by link [[REL-99 Gone]] matches no Item in Project REL
+hint: fix or remove the link in Projects/REL/Issues/REL-30 Dangling blocker.md, then retry
+
+$ otman frontier --parent REL-1 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [
+      {
+        "id": "REL-2",
+        "title": "Wikilink scanner",
+        "kind": "issue",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": {
+          "id": "REL-1",
+          "path": "Projects/REL/Specs/REL-1 Relations spec.md",
+          "resolved": true
+        },
+        "blocked_by": [],
+        "path": "Projects/REL/Issues/REL-2 Wikilink scanner.md",
+        "rev": "a7079c558988"
+      }
+    ],
+    "total": 1,
+    "count": 1,
+    "has_more": false
+  },
+  "warnings": [
+    {
+      "code": "malformed_frontmatter",
+      "message": "cannot read the frontmatter of Projects/REL/Issues/REL-23 Unreadable.md: yaml: line 1: did not find expected ',' or ']'",
+      "details": {
+        "path": "Projects/REL/Issues/REL-23 Unreadable.md"
+      },
+      "hint": "fix the YAML between the --- lines in Projects/REL/Issues/REL-23 Unreadable.md"
+    }
+  ]
+}
+-- stderr --
+
+$ otman frontier --kind spec --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [
+      {
+        "id": "REL-1",
+        "title": "Relations spec",
+        "kind": "spec",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/REL/Specs/REL-1 Relations spec.md",
+        "rev": "213fdef0792d"
+      }
+    ],
+    "total": 1,
+    "count": 1,
+    "has_more": false
+  },
+  "warnings": [
+    {
+      "code": "malformed_frontmatter",
+      "message": "cannot read the frontmatter of Projects/REL/Issues/REL-23 Unreadable.md: yaml: line 1: did not find expected ',' or ']'",
+      "details": {
+        "path": "Projects/REL/Issues/REL-23 Unreadable.md"
+      },
+      "hint": "fix the YAML between the --- lines in Projects/REL/Issues/REL-23 Unreadable.md"
+    }
+  ]
+}
+-- stderr --
+
+$ rm "vault/Projects/REL/Issues/REL-30 Dangling blocker.md"
+
+$ otman frontier --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "ambiguous_link",
+    "message": "REL-31 blocked_by link [[REL-7 Twin]] matches 2 Items: Projects/REL/Issues/REL-7 Twin.md, Projects/REL/Specs/REL-7 Twin.md",
+    "details": {
+      "id": "REL-31",
+      "key": "blocked_by",
+      "link": "[[REL-7 Twin]]",
+      "path": "Projects/REL/Issues/REL-31 Ambiguous blocker.md",
+      "paths": [
+        "Projects/REL/Issues/REL-7 Twin.md",
+        "Projects/REL/Specs/REL-7 Twin.md"
+      ]
+    },
+    "hint": "fix or remove the link in Projects/REL/Issues/REL-31 Ambiguous blocker.md, or name one Item by its path, such as [[Projects/REL/Issues/REL-7 Twin]], then retry"
+  }
+}
+
+$ rm "vault/Projects/REL/Issues/REL-31 Ambiguous blocker.md"
+
+$ otman frontier --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "malformed_relation",
+    "message": "the blocked_by of REL-32 is \"[[REL-5 Old groundwork]]\", not a list of wikilinks",
+    "details": {
+      "id": "REL-32",
+      "key": "blocked_by",
+      "path": "Projects/REL/Issues/REL-32 Malformed blockers.md",
+      "value": "[[REL-5 Old groundwork]]"
+    },
+    "hint": "write blocked_by in Projects/REL/Issues/REL-32 Malformed blockers.md as quoted wikilinks, such as blocked_by: [\"[[REL-1 Title]]\"], then retry"
+  }
+}
+
+$ rm "vault/Projects/REL/Issues/REL-32 Malformed blockers.md"
+
+$ otman frontier --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "malformed_frontmatter",
+    "message": "cannot read the status of REL-23, a blocker of REL-33: yaml: line 1: did not find expected ',' or ']'",
+    "details": {
+      "blocked": "REL-33",
+      "id": "REL-23",
+      "path": "Projects/REL/Issues/REL-23 Unreadable.md"
+    },
+    "hint": "fix the YAML between the --- lines in Projects/REL/Issues/REL-23 Unreadable.md, then retry"
+  }
+}
+
+$ rm "vault/Projects/REL/Issues/REL-33 Blocked by the unreadable.md"
+
+$ otman frontier
+tty: true
+exit: 0
+-- stdout --
+ID      KIND   STATUS  ASSIGNEE  TITLE
+REL-1   spec   open    -         Relations spec
+REL-2   issue  open    -         Wikilink scanner
+REL-6   issue  open    -         Loose end
+REL-36  issue  open    -         Lost parent
+-- stderr --
+warning[malformed_frontmatter]: cannot read the frontmatter of Projects/REL/Issues/REL-23 Unreadable.md: yaml: line 1: did not find expected ',' or ']'
+hint: fix the YAML between the --- lines in Projects/REL/Issues/REL-23 Unreadable.md
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "REL"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTH/
+vault/Projects/OTH/Issues/
+-- vault/Projects/OTH/Issues/OTH-1 Elsewhere.md --
+---
+id: OTH-1
+title: Elsewhere
+aliases:
+  - Elsewhere
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTH/OTH.md --
+---
+name: Other
+kind: project
+---
+vault/Projects/REL/
+vault/Projects/REL/Issues/
+-- vault/Projects/REL/Issues/REL-2 Wikilink scanner.md --
+---
+id: REL-2
+title: Wikilink scanner
+aliases:
+  - Wikilink scanner
+kind: issue
+status: open
+author: talvor
+parent: "[[REL-1 Relations spec]]"
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-23 Unreadable.md --
+---
+status: [unclosed
+---
+-- vault/Projects/REL/Issues/REL-3 Parent commands.md --
+---
+id: REL-3
+title: Parent commands
+aliases:
+  - Parent commands
+kind: issue
+status: open
+author: talvor
+parent: "[[REL-1 Relations spec]]"
+blocked_by:
+  - "[[REL-2 Wikilink scanner]]"
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-34 Claimed and dangling.md --
+---
+id: REL-34
+title: Claimed and dangling
+kind: issue
+status: open
+blocked_by: ["[[REL-99 Gone]]"]
+assignee: agent-a
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-35 Closed and dangling.md --
+---
+id: REL-35
+title: Closed and dangling
+kind: issue
+status: closed
+blocked_by: ["[[REL-99 Gone]]"]
+---
+-- vault/Projects/REL/Issues/REL-36 Lost parent.md --
+---
+id: REL-36
+title: Lost parent
+kind: issue
+status: open
+parent: "[[REL-98 Missing parent]]"
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-4 Block commands.md --
+---
+id: REL-4
+title: Block commands
+aliases:
+  - Block commands
+kind: issue
+status: open
+author: talvor
+parent: "[[REL-1 Relations spec]]"
+blocked_by:
+  - "[[REL-3 Parent commands]]"
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-5 Old groundwork.md --
+---
+id: REL-5
+title: Old groundwork
+aliases:
+  - Old groundwork
+kind: issue
+status: closed
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-6 Loose end.md --
+---
+id: REL-6
+title: Loose end
+aliases:
+  - Loose end
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-7 Twin.md --
+---
+id: REL-7
+title: Twin
+kind: issue
+status: closed
+---
+-- vault/Projects/REL/REL.md --
+---
+name: Relations
+kind: project
+---
+vault/Projects/REL/Specs/
+-- vault/Projects/REL/Specs/REL-1 Relations spec.md --
+---
+id: REL-1
+title: Relations spec
+aliases:
+  - Relations spec
+kind: spec
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Specs/REL-7 Twin.md --
+---
+id: REL-7
+title: Twin
+kind: spec
+status: closed
+---

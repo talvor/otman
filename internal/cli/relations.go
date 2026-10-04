@@ -55,9 +55,17 @@ func linkProblem(holder vault.ItemFile, key, link string, candidates []vault.Ite
 		details, hint+", or name one Item by its path, such as [["+strings.TrimSuffix(paths[0], ".md")+"]]"), true
 }
 
-// badRelationProblem reports bad, a relation value of holder that is not a
-// wikilink.
+// badRelationProblem warns about bad, a relation value of holder that is
+// not a wikilink, which a read ignores.
 func badRelationProblem(holder vault.ItemFile, bad item.BadRelation) output.Problem {
+	p := badRelation(holder, bad)
+	p.Message += ", so it is ignored"
+	return p
+}
+
+// badRelation is what is wrong with bad, a relation value of holder that
+// is not a wikilink.
+func badRelation(holder vault.ItemFile, bad item.BadRelation) output.Problem {
 	what := "a list or mapping"
 	if bad.Value != nil {
 		what = quoteArg(*bad.Value)
@@ -72,7 +80,7 @@ func badRelationProblem(holder vault.ItemFile, bad item.BadRelation) output.Prob
 		}
 	}
 	return output.Warning("malformed_relation",
-		where+" of "+holder.ID()+" is "+what+", not "+want+", so it is ignored",
+		where+" of "+holder.ID()+" is "+what+", not "+want,
 		map[string]any{"id": holder.ID(), "path": holder.Path, "key": bad.Key, "value": bad.Value},
 		"write "+bad.Key+" in "+holder.Path+" as quoted wikilinks, such as "+example)
 }
@@ -181,6 +189,16 @@ func selfEdge(f vault.ItemFile, relation string) error {
 		Hint:    "name another Item"}
 }
 
+// unreadableTarget fails a graph operation that must read what, such as
+// the relations of Item file f, because the frontmatter of f, err, cannot
+// be read.
+func unreadableTarget(f vault.ItemFile, what string, err error) *Error {
+	return &Error{Exit: ExitConflict, Code: "malformed_frontmatter",
+		Message: "cannot read " + what + ": " + err.Error(),
+		Details: map[string]any{"id": f.ID(), "path": f.Path},
+		Hint:    "fix the YAML between the --- lines in " + f.Path + ", then retry"}
+}
+
 // followLinks reads the relation key of Item file f and returns the Items
 // its links name. Every link must resolve to exactly one Item, and f must
 // be readable, or the graph operation that follows them fails.
@@ -191,14 +209,18 @@ func followLinks(v *vault.Vault, links itemLinks, f vault.ItemFile, key string) 
 	}
 	p := item.Parse(data)
 	if p.FrontmatterErr != nil {
-		return nil, &Error{Exit: ExitConflict, Code: "malformed_frontmatter",
-			Message: "cannot read the relations of " + f.ID() + ": " + p.FrontmatterErr.Error(),
-			Details: map[string]any{"id": f.ID(), "path": f.Path},
-			Hint:    "fix the YAML between the --- lines in " + f.Path + ", then retry"}
+		return nil, unreadableTarget(f, "the relations of "+f.ID(), p.FrontmatterErr)
 	}
+	return resolveLinks(links, f, p, key)
+}
+
+// resolveLinks returns the Items named by the links of relation key of
+// Item file f, parsed as p. Every link must resolve to exactly one Item,
+// or the graph operation that follows them fails.
+func resolveLinks(links itemLinks, f vault.ItemFile, p item.Parsed, key string) ([]vault.ItemFile, error) {
 	for _, bad := range p.BadRelations {
 		if bad.Key == key {
-			return nil, graphError(badRelationProblem(f, bad))
+			return nil, graphError(badRelation(f, bad))
 		}
 	}
 	var out []vault.ItemFile

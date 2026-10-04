@@ -139,7 +139,7 @@ tty: true
 exit: 4
 -- stdout --
 -- stderr --
-error[malformed_relation]: the blocked_by of REL-22 is "[[REL-2 Wikilink scanner]]", not a list of wikilinks, so it is ignored
+error[malformed_relation]: the blocked_by of REL-22 is "[[REL-2 Wikilink scanner]]", not a list of wikilinks
 hint: write blocked_by in Projects/REL/Issues/REL-22 Malformed.md as quoted wikilinks, such as blocked_by: ["[[REL-1 Title]]"], then retry
 
 $ otman parent set REL-6 REL-24 --json
