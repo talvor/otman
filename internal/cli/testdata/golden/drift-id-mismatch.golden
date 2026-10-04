@@ -1,0 +1,392 @@
+$ otman view DRF-1 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "DRF-1",
+      "title": "Mismatched id",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/DRF/Issues/DRF-1 Mismatched id.md",
+      "rev": "48f631751603",
+      "author": null,
+      "body": "The id was pasted from another Item.",
+      "created": "2026-01-01T10:00:00Z",
+      "updated": "2026-01-01T11:00:00Z",
+      "comments": [],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": [
+    {
+      "code": "id_mismatch",
+      "message": "DRF-1 has frontmatter id \"DRF-9\"; its identity is its filename prefix DRF-1",
+      "details": {
+        "frontmatter_id": "DRF-9",
+        "id": "DRF-1",
+        "path": "Projects/DRF/Issues/DRF-1 Mismatched id.md"
+      },
+      "hint": "the next otman write to DRF-1 resets id to DRF-1"
+    }
+  ]
+}
+-- stderr --
+
+$ otman view DRF-1
+tty: true
+exit: 0
+-- stdout --
+DRF-1 · Mismatched id
+issue · open · unassigned
+Author: - · created 2026-01-01T10:00:00Z · updated 2026-01-01T11:00:00Z
+Path: Projects/DRF/Issues/DRF-1 Mismatched id.md
+
+The id was pasted from another Item.
+-- stderr --
+warning[id_mismatch]: DRF-1 has frontmatter id "DRF-9"; its identity is its filename prefix DRF-1
+hint: the next otman write to DRF-1 resets id to DRF-1
+
+$ otman reopen DRF-1 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "DRF-1",
+      "title": "Mismatched id",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/DRF/Issues/DRF-1 Mismatched id.md",
+      "rev": "48f631751603"
+    },
+    "changed": false
+  },
+  "warnings": [
+    {
+      "code": "id_mismatch",
+      "message": "DRF-1 has frontmatter id \"DRF-9\"; its identity is its filename prefix DRF-1",
+      "details": {
+        "frontmatter_id": "DRF-9",
+        "id": "DRF-1",
+        "path": "Projects/DRF/Issues/DRF-1 Mismatched id.md"
+      },
+      "hint": "the next otman write to DRF-1 resets id to DRF-1"
+    }
+  ]
+}
+-- stderr --
+
+$ otman edit DRF-1 --assignee alice --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "DRF-1",
+      "title": "Mismatched id",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": "alice",
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/DRF/Issues/DRF-1 Mismatched id.md",
+      "rev": "fffc9934a93e"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman view DRF-1 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "DRF-1",
+      "title": "Mismatched id",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": "alice",
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/DRF/Issues/DRF-1 Mismatched id.md",
+      "rev": "fffc9934a93e",
+      "author": null,
+      "body": "The id was pasted from another Item.",
+      "created": "2026-01-01T10:00:00Z",
+      "updated": "2026-01-02T03:04:05Z",
+      "comments": [],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "DRF"
+actor = "talvor"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/DRF/
+-- vault/Projects/DRF/DRF.md --
+---
+name: Drift
+kind: project
+---
+vault/Projects/DRF/Issues/
+-- vault/Projects/DRF/Issues/DRF-1 Mismatched id.md --
+---
+# Copied from another note in Obsidian
+id: DRF-1
+title: Mismatched id
+kind: issue
+
+status: open
+priority: high
+labels: []
+assignee: alice
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+The id was pasted from another Item.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-10 Unparseable.md --
+---
+id: DRF-10
+title: Unparseable
+status: [open
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-11 Repeated key.md --
+---
+id: DRF-11
+title: Repeated key
+kind: issue
+status: open
+labels: []
+status: closed
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-12 Missing marker.md --
+---
+id: DRF-12
+title: Missing marker
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+The body has its own section.
+
+## Comments
+
+Not otman's comments: this heading is part of the body.
+
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+The marker line above was deleted in Obsidian.
+-- vault/Projects/DRF/Issues/DRF-13 No comments section.md --
+---
+id: DRF-13
+title: No comments section
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+The marker and the heading were both deleted.
+-- vault/Projects/DRF/Issues/DRF-14 Duplicate markers.md --
+---
+id: DRF-14
+title: Duplicate markers
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+Pasted twice.
+
+<!-- otman:comments -->
+## Comments
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+A comment after the second marker.
+-- vault/Projects/DRF/Issues/DRF-15 Invalid labels.md --
+---
+id: DRF-15
+title: Invalid labels
+kind: issue
+status: open
+labels:
+  - Needs Triage!   # a space and a bang
+  - BUG
+  - bug
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-2 Short title.md --
+---
+id: DRF-2
+title: A longer title, retyped in Obsidian   # not the filename
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-3 Filed as a spec.md --
+---
+id: DRF-3
+title: Filed as a spec
+kind: spec
+status: open
+labels: []
+assignee: null
+
+due: 2026-02-01
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-5 Missing keys.md --
+---
+# only some keys survived a hand edit
+status: open
+
+estimate: 3   # an unknown key
+labels: []
+---
+No id, title, kind, created or updated.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-6 Invalid status.md --
+---
+id: DRF-6
+title: Invalid status
+kind: issue
+status: doing   # not a status otman knows
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-7 Missing status.md --
+---
+id: DRF-7
+title: Missing status
+kind: issue
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-8 Malformed values.md --
+---
+id: DRF-8
+title: Malformed values
+kind: issue
+status: open
+labels: needs-triage   # not a list
+assignee:
+  - alice
+  - bob
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-9 Flow style.md --
+---
+{id: DRF-9, title: Flow style, kind: issue, status: open, labels: [], assignee: null}
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/DRF/Notes/
+-- vault/Projects/DRF/Notes/DRF-4 Outside a Kind folder.md --
+---
+id: DRF-4
+title: Outside a Kind folder
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+Moved into Notes/ by hand.
+
+<!-- otman:comments -->
+## Comments
+vault/Projects/DRF/Specs/
+-- vault/Projects/DRF/Specs/DRF-16 Malformed title and kind.md --
+---
+id: DRF-16
+title:
+  - one
+  - two
+kind: bug
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments

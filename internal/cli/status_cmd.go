@@ -79,7 +79,7 @@ func (a *app) setStatus(cmd *cobra.Command, c statusCommand, ref, commentText, c
 			return ioError(err)
 		}
 		before := item.Parse(data)
-		data, changed, err := item.SetStatus(data, c.status, comment, a.opts.Now())
+		data, changed, err := item.SetStatus(data, f.Derived(), c.status, comment, a.opts.Now())
 		if err != nil {
 			return writeError(f, err)
 		}
@@ -125,7 +125,10 @@ func writeError(f vault.ItemFile, err error) error {
 			`make blocked_by in `+f.Path+` a list of quoted wikilinks, such as blocked_by: ["[[`+f.Key+`-1 Title]]"], then retry`)
 	case errors.Is(err, item.ErrNoMarker):
 		return unsafeWrite(f.Path, err.Error(), "put the line "+item.CommentsMarker+
-			" back just before "+item.CommentsHeading+", then retry")
+			" back just before "+item.CommentsHeading+", or run 'otman comment "+f.ID()+"', which restores it, then retry")
+	case errors.Is(err, item.ErrDuplicateMarkers):
+		return unsafeWrite(f.Path, err.Error(), "keep only the "+item.CommentsMarker+
+			" line just before the comments' "+item.CommentsHeading+" heading, then retry")
 	case errors.As(err, &exists):
 		return &Error{Exit: ExitConflict, Code: "move_target_exists",
 			Message: "cannot move " + f.Path + ": " + exists.Error(),

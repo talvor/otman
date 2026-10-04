@@ -174,6 +174,15 @@ func Splice(file []byte, edits []Edit) ([]byte, error) {
 	return append(result, file[end:]...), nil
 }
 
+// Check reports why the frontmatter fm, the YAML between the --- lines,
+// could not be spliced, as an *UnsafeError, or nil when it could. A read
+// that accepts only what Check accepts never shows an Item that every
+// write would refuse.
+func Check(fm []byte) error {
+	_, err := parse(fm)
+	return err
+}
+
 // key is one top-level key of the frontmatter as parsed.
 type key struct {
 	name   string

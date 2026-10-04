@@ -111,7 +111,20 @@ exit: 0
     },
     "changed": true
   },
-  "warnings": []
+  "warnings": [
+    {
+      "code": "invalid_label",
+      "message": "OTM-7 has the label \"not valid!\", which is not a valid Label even lowercased",
+      "details": {
+        "id": "OTM-7",
+        "label": "not valid!",
+        "max_length": 64,
+        "path": "Projects/OTM/Issues/OTM-7 Still invalid.md",
+        "pattern": "[a-z0-9][a-z0-9._:/-]*"
+      },
+      "hint": "otman keeps it; rename it in Projects/OTM/Issues/OTM-7 Still invalid.md to lowercase letters, digits and . _ : / -, starting with a letter or digit, at most 64 characters"
+    }
+  ]
 }
 -- stderr --
 
@@ -135,7 +148,19 @@ exit: 0
     },
     "changed": true
   },
-  "warnings": []
+  "warnings": [
+    {
+      "code": "malformed_value",
+      "message": "the labels value of OTM-8 is \"Bug\", not a list of Labels, so it reads as absent",
+      "details": {
+        "id": "OTM-8",
+        "key": "labels",
+        "path": "Projects/OTM/Issues/OTM-8 Not a list.md",
+        "value": "Bug"
+      },
+      "hint": "fix labels in Projects/OTM/Issues/OTM-8 Not a list.md; otman keeps it as written until a command sets labels"
+    }
+  ]
 }
 -- stderr --
 

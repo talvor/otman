@@ -79,7 +79,7 @@ func (a *app) view(ref string, comments, full bool) error {
 			return ioError(err)
 		}
 		p := item.Parse(data)
-		warnings = append(warnings, relationProblems(f, p, links)...)
+		warnings = append(warnings, itemProblems(f, p, links)...)
 		it := newItemFull(f, p, data, links, r)
 		if a.out == output.JSON {
 			return a.emit(viewResult{it}, warnings)

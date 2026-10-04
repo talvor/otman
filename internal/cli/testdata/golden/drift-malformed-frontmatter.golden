@@ -1,0 +1,1365 @@
+$ otman view DRF-9 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "DRF-9",
+      "title": "Flow style",
+      "kind": "issue",
+      "status": null,
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/DRF/Issues/DRF-9 Flow style.md",
+      "rev": "b0b3d8a21969",
+      "author": null,
+      "body": "",
+      "created": null,
+      "updated": null,
+      "comments": [],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": [
+    {
+      "code": "malformed_frontmatter",
+      "message": "cannot read Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML",
+      "details": {
+        "path": "Projects/DRF/Issues/DRF-9 Flow style.md"
+      },
+      "hint": "fix the YAML between the --- lines in Projects/DRF/Issues/DRF-9 Flow style.md"
+    }
+  ]
+}
+-- stderr --
+
+$ otman close DRF-9
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML"
+  details:
+    path: Projects/DRF/Issues/DRF-9 Flow style.md
+    reason: the frontmatter is flow-style YAML
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman reopen DRF-9
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML"
+  details:
+    path: Projects/DRF/Issues/DRF-9 Flow style.md
+    reason: the frontmatter is flow-style YAML
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman edit DRF-9 --assignee alice
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML"
+  details:
+    path: Projects/DRF/Issues/DRF-9 Flow style.md
+    reason: the frontmatter is flow-style YAML
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman edit DRF-9 --body New body.
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML"
+  details:
+    path: Projects/DRF/Issues/DRF-9 Flow style.md
+    reason: the frontmatter is flow-style YAML
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman comment DRF-9 --body A comment.
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML"
+  details:
+    path: Projects/DRF/Issues/DRF-9 Flow style.md
+    reason: the frontmatter is flow-style YAML
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman claim DRF-9
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML"
+  details:
+    path: Projects/DRF/Issues/DRF-9 Flow style.md
+    reason: the frontmatter is flow-style YAML
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman release DRF-9
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML"
+  details:
+    path: Projects/DRF/Issues/DRF-9 Flow style.md
+    reason: the frontmatter is flow-style YAML
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman parent set DRF-9 DRF-2
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML"
+  details:
+    path: Projects/DRF/Issues/DRF-9 Flow style.md
+    reason: the frontmatter is flow-style YAML
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman block DRF-9 --by DRF-2
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML"
+  details:
+    path: Projects/DRF/Issues/DRF-9 Flow style.md
+    reason: the frontmatter is flow-style YAML
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman view DRF-10 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "DRF-10",
+      "title": "Unparseable",
+      "kind": "issue",
+      "status": null,
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/DRF/Issues/DRF-10 Unparseable.md",
+      "rev": "93725fea84dc",
+      "author": null,
+      "body": "",
+      "created": null,
+      "updated": null,
+      "comments": [],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": [
+    {
+      "code": "malformed_frontmatter",
+      "message": "cannot read Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'",
+      "details": {
+        "path": "Projects/DRF/Issues/DRF-10 Unparseable.md"
+      },
+      "hint": "fix the YAML between the --- lines in Projects/DRF/Issues/DRF-10 Unparseable.md"
+    }
+  ]
+}
+-- stderr --
+
+$ otman close DRF-10
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'"
+  details:
+    path: Projects/DRF/Issues/DRF-10 Unparseable.md
+    reason: "the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'"
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman reopen DRF-10
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'"
+  details:
+    path: Projects/DRF/Issues/DRF-10 Unparseable.md
+    reason: "the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'"
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman edit DRF-10 --assignee alice
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'"
+  details:
+    path: Projects/DRF/Issues/DRF-10 Unparseable.md
+    reason: "the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'"
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman edit DRF-10 --body New body.
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'"
+  details:
+    path: Projects/DRF/Issues/DRF-10 Unparseable.md
+    reason: "the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'"
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman comment DRF-10 --body A comment.
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'"
+  details:
+    path: Projects/DRF/Issues/DRF-10 Unparseable.md
+    reason: "the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'"
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman claim DRF-10
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'"
+  details:
+    path: Projects/DRF/Issues/DRF-10 Unparseable.md
+    reason: "the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'"
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman release DRF-10
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'"
+  details:
+    path: Projects/DRF/Issues/DRF-10 Unparseable.md
+    reason: "the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'"
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman parent set DRF-10 DRF-2
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'"
+  details:
+    path: Projects/DRF/Issues/DRF-10 Unparseable.md
+    reason: "the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'"
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman block DRF-10 --by DRF-2
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'"
+  details:
+    path: Projects/DRF/Issues/DRF-10 Unparseable.md
+    reason: "the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'"
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman view DRF-11 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "DRF-11",
+      "title": "Repeated key",
+      "kind": "issue",
+      "status": null,
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/DRF/Issues/DRF-11 Repeated key.md",
+      "rev": "ec65eff6e4ed",
+      "author": null,
+      "body": "",
+      "created": null,
+      "updated": null,
+      "comments": [],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": [
+    {
+      "code": "malformed_frontmatter",
+      "message": "cannot read Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key \"status\"",
+      "details": {
+        "path": "Projects/DRF/Issues/DRF-11 Repeated key.md"
+      },
+      "hint": "fix the YAML between the --- lines in Projects/DRF/Issues/DRF-11 Repeated key.md"
+    }
+  ]
+}
+-- stderr --
+
+$ otman close DRF-11
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key \"status\""
+  details:
+    path: Projects/DRF/Issues/DRF-11 Repeated key.md
+    reason: "the frontmatter repeats the key \"status\""
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman reopen DRF-11
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key \"status\""
+  details:
+    path: Projects/DRF/Issues/DRF-11 Repeated key.md
+    reason: "the frontmatter repeats the key \"status\""
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman edit DRF-11 --assignee alice
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key \"status\""
+  details:
+    path: Projects/DRF/Issues/DRF-11 Repeated key.md
+    reason: "the frontmatter repeats the key \"status\""
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman edit DRF-11 --body New body.
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key \"status\""
+  details:
+    path: Projects/DRF/Issues/DRF-11 Repeated key.md
+    reason: "the frontmatter repeats the key \"status\""
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman comment DRF-11 --body A comment.
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key \"status\""
+  details:
+    path: Projects/DRF/Issues/DRF-11 Repeated key.md
+    reason: "the frontmatter repeats the key \"status\""
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman claim DRF-11
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key \"status\""
+  details:
+    path: Projects/DRF/Issues/DRF-11 Repeated key.md
+    reason: "the frontmatter repeats the key \"status\""
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman release DRF-11
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key \"status\""
+  details:
+    path: Projects/DRF/Issues/DRF-11 Repeated key.md
+    reason: "the frontmatter repeats the key \"status\""
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman parent set DRF-11 DRF-2
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key \"status\""
+  details:
+    path: Projects/DRF/Issues/DRF-11 Repeated key.md
+    reason: "the frontmatter repeats the key \"status\""
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman block DRF-11 --by DRF-2
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: unsafe_write
+  message: "refusing to rewrite Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key \"status\""
+  details:
+    path: Projects/DRF/Issues/DRF-11 Repeated key.md
+    reason: "the frontmatter repeats the key \"status\""
+  hint: "make the frontmatter plain block-style YAML between --- lines, then retry"
+
+$ otman view DRF-9
+tty: true
+exit: 0
+-- stdout --
+DRF-9 · Flow style
+issue · - · unassigned
+Author: - · created - · updated -
+Path: Projects/DRF/Issues/DRF-9 Flow style.md
+
+(no body)
+-- stderr --
+warning[malformed_frontmatter]: cannot read Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML
+hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-9 Flow style.md
+
+$ otman list --state all --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [
+      {
+        "id": "DRF-1",
+        "title": "Mismatched id",
+        "kind": "issue",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/DRF/Issues/DRF-1 Mismatched id.md",
+        "rev": "48f631751603"
+      },
+      {
+        "id": "DRF-2",
+        "title": "A longer title, retyped in Obsidian",
+        "kind": "issue",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/DRF/Issues/DRF-2 Short title.md",
+        "rev": "e5ac2f0c0865"
+      },
+      {
+        "id": "DRF-3",
+        "title": "Filed as a spec",
+        "kind": "spec",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/DRF/Issues/DRF-3 Filed as a spec.md",
+        "rev": "87cc3e06c5b5"
+      },
+      {
+        "id": "DRF-4",
+        "title": "Outside a Kind folder",
+        "kind": "issue",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/DRF/Notes/DRF-4 Outside a Kind folder.md",
+        "rev": "89551eadbb79"
+      },
+      {
+        "id": "DRF-5",
+        "title": "Missing keys",
+        "kind": "issue",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/DRF/Issues/DRF-5 Missing keys.md",
+        "rev": "4768a4ebfc61"
+      },
+      {
+        "id": "DRF-6",
+        "title": "Invalid status",
+        "kind": "issue",
+        "status": "doing",
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/DRF/Issues/DRF-6 Invalid status.md",
+        "rev": "f49b94880a5c"
+      },
+      {
+        "id": "DRF-7",
+        "title": "Missing status",
+        "kind": "issue",
+        "status": null,
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/DRF/Issues/DRF-7 Missing status.md",
+        "rev": "5dba3797b29d"
+      },
+      {
+        "id": "DRF-8",
+        "title": "Malformed values",
+        "kind": "issue",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/DRF/Issues/DRF-8 Malformed values.md",
+        "rev": "774b08ab0fc8"
+      },
+      {
+        "id": "DRF-12",
+        "title": "Missing marker",
+        "kind": "issue",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/DRF/Issues/DRF-12 Missing marker.md",
+        "rev": "8a191704ccdb"
+      },
+      {
+        "id": "DRF-13",
+        "title": "No comments section",
+        "kind": "issue",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/DRF/Issues/DRF-13 No comments section.md",
+        "rev": "61202b046032"
+      },
+      {
+        "id": "DRF-14",
+        "title": "Duplicate markers",
+        "kind": "issue",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/DRF/Issues/DRF-14 Duplicate markers.md",
+        "rev": "8c7671164c3b"
+      },
+      {
+        "id": "DRF-15",
+        "title": "Invalid labels",
+        "kind": "issue",
+        "status": "open",
+        "labels": [
+          "Needs Triage!",
+          "BUG",
+          "bug"
+        ],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/DRF/Issues/DRF-15 Invalid labels.md",
+        "rev": "a5b8e7de1a05"
+      },
+      {
+        "id": "DRF-16",
+        "title": "Malformed title and kind",
+        "kind": "spec",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/DRF/Specs/DRF-16 Malformed title and kind.md",
+        "rev": "5428848d5318"
+      }
+    ],
+    "total": 13,
+    "count": 13,
+    "has_more": false
+  },
+  "warnings": [
+    {
+      "code": "id_mismatch",
+      "message": "DRF-1 has frontmatter id \"DRF-9\"; its identity is its filename prefix DRF-1",
+      "details": {
+        "frontmatter_id": "DRF-9",
+        "id": "DRF-1",
+        "path": "Projects/DRF/Issues/DRF-1 Mismatched id.md"
+      },
+      "hint": "the next otman write to DRF-1 resets id to DRF-1"
+    },
+    {
+      "code": "title_drift",
+      "message": "DRF-2 has title \"A longer title, retyped in Obsidian\", but its filename says \"Short title\"",
+      "details": {
+        "filename_title": "Short title",
+        "id": "DRF-2",
+        "path": "Projects/DRF/Issues/DRF-2 Short title.md",
+        "title": "A longer title, retyped in Obsidian"
+      },
+      "hint": "otman shows the frontmatter title; 'otman doctor --fix --prefer frontmatter|file' settles which is right"
+    },
+    {
+      "code": "kind_drift",
+      "message": "DRF-3 has kind spec, but it is in Projects/DRF/Issues, the folder for issue",
+      "details": {
+        "folder_kind": "issue",
+        "id": "DRF-3",
+        "kind": "spec",
+        "path": "Projects/DRF/Issues/DRF-3 Filed as a spec.md"
+      },
+      "hint": "otman shows the frontmatter Kind; 'otman doctor --fix --prefer frontmatter|file' settles which is right"
+    },
+    {
+      "code": "unexpected_folder",
+      "message": "DRF-4 is in Projects/DRF/Notes, not in a Kind folder of Project DRF",
+      "details": {
+        "expected": "Projects/DRF/Issues/DRF-4 Outside a Kind folder.md",
+        "folder": "Projects/DRF/Notes",
+        "id": "DRF-4",
+        "path": "Projects/DRF/Notes/DRF-4 Outside a Kind folder.md"
+      },
+      "hint": "move it to Projects/DRF/Issues/DRF-4 Outside a Kind folder.md, or run 'otman doctor --fix'"
+    },
+    {
+      "code": "missing_key",
+      "message": "DRF-5 has no id, so it reads as \"DRF-5\" from its filename",
+      "details": {
+        "derived": "DRF-5",
+        "id": "DRF-5",
+        "key": "id",
+        "path": "Projects/DRF/Issues/DRF-5 Missing keys.md"
+      },
+      "hint": "the next otman write to DRF-5 adds id from its filename"
+    },
+    {
+      "code": "missing_key",
+      "message": "DRF-5 has no title, so it reads as \"Missing keys\" from its filename",
+      "details": {
+        "derived": "Missing keys",
+        "id": "DRF-5",
+        "key": "title",
+        "path": "Projects/DRF/Issues/DRF-5 Missing keys.md"
+      },
+      "hint": "the next otman write to DRF-5 adds title from its filename"
+    },
+    {
+      "code": "missing_key",
+      "message": "DRF-5 has no kind, so it reads as \"issue\" from its folder",
+      "details": {
+        "derived": "issue",
+        "id": "DRF-5",
+        "key": "kind",
+        "path": "Projects/DRF/Issues/DRF-5 Missing keys.md"
+      },
+      "hint": "the next otman write to DRF-5 adds kind from its folder"
+    },
+    {
+      "code": "invalid_status",
+      "message": "DRF-6 has status \"doing\", not open or closed",
+      "details": {
+        "id": "DRF-6",
+        "path": "Projects/DRF/Issues/DRF-6 Invalid status.md",
+        "status": "doing"
+      },
+      "hint": "run 'otman reopen DRF-6' or 'otman close DRF-6' to set it"
+    },
+    {
+      "code": "invalid_status",
+      "message": "DRF-7 has no status, not open or closed",
+      "details": {
+        "id": "DRF-7",
+        "path": "Projects/DRF/Issues/DRF-7 Missing status.md",
+        "status": null
+      },
+      "hint": "run 'otman reopen DRF-7' or 'otman close DRF-7' to set it"
+    },
+    {
+      "code": "malformed_value",
+      "message": "the labels value of DRF-8 is \"needs-triage\", not a list of Labels, so it reads as absent",
+      "details": {
+        "id": "DRF-8",
+        "key": "labels",
+        "path": "Projects/DRF/Issues/DRF-8 Malformed values.md",
+        "value": "needs-triage"
+      },
+      "hint": "fix labels in Projects/DRF/Issues/DRF-8 Malformed values.md; otman keeps it as written until a command sets labels"
+    },
+    {
+      "code": "malformed_value",
+      "message": "the assignee value of DRF-8 is a list or mapping, not a name, so it reads as absent",
+      "details": {
+        "id": "DRF-8",
+        "key": "assignee",
+        "path": "Projects/DRF/Issues/DRF-8 Malformed values.md",
+        "value": null
+      },
+      "hint": "fix assignee in Projects/DRF/Issues/DRF-8 Malformed values.md; otman keeps it as written until a command sets assignee"
+    },
+    {
+      "code": "malformed_frontmatter",
+      "message": "cannot read Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML",
+      "details": {
+        "path": "Projects/DRF/Issues/DRF-9 Flow style.md"
+      },
+      "hint": "fix the YAML between the --- lines in Projects/DRF/Issues/DRF-9 Flow style.md"
+    },
+    {
+      "code": "malformed_frontmatter",
+      "message": "cannot read Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'",
+      "details": {
+        "path": "Projects/DRF/Issues/DRF-10 Unparseable.md"
+      },
+      "hint": "fix the YAML between the --- lines in Projects/DRF/Issues/DRF-10 Unparseable.md"
+    },
+    {
+      "code": "malformed_frontmatter",
+      "message": "cannot read Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key \"status\"",
+      "details": {
+        "path": "Projects/DRF/Issues/DRF-11 Repeated key.md"
+      },
+      "hint": "fix the YAML between the --- lines in Projects/DRF/Issues/DRF-11 Repeated key.md"
+    },
+    {
+      "code": "missing_comments_marker",
+      "message": "DRF-12 has no <!-- otman:comments --> line, so its comments are read from the last ## Comments heading",
+      "details": {
+        "id": "DRF-12",
+        "path": "Projects/DRF/Issues/DRF-12 Missing marker.md"
+      },
+      "hint": "'otman comment DRF-12' restores the marker; until then body edits are refused"
+    },
+    {
+      "code": "missing_comments_marker",
+      "message": "DRF-13 has no <!-- otman:comments --> line, so its comments are read from the last ## Comments heading",
+      "details": {
+        "id": "DRF-13",
+        "path": "Projects/DRF/Issues/DRF-13 No comments section.md"
+      },
+      "hint": "'otman comment DRF-13' restores the marker; until then body edits are refused"
+    },
+    {
+      "code": "duplicate_comments_markers",
+      "message": "DRF-14 has 2 <!-- otman:comments --> lines, so its comments are read from the first",
+      "details": {
+        "id": "DRF-14",
+        "path": "Projects/DRF/Issues/DRF-14 Duplicate markers.md"
+      },
+      "hint": "keep only the marker just before the comments' ## Comments heading; until then body edits and comments are refused"
+    },
+    {
+      "code": "invalid_label",
+      "message": "DRF-15 has the label \"Needs Triage!\", which is not a valid Label even lowercased",
+      "details": {
+        "id": "DRF-15",
+        "label": "Needs Triage!",
+        "max_length": 64,
+        "path": "Projects/DRF/Issues/DRF-15 Invalid labels.md",
+        "pattern": "[a-z0-9][a-z0-9._:/-]*"
+      },
+      "hint": "otman keeps it; rename it in Projects/DRF/Issues/DRF-15 Invalid labels.md to lowercase letters, digits and . _ : / -, starting with a letter or digit, at most 64 characters"
+    },
+    {
+      "code": "malformed_value",
+      "message": "the title value of DRF-16 is a list or mapping, not text, so it reads as absent",
+      "details": {
+        "id": "DRF-16",
+        "key": "title",
+        "path": "Projects/DRF/Specs/DRF-16 Malformed title and kind.md",
+        "value": null
+      },
+      "hint": "fix title in Projects/DRF/Specs/DRF-16 Malformed title and kind.md; otman keeps it as written until a command sets title"
+    },
+    {
+      "code": "malformed_value",
+      "message": "the kind value of DRF-16 is \"bug\", not issue, prd or spec, so it reads as absent",
+      "details": {
+        "id": "DRF-16",
+        "key": "kind",
+        "path": "Projects/DRF/Specs/DRF-16 Malformed title and kind.md",
+        "value": "bug"
+      },
+      "hint": "fix kind in Projects/DRF/Specs/DRF-16 Malformed title and kind.md; otman keeps it as written until a command sets kind"
+    }
+  ]
+}
+-- stderr --
+
+$ otman frontier
+exit: 0
+-- stdout --
+items[11]:
+  - id: DRF-1
+    title: Mismatched id
+    kind: issue
+    status: open
+    labels[0]:
+    assignee: null
+    parent: null
+    blocked_by[0]:
+    path: Projects/DRF/Issues/DRF-1 Mismatched id.md
+    rev: 48f631751603
+  - id: DRF-2
+    title: "A longer title, retyped in Obsidian"
+    kind: issue
+    status: open
+    labels[0]:
+    assignee: null
+    parent: null
+    blocked_by[0]:
+    path: Projects/DRF/Issues/DRF-2 Short title.md
+    rev: e5ac2f0c0865
+  - id: DRF-3
+    title: Filed as a spec
+    kind: spec
+    status: open
+    labels[0]:
+    assignee: null
+    parent: null
+    blocked_by[0]:
+    path: Projects/DRF/Issues/DRF-3 Filed as a spec.md
+    rev: 87cc3e06c5b5
+  - id: DRF-4
+    title: Outside a Kind folder
+    kind: issue
+    status: open
+    labels[0]:
+    assignee: null
+    parent: null
+    blocked_by[0]:
+    path: Projects/DRF/Notes/DRF-4 Outside a Kind folder.md
+    rev: 89551eadbb79
+  - id: DRF-5
+    title: Missing keys
+    kind: issue
+    status: open
+    labels[0]:
+    assignee: null
+    parent: null
+    blocked_by[0]:
+    path: Projects/DRF/Issues/DRF-5 Missing keys.md
+    rev: 4768a4ebfc61
+  - id: DRF-8
+    title: Malformed values
+    kind: issue
+    status: open
+    labels[0]:
+    assignee: null
+    parent: null
+    blocked_by[0]:
+    path: Projects/DRF/Issues/DRF-8 Malformed values.md
+    rev: 774b08ab0fc8
+  - id: DRF-12
+    title: Missing marker
+    kind: issue
+    status: open
+    labels[0]:
+    assignee: null
+    parent: null
+    blocked_by[0]:
+    path: Projects/DRF/Issues/DRF-12 Missing marker.md
+    rev: 8a191704ccdb
+  - id: DRF-13
+    title: No comments section
+    kind: issue
+    status: open
+    labels[0]:
+    assignee: null
+    parent: null
+    blocked_by[0]:
+    path: Projects/DRF/Issues/DRF-13 No comments section.md
+    rev: 61202b046032
+  - id: DRF-14
+    title: Duplicate markers
+    kind: issue
+    status: open
+    labels[0]:
+    assignee: null
+    parent: null
+    blocked_by[0]:
+    path: Projects/DRF/Issues/DRF-14 Duplicate markers.md
+    rev: 8c7671164c3b
+  - id: DRF-15
+    title: Invalid labels
+    kind: issue
+    status: open
+    labels[3]: Needs Triage!,BUG,bug
+    assignee: null
+    parent: null
+    blocked_by[0]:
+    path: Projects/DRF/Issues/DRF-15 Invalid labels.md
+    rev: a5b8e7de1a05
+  - id: DRF-16
+    title: Malformed title and kind
+    kind: spec
+    status: open
+    labels[0]:
+    assignee: null
+    parent: null
+    blocked_by[0]:
+    path: Projects/DRF/Specs/DRF-16 Malformed title and kind.md
+    rev: 5428848d5318
+total: 11
+count: 11
+has_more: false
+-- stderr --
+warning:
+  code: id_mismatch
+  message: "DRF-1 has frontmatter id \"DRF-9\"; its identity is its filename prefix DRF-1"
+  details:
+    frontmatter_id: DRF-9
+    id: DRF-1
+    path: Projects/DRF/Issues/DRF-1 Mismatched id.md
+  hint: the next otman write to DRF-1 resets id to DRF-1
+warning:
+  code: title_drift
+  message: "DRF-2 has title \"A longer title, retyped in Obsidian\", but its filename says \"Short title\""
+  details:
+    filename_title: Short title
+    id: DRF-2
+    path: Projects/DRF/Issues/DRF-2 Short title.md
+    title: "A longer title, retyped in Obsidian"
+  hint: otman shows the frontmatter title; 'otman doctor --fix --prefer frontmatter|file' settles which is right
+warning:
+  code: kind_drift
+  message: "DRF-3 has kind spec, but it is in Projects/DRF/Issues, the folder for issue"
+  details:
+    folder_kind: issue
+    id: DRF-3
+    kind: spec
+    path: Projects/DRF/Issues/DRF-3 Filed as a spec.md
+  hint: otman shows the frontmatter Kind; 'otman doctor --fix --prefer frontmatter|file' settles which is right
+warning:
+  code: unexpected_folder
+  message: "DRF-4 is in Projects/DRF/Notes, not in a Kind folder of Project DRF"
+  details:
+    expected: Projects/DRF/Issues/DRF-4 Outside a Kind folder.md
+    folder: Projects/DRF/Notes
+    id: DRF-4
+    path: Projects/DRF/Notes/DRF-4 Outside a Kind folder.md
+  hint: "move it to Projects/DRF/Issues/DRF-4 Outside a Kind folder.md, or run 'otman doctor --fix'"
+warning:
+  code: missing_key
+  message: "DRF-5 has no id, so it reads as \"DRF-5\" from its filename"
+  details:
+    derived: DRF-5
+    id: DRF-5
+    key: id
+    path: Projects/DRF/Issues/DRF-5 Missing keys.md
+  hint: the next otman write to DRF-5 adds id from its filename
+warning:
+  code: missing_key
+  message: "DRF-5 has no title, so it reads as \"Missing keys\" from its filename"
+  details:
+    derived: Missing keys
+    id: DRF-5
+    key: title
+    path: Projects/DRF/Issues/DRF-5 Missing keys.md
+  hint: the next otman write to DRF-5 adds title from its filename
+warning:
+  code: missing_key
+  message: "DRF-5 has no kind, so it reads as \"issue\" from its folder"
+  details:
+    derived: issue
+    id: DRF-5
+    key: kind
+    path: Projects/DRF/Issues/DRF-5 Missing keys.md
+  hint: the next otman write to DRF-5 adds kind from its folder
+warning:
+  code: invalid_status
+  message: "DRF-6 has status \"doing\", not open or closed, so it is not listed"
+  details:
+    id: DRF-6
+    path: Projects/DRF/Issues/DRF-6 Invalid status.md
+    status: doing
+  hint: "set status: open or closed in Projects/DRF/Issues/DRF-6 Invalid status.md, or pass --state all"
+warning:
+  code: invalid_status
+  message: "DRF-7 has no status, not open or closed, so it is not listed"
+  details:
+    id: DRF-7
+    path: Projects/DRF/Issues/DRF-7 Missing status.md
+    status: null
+  hint: "set status: open or closed in Projects/DRF/Issues/DRF-7 Missing status.md, or pass --state all"
+warning:
+  code: malformed_value
+  message: "the labels value of DRF-8 is \"needs-triage\", not a list of Labels, so it reads as absent"
+  details:
+    id: DRF-8
+    key: labels
+    path: Projects/DRF/Issues/DRF-8 Malformed values.md
+    value: needs-triage
+  hint: fix labels in Projects/DRF/Issues/DRF-8 Malformed values.md; otman keeps it as written until a command sets labels
+warning:
+  code: malformed_value
+  message: "the assignee value of DRF-8 is a list or mapping, not a name, so it reads as absent"
+  details:
+    id: DRF-8
+    key: assignee
+    path: Projects/DRF/Issues/DRF-8 Malformed values.md
+    value: null
+  hint: fix assignee in Projects/DRF/Issues/DRF-8 Malformed values.md; otman keeps it as written until a command sets assignee
+warning:
+  code: malformed_frontmatter
+  message: "cannot read Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML"
+  details:
+    path: Projects/DRF/Issues/DRF-9 Flow style.md
+  hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-9 Flow style.md
+warning:
+  code: malformed_frontmatter
+  message: "cannot read Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'"
+  details:
+    path: Projects/DRF/Issues/DRF-10 Unparseable.md
+  hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-10 Unparseable.md
+warning:
+  code: malformed_frontmatter
+  message: "cannot read Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key \"status\""
+  details:
+    path: Projects/DRF/Issues/DRF-11 Repeated key.md
+  hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-11 Repeated key.md
+warning:
+  code: missing_comments_marker
+  message: "DRF-12 has no <!-- otman:comments --> line, so its comments are read from the last ## Comments heading"
+  details:
+    id: DRF-12
+    path: Projects/DRF/Issues/DRF-12 Missing marker.md
+  hint: 'otman comment DRF-12' restores the marker; until then body edits are refused
+warning:
+  code: missing_comments_marker
+  message: "DRF-13 has no <!-- otman:comments --> line, so its comments are read from the last ## Comments heading"
+  details:
+    id: DRF-13
+    path: Projects/DRF/Issues/DRF-13 No comments section.md
+  hint: 'otman comment DRF-13' restores the marker; until then body edits are refused
+warning:
+  code: duplicate_comments_markers
+  message: "DRF-14 has 2 <!-- otman:comments --> lines, so its comments are read from the first"
+  details:
+    id: DRF-14
+    path: Projects/DRF/Issues/DRF-14 Duplicate markers.md
+  hint: keep only the marker just before the comments' ## Comments heading; until then body edits and comments are refused
+warning:
+  code: invalid_label
+  message: "DRF-15 has the label \"Needs Triage!\", which is not a valid Label even lowercased"
+  details:
+    id: DRF-15
+    label: Needs Triage!
+    max_length: 64
+    path: Projects/DRF/Issues/DRF-15 Invalid labels.md
+    pattern: "[a-z0-9][a-z0-9._:/-]*"
+  hint: "otman keeps it; rename it in Projects/DRF/Issues/DRF-15 Invalid labels.md to lowercase letters, digits and . _ : / -, starting with a letter or digit, at most 64 characters"
+warning:
+  code: malformed_value
+  message: "the title value of DRF-16 is a list or mapping, not text, so it reads as absent"
+  details:
+    id: DRF-16
+    key: title
+    path: Projects/DRF/Specs/DRF-16 Malformed title and kind.md
+    value: null
+  hint: fix title in Projects/DRF/Specs/DRF-16 Malformed title and kind.md; otman keeps it as written until a command sets title
+warning:
+  code: malformed_value
+  message: "the kind value of DRF-16 is \"bug\", not issue, prd or spec, so it reads as absent"
+  details:
+    id: DRF-16
+    key: kind
+    path: Projects/DRF/Specs/DRF-16 Malformed title and kind.md
+    value: bug
+  hint: fix kind in Projects/DRF/Specs/DRF-16 Malformed title and kind.md; otman keeps it as written until a command sets kind
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "DRF"
+actor = "talvor"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/DRF/
+-- vault/Projects/DRF/DRF.md --
+---
+name: Drift
+kind: project
+---
+vault/Projects/DRF/Issues/
+-- vault/Projects/DRF/Issues/DRF-1 Mismatched id.md --
+---
+# Copied from another note in Obsidian
+id: DRF-9   # wrong number
+title: Mismatched id
+kind: issue
+
+status: open
+priority: high
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+The id was pasted from another Item.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-10 Unparseable.md --
+---
+id: DRF-10
+title: Unparseable
+status: [open
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-11 Repeated key.md --
+---
+id: DRF-11
+title: Repeated key
+kind: issue
+status: open
+labels: []
+status: closed
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-12 Missing marker.md --
+---
+id: DRF-12
+title: Missing marker
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+The body has its own section.
+
+## Comments
+
+Not otman's comments: this heading is part of the body.
+
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+The marker line above was deleted in Obsidian.
+-- vault/Projects/DRF/Issues/DRF-13 No comments section.md --
+---
+id: DRF-13
+title: No comments section
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+The marker and the heading were both deleted.
+-- vault/Projects/DRF/Issues/DRF-14 Duplicate markers.md --
+---
+id: DRF-14
+title: Duplicate markers
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+Pasted twice.
+
+<!-- otman:comments -->
+## Comments
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+A comment after the second marker.
+-- vault/Projects/DRF/Issues/DRF-15 Invalid labels.md --
+---
+id: DRF-15
+title: Invalid labels
+kind: issue
+status: open
+labels:
+  - Needs Triage!   # a space and a bang
+  - BUG
+  - bug
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-2 Short title.md --
+---
+id: DRF-2
+title: A longer title, retyped in Obsidian   # not the filename
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-3 Filed as a spec.md --
+---
+id: DRF-3
+title: Filed as a spec
+kind: spec
+status: open
+labels: []
+assignee: null
+
+due: 2026-02-01
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-5 Missing keys.md --
+---
+# only some keys survived a hand edit
+status: open
+
+estimate: 3   # an unknown key
+labels: []
+---
+No id, title, kind, created or updated.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-6 Invalid status.md --
+---
+id: DRF-6
+title: Invalid status
+kind: issue
+status: doing   # not a status otman knows
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-7 Missing status.md --
+---
+id: DRF-7
+title: Missing status
+kind: issue
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-8 Malformed values.md --
+---
+id: DRF-8
+title: Malformed values
+kind: issue
+status: open
+labels: needs-triage   # not a list
+assignee:
+  - alice
+  - bob
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/DRF/Issues/DRF-9 Flow style.md --
+---
+{id: DRF-9, title: Flow style, kind: issue, status: open, labels: [], assignee: null}
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/DRF/Notes/
+-- vault/Projects/DRF/Notes/DRF-4 Outside a Kind folder.md --
+---
+id: DRF-4
+title: Outside a Kind folder
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+Moved into Notes/ by hand.
+
+<!-- otman:comments -->
+## Comments
+vault/Projects/DRF/Specs/
+-- vault/Projects/DRF/Specs/DRF-16 Malformed title and kind.md --
+---
+id: DRF-16
+title:
+  - one
+  - two
+kind: bug
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+<!-- otman:comments -->
+## Comments

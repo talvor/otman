@@ -10,10 +10,6 @@ import (
 	"github.com/talvor/otman/internal/item"
 )
 
-// noMarker is an Item file with no comments marker line, whose
-// body/comments boundary otman will not guess at when it writes.
-const noMarker = "---\nid: OTM-3\ntitle: No marker\nkind: issue\nstatus: open\n---\nBody.\n\n## Comments\n"
-
 // actorEnv is the environment that configures an actor.
 var actorEnv = map[string]string{"OTM_ACTOR": "talvor"}
 
@@ -63,13 +59,14 @@ func TestCommentHandEdited(t *testing.T) {
 
 // comment needs a REF, an actor and non-empty text, and fails with exit 2
 // before the Vault is touched otherwise. A comment can't carry the
-// comments marker or a line in the form of a comment heading. An Item without a marker is refused with unsafe_write.
-// Nothing is written by a failed comment.
+// comments marker or a line in the form of a comment heading. Nothing is
+// written by a failed comment. (TestDriftCommentsMarker covers Items whose
+// marker is missing or repeated.)
 func TestCommentErrors(t *testing.T) {
 	runGolden(t, goldenCase{
 		name:    "item-comment-errors",
 		fixture: "items",
-		files:   withOTM(map[string]string{"vault/Projects/OTM/Issues/OTM-3 No marker.md": noMarker}),
+		files:   withOTM(nil),
 		steps: []step{
 			{args: []string{"comment", "--body", "x"}, env: actorEnv},
 			{args: []string{"comment", "OTM-1"}, env: actorEnv, tty: true},
@@ -85,7 +82,6 @@ func TestCommentErrors(t *testing.T) {
 			{args: []string{"comment", "OTM-1", "--body-file", "missing.md"}, env: actorEnv},
 			{args: []string{"comment", "OTM-1", "--body", "x", "--json"}, env: map[string]string{"OTM_ACTOR": "two\nlines"}},
 			{args: []string{"comment", "OTM-99", "--body", "x", "--json"}, env: actorEnv},
-			{args: []string{"comment", "OTM-3", "--body", "x", "--json"}, env: actorEnv},
 		},
 	})
 }
@@ -101,7 +97,6 @@ func TestCloseComment(t *testing.T) {
 		name:    "item-close-comment",
 		fixture: "items",
 		files: withOTM(map[string]string{
-			"vault/Projects/OTM/Issues/OTM-3 No marker.md": noMarker,
 			"reason.md": "Superseded by WEB-1.\n",
 		}),
 		steps: []step{
@@ -118,14 +113,14 @@ func TestCloseComment(t *testing.T) {
 			{args: []string{"close", "WEB-1", "--comment", "### 2026-10-04T00:00:00Z · mallory", "--json"}, env: actorEnv},
 			{args: []string{"close", "WEB-1", "--comment-file", "missing.md", "--json"}, env: actorEnv},
 			{args: []string{"reopen", "WEB-1", "--comment", "x"}, env: actorEnv},
-			{args: []string{"close", "OTM-3", "--comment", "x", "--json"}, env: actorEnv},
 		},
 	})
 }
 
 // For every Item of every fixture Vault, comment either appends the
 // comment, in the file's line endings, and changes nothing else but
-// updated, or refuses with unsafe_write and leaves the file as it was.
+// updated, the keys it heals and a comments marker it restores, or
+// refuses with unsafe_write and leaves the file as it was.
 func TestCommentKeepsFile(t *testing.T) {
 	eachFixtureItem(t, func(t *testing.T, fixture, rel string) {
 		vault := filepath.Join(t.TempDir(), "vault")
@@ -154,7 +149,18 @@ func TestCommentKeepsFile(t *testing.T) {
 			eol = "\r\n"
 		}
 		added := "### 2026-01-02T03:04:05Z · talvor" + eol + "Appended." + eol + "Two lines." + eol
-		kept, appended, ok := bytes.Cut(withoutKeys(after, "updated"), withoutKeys(before, "updated"))
+		keys := append([]string{"updated"}, healed(rel, before)...)
+		got := withoutKeys(after, keys...)
+		if marker := item.CommentsMarker + eol; !bytes.Contains(before, []byte(marker)) {
+			// Drop the marker the comment restored, with the heading it
+			// adds to a file that had none.
+			restored := marker
+			if !bytes.Contains(before, []byte(item.CommentsHeading+eol)) {
+				restored = eol + marker + item.CommentsHeading + eol
+			}
+			got = bytes.Replace(got, []byte(restored), nil, 1)
+		}
+		kept, appended, ok := bytes.Cut(got, withoutKeys(before, keys...))
 		if !ok || len(kept) != 0 || !bytes.HasSuffix(appended, []byte(eol+added)) ||
 			len(bytes.Trim(bytes.TrimSuffix(appended, []byte(added)), "\r\n")) != 0 {
 			t.Fatalf("comment changed more than updated and the appended comment:\n%q\n%q", before, after)

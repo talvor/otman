@@ -231,7 +231,7 @@ exit: 4
       "path": "Projects/OTM/Issues/OTM-3 No marker.md",
       "reason": "the Item has no <!-- otman:comments --> line"
     },
-    "hint": "put the line <!-- otman:comments --> back just before ## Comments, then retry"
+    "hint": "put the line <!-- otman:comments --> back just before ## Comments, or run 'otman comment OTM-3', which restores it, then retry"
   }
 }
 
@@ -241,7 +241,7 @@ exit: 4
 -- stdout --
 -- stderr --
 error[unsafe_write]: refusing to rewrite Projects/OTM/Issues/OTM-3 No marker.md: the Item has no <!-- otman:comments --> line
-hint: put the line <!-- otman:comments --> back just before ## Comments, then retry
+hint: put the line <!-- otman:comments --> back just before ## Comments, or run 'otman comment OTM-3', which restores it, then retry
 
 $ otman edit OTM-4 --kind spec --json
 exit: 4

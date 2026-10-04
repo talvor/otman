@@ -34,6 +34,26 @@ func (f ItemFile) ID() string { return fmt.Sprintf("%s-%d", f.Key, f.Number) }
 // Name is the file name.
 func (f ItemFile) Name() string { return path.Base(f.Path) }
 
+// folderKind is the Kind whose folder, directly under the Project's
+// folder, holds the file, and false when the file is anywhere else.
+func (f ItemFile) folderKind() (item.Kind, bool) {
+	dir, folder := path.Split(path.Dir(f.Path))
+	if dir != path.Join(ProjectsDir, f.Key)+"/" {
+		return "", false
+	}
+	return item.KindOfFolder(folder)
+}
+
+// Derived is what the file's name and folder say about the Item.
+func (f ItemFile) Derived() item.Derived {
+	_, _, title, _ := item.ParseFilename(f.Name())
+	d := item.Derived{ID: f.ID(), Title: title}
+	if k, ok := f.folderKind(); ok {
+		d.Kind = &k
+	}
+	return d
+}
+
 // ItemFiles lists Project key's Item files: the files anywhere under
 // Projects/<KEY>/, except Templates/, whose names carry the <KEY>-<n>
 // prefix. They are sorted by number, then path.

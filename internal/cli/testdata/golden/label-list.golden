@@ -8,7 +8,7 @@ enhancement    1     1
 needs-triage   1     1
 wayfinder:map  1     1
 -- stderr --
-warning[malformed_frontmatter]: cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Broken.md: yaml: line 1: did not find expected ',' or ']'
+warning[malformed_frontmatter]: cannot read Projects/OTM/Issues/OTM-7 Broken.md: the frontmatter is not valid YAML: yaml: line 1: did not find expected ',' or ']'
 hint: fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Broken.md
 
 $ otman label list --project OTM --json
@@ -46,7 +46,7 @@ exit: 0
   "warnings": [
     {
       "code": "malformed_frontmatter",
-      "message": "cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Broken.md: yaml: line 1: did not find expected ',' or ']'",
+      "message": "cannot read Projects/OTM/Issues/OTM-7 Broken.md: the frontmatter is not valid YAML: yaml: line 1: did not find expected ',' or ']'",
       "details": {
         "path": "Projects/OTM/Issues/OTM-7 Broken.md"
       },
@@ -70,7 +70,7 @@ has_more: false
 -- stderr --
 warning:
   code: malformed_frontmatter
-  message: "cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Broken.md: yaml: line 1: did not find expected ',' or ']'"
+  message: "cannot read Projects/OTM/Issues/OTM-7 Broken.md: the frontmatter is not valid YAML: yaml: line 1: did not find expected ',' or ']'"
   details:
     path: Projects/OTM/Issues/OTM-7 Broken.md
   hint: fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Broken.md
@@ -86,7 +86,7 @@ enhancement    1     1
 needs-triage   1     1
 wayfinder:map  1     1
 -- stderr --
-warning[malformed_frontmatter]: cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Broken.md: yaml: line 1: did not find expected ',' or ']'
+warning[malformed_frontmatter]: cannot read Projects/OTM/Issues/OTM-7 Broken.md: the frontmatter is not valid YAML: yaml: line 1: did not find expected ',' or ']'
 hint: fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Broken.md
 
 $ otman label list --project OTM --limit 2 --offset 1 --json
@@ -114,7 +114,7 @@ exit: 0
   "warnings": [
     {
       "code": "malformed_frontmatter",
-      "message": "cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Broken.md: yaml: line 1: did not find expected ',' or ']'",
+      "message": "cannot read Projects/OTM/Issues/OTM-7 Broken.md: the frontmatter is not valid YAML: yaml: line 1: did not find expected ',' or ']'",
       "details": {
         "path": "Projects/OTM/Issues/OTM-7 Broken.md"
       },
@@ -134,7 +134,7 @@ enhancement  1     1
 
 Showing 1-2 of 4; pass --offset 2 for more, or --all
 -- stderr --
-warning[malformed_frontmatter]: cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Broken.md: yaml: line 1: did not find expected ',' or ']'
+warning[malformed_frontmatter]: cannot read Projects/OTM/Issues/OTM-7 Broken.md: the frontmatter is not valid YAML: yaml: line 1: did not find expected ',' or ']'
 hint: fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Broken.md
 
 $ otman label list --project AAA --json

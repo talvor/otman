@@ -389,28 +389,26 @@ func listProject(v *vault.Vault, key string, q itemQuery, inUse labelSet) ([]ite
 			return nil, nil, err
 		} else if ok {
 			found = append(found, s)
+			warnings = append(warnings, driftProblems(f, p)...)
 		}
 	}
 	return found, warnings, nil
 }
 
-// malformedFrontmatter warns that the Item file f was left out because
-// its frontmatter cannot be read.
-func malformedFrontmatter(f vault.ItemFile, err error) output.Problem {
-	return output.Warning("malformed_frontmatter",
-		"cannot read the frontmatter of "+f.Path+": "+err.Error(),
-		map[string]any{"path": f.Path},
-		"fix the YAML between the --- lines in "+f.Path)
-}
-
 // invalidStatus warns that the Item summarised by s was left out of a
 // --state open or closed list because its status is neither.
 func invalidStatus(s itemSummary) output.Problem {
-	msg := s.ID + " has no status"
-	if s.Status != nil {
-		msg = s.ID + " has status " + quoteArg(*s.Status)
-	}
-	return output.Warning("invalid_status", msg+", not open or closed, so it is not listed",
+	return output.Warning("invalid_status", statusMessage(s.ID, s.Status)+", so it is not listed",
 		map[string]any{"id": s.ID, "path": s.Path, "status": s.Status},
 		"set status: open or closed in "+s.Path+", or pass --state all")
+}
+
+// statusMessage says that Item id has status, which is neither open nor
+// closed.
+func statusMessage(id string, status *string) string {
+	msg := id + " has no status"
+	if status != nil {
+		msg = id + " has status " + quoteArg(*status)
+	}
+	return msg + ", not open or closed"
 }

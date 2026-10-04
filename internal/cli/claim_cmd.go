@@ -74,7 +74,7 @@ func (a *app) setClaim(c claimCommand, ref string) error {
 		}
 		// Apply first, so a file otman could not rewrite is refused with
 		// unsafe_write whatever its frontmatter seems to say.
-		out, changed, err := item.Apply(data, update, a.opts.Now())
+		out, changed, err := item.Apply(data, f.Derived(), update, a.opts.Now())
 		if err != nil {
 			return writeError(f, err)
 		}

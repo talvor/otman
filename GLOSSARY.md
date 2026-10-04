@@ -33,7 +33,7 @@ The starting body a new Item of a given Kind receives when no body is supplied.
 _Avoid_: Scaffold, boilerplate, skeleton
 
 **Drift**:
-A disagreement, introduced outside otman, between parts of an Item that otman keeps consistent, such as filename vs title, folder vs Kind, or a missing comments marker. Drift is expected, warned about on read and repaired by `doctor`.
+A disagreement, introduced outside otman, between parts of an Item that otman keeps consistent, such as filename vs title, folder vs Kind, or a missing comments marker. Drift is expected: reads warn about it, a write heals it only where nothing is lost, and `doctor` repairs the rest.
 _Avoid_: Corruption, inconsistency
 
 **Renumber**:

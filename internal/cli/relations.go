@@ -116,7 +116,8 @@ func graphError(p output.Problem) *Error {
 }
 
 // summarize is the summary of Item file f, whose bytes are data, with a
-// warning for each of its relation links that does not resolve.
+// warning for its Drift and each of its relation links that does not
+// resolve.
 func summarize(v *vault.Vault, f vault.ItemFile, data []byte) (itemSummary, []output.Problem, error) {
 	files, err := v.ItemFiles(f.Key)
 	if err != nil {
@@ -124,7 +125,7 @@ func summarize(v *vault.Vault, f vault.ItemFile, data []byte) (itemSummary, []ou
 	}
 	links := newItemLinks(files)
 	p := item.Parse(data)
-	return newItemSummary(f, p, data, links), relationProblems(f, p, links), nil
+	return newItemSummary(f, p, data, links), itemProblems(f, p, links), nil
 }
 
 // resolveTarget finds the Item ref names as the target of a relation of

@@ -55,7 +55,7 @@ func (a *app) comment(cmd *cobra.Command, ref, body, bodyFile string) error {
 		if err != nil {
 			return ioError(err)
 		}
-		if data, err = item.AppendComment(data, c, a.opts.Now()); err != nil {
+		if data, err = item.AppendComment(data, f.Derived(), c, a.opts.Now()); err != nil {
 			return writeError(f, err)
 		}
 		if err := v.WriteItemFile(f, data); err != nil {
