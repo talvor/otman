@@ -8,24 +8,25 @@ Usage:
   otman [command]
 
 Available Commands:
-  block       Record that BLOCKER blocks an Item
-  claim       Claim an open Item for the actor
-  close       Close an Item
-  comment     Append a comment to an Item
-  config      Show or change user config
-  create      Create an Item in the selected Project
-  doctor      Report the Drift of Items, and with --fix repair what can be repaired
-  edit        Change an Item's title, Kind, body, assignee or Labels
-  frontier    List the Frontier: the open, unclaimed Items with no open blockers
-  help        Help about any command
-  label       Show the Labels in use
-  list        List the Items of the selected Project (default: open ones)
-  parent      Set or clear an Item's parent
-  project     Create, list, view and link Projects
-  release     Release the actor's Claim on an Item
-  reopen      Reopen a closed Item
-  unblock     Remove the record that BLOCKER blocks an Item
-  view        Show an Item by ID, number, full filename or Vault-relative path
+  block            Record that BLOCKER blocks an Item
+  claim            Claim an open Item for the actor
+  close            Close an Item
+  comment          Append a comment to an Item
+  config           Show or change user config
+  create           Create an Item in the selected Project
+  doctor           Report the Drift of Items, and with --fix repair what can be repaired
+  edit             Change an Item's title, Kind, body, assignee or Labels
+  frontier         List the Frontier: the open, unclaimed Items with no open blockers
+  help             Help about any command
+  label            Show the Labels in use
+  list             List the Items of the selected Project (default: open ones)
+  parent           Set or clear an Item's parent
+  project          Create, list, view and link Projects
+  release          Release the actor's Claim on an Item
+  reopen           Reopen a closed Item
+  tracker-template Print the Tracker template for the selected Project
+  unblock          Remove the record that BLOCKER blocks an Item
+  view             Show an Item by ID, number, full filename or Vault-relative path
 
 Flags:
       --actor string     actor name (overrides OTM_ACTOR and config)

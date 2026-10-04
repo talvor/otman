@@ -143,6 +143,7 @@ func (a *app) newRoot() *cobra.Command {
 	root.AddCommand(a.newConfigCmd())
 	root.AddCommand(a.newProjectCmd())
 	root.AddCommand(a.newDoctorCmd())
+	root.AddCommand(a.newTrackerTemplateCmd())
 	return root
 }
 
