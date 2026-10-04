@@ -132,8 +132,12 @@ func (v *Vault) StrayFiles(key string) ([]ItemFile, error) {
 // scanItems lists every file under a Project folder, outside its
 // Templates/, whose name carries a <KEY>-<n> prefix, whatever Project the
 // prefix names, sorted by number, then path. Folders under Projects/ whose
-// names are not Project keys are skipped.
+// names are not Project keys are skipped. The listing is kept until the
+// Vault changes the files under Projects/.
 func (v *Vault) scanItems() ([]ItemFile, error) {
+	if v.items != nil {
+		return v.items, nil
+	}
 	root := filepath.Join(v.Root, ProjectsDir)
 	var files []ItemFile
 	err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
@@ -169,6 +173,10 @@ func (v *Vault) scanItems() ([]ItemFile, error) {
 		}
 		return files[i].Path < files[j].Path
 	})
+	if files == nil {
+		files = []ItemFile{}
+	}
+	v.items = files
 	return files, nil
 }
 
@@ -218,6 +226,7 @@ func (v *Vault) CreateItem(key string, n NewItem) (ItemFile, []byte, error) {
 	}
 	project := filepath.Join(v.Root, ProjectsDir, key)
 	folder := filepath.Join(project, n.Kind.Folder())
+	v.items = nil
 	if err := os.MkdirAll(folder, 0o755); err != nil {
 		return ItemFile{}, nil, err
 	}
@@ -279,6 +288,7 @@ func (v *Vault) writeFile(p string, data []byte) error {
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
+	v.items = nil
 	if err := fsutil.WriteFile(v.abs(p), data); err != nil {
 		return err
 	}

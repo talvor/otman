@@ -6,7 +6,7 @@ invalid_label Projects/DOC/Issues/DOC-6 Labels.md: DOC-6 has the label "Needs Tr
 duplicate_label Projects/DOC/Issues/DOC-6 Labels.md: DOC-6 has the label "bug" 2 times, ignoring case (fix: auto)
 -- stderr --
 warning[duplicate_number]: DOC-16 is the number of 2 Items: Projects/DOC/Issues/DOC-16 Clean.md, Projects/DOC/Notes/DOC-16 Clean.md
-hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
+hint: name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ otman doctor DOC-2 --fix --json
 exit: 4
@@ -35,7 +35,7 @@ exit: 4
           "Projects/DOC/Notes/DOC-16 Clean.md"
         ]
       },
-      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }

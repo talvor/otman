@@ -208,6 +208,7 @@ func (v *Vault) CreateProject(key, name string) (Project, error) {
 		return Project{}, fmt.Errorf("invalid project key %q", key)
 	}
 	projects := filepath.Join(v.Root, ProjectsDir)
+	v.items = nil
 	if err := os.MkdirAll(projects, 0o755); err != nil {
 		return Project{}, err
 	}

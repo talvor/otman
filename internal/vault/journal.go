@@ -425,6 +425,7 @@ func caseTemp(to string) string { return path.Join(path.Dir(to), "."+path.Base(t
 // Item's snapshot.
 func (v *Vault) renameFile(from, to string, data []byte) error {
 	src, dst := v.abs(from), v.abs(to)
+	v.items = nil
 	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
 		return err
 	}

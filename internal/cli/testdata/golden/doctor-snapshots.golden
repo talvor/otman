@@ -20,7 +20,7 @@ warning:
   details:
     id: DOC-16
     paths[2]: Projects/DOC/Issues/DOC-16 Clean.md,Projects/DOC/Notes/DOC-16 Clean.md
-  hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
+  hint: name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ write "vault/Projects/DOC/Issues/DOC-17 Snapshot one.md"
 
@@ -51,7 +51,7 @@ exit: 4
           "Projects/DOC/Notes/DOC-16 Clean.md"
         ]
       },
-      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }
@@ -84,7 +84,7 @@ exit: 0
           "Projects/DOC/Notes/DOC-16 Clean.md"
         ]
       },
-      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }
@@ -112,7 +112,7 @@ warning:
   details:
     id: DOC-16
     paths[2]: Projects/DOC/Issues/DOC-16 Clean.md,Projects/DOC/Notes/DOC-16 Clean.md
-  hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
+  hint: name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ rm "vault/Projects/DOC/Issues/DOC-18 Snapshot two.md"
 
@@ -145,7 +145,7 @@ exit: 0
           "Projects/DOC/Notes/DOC-16 Clean.md"
         ]
       },
-      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }
@@ -173,7 +173,7 @@ warning:
   details:
     id: DOC-16
     paths[2]: Projects/DOC/Issues/DOC-16 Clean.md,Projects/DOC/Notes/DOC-16 Clean.md
-  hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
+  hint: name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ rm "vault/Projects/DOC/Issues/DOC-19 Snapshot three.md"
 
@@ -206,7 +206,7 @@ exit: 4
           "Projects/DOC/Notes/DOC-16 Clean.md"
         ]
       },
-      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }
@@ -239,7 +239,7 @@ exit: 0
           "Projects/DOC/Notes/DOC-16 Clean.md"
         ]
       },
-      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }
@@ -267,7 +267,7 @@ warning:
   details:
     id: DOC-16
     paths[2]: Projects/DOC/Issues/DOC-16 Clean.md,Projects/DOC/Notes/DOC-16 Clean.md
-  hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
+  hint: name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ write "vault/Projects/DOC/Issues/DOC-20 Snapshot four.md"
 
@@ -298,7 +298,7 @@ exit: 0
           "Projects/DOC/Notes/DOC-16 Clean.md"
         ]
       },
-      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }
@@ -326,7 +326,7 @@ warning:
   details:
     id: DOC-16
     paths[2]: Projects/DOC/Issues/DOC-16 Clean.md,Projects/DOC/Notes/DOC-16 Clean.md
-  hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
+  hint: name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ rm "vault/Projects/DOC/Issues/DOC-21 Snapshot five.md"
 
@@ -359,7 +359,7 @@ exit: 0
           "Projects/DOC/Notes/DOC-16 Clean.md"
         ]
       },
-      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }
@@ -387,7 +387,7 @@ warning:
   details:
     id: DOC-16
     paths[2]: Projects/DOC/Issues/DOC-16 Clean.md,Projects/DOC/Notes/DOC-16 Clean.md
-  hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
+  hint: name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ rm "vault/Projects/DOC/Issues/DOC-22 Snapshot six.md"
 
@@ -420,7 +420,7 @@ exit: 4
           "Projects/DOC/Notes/DOC-16 Clean.md"
         ]
       },
-      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }
@@ -448,7 +448,7 @@ warning:
   details:
     id: DOC-16
     paths[2]: Projects/DOC/Issues/DOC-16 Clean.md,Projects/DOC/Notes/DOC-16 Clean.md
-  hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
+  hint: name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ rm "vault/Projects/DOC/Issues/DOC-23 Keep kind.md"
 
@@ -488,7 +488,7 @@ exit: 4
           "Projects/DOC/Notes/DOC-16 Clean.md"
         ]
       },
-      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }
@@ -525,7 +525,7 @@ exit: 0
           "Projects/DOC/Notes/DOC-16 Clean.md"
         ]
       },
-      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }

@@ -19,7 +19,7 @@ warning:
   details:
     id: HOM-3
     paths[2]: Projects/AWY/Issues/HOM-3 Same name.md,Projects/HOM/Issues/HOM-3 Same name.md
-  hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
+  hint: name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ otman doctor Projects/AWY/Issues/HOM-3 Same name.md --fix
 exit: 0

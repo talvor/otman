@@ -20,7 +20,7 @@ warning:
   details:
     id: DOC-16
     paths[2]: Projects/DOC/Issues/DOC-16 Clean.md,Projects/DOC/Notes/DOC-16 Clean.md
-  hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
+  hint: name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ rm "vault/.otman/otman.db"
 

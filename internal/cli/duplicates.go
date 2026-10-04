@@ -45,14 +45,20 @@ func duplicateWarnings(v *vault.Vault) ([]output.Problem, error) {
 		}
 		for _, g := range duplicateGroups(files) {
 			paths := make([]string, len(g))
+			names := map[string]bool{}
 			for i, f := range g {
 				paths[i] = f.Path
+				names[f.Name()] = true
+			}
+			by := "its full filename or Vault-relative path"
+			if len(names) < len(g) {
+				by = "its Vault-relative path"
 			}
 			id := g[0].ID()
 			ws = append(ws, output.Warning("duplicate_number",
 				fmt.Sprintf("%s is the number of %d Items: %s", id, len(g), strings.Join(paths, ", ")),
 				map[string]any{"id": id, "paths": paths},
-				"name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"))
+				"name one by "+by+"; 'otman doctor --fix' renumbers all but the one created first"))
 		}
 	}
 	return ws, nil

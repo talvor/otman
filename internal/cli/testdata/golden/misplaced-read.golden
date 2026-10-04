@@ -15,7 +15,7 @@ hint: move it to Projects/HOM/Issues/HOM-1 Wandered off.md, or run 'otman doctor
 warning[duplicate_number]: HOM-2 is the number of 2 Items: Projects/AWY/Specs/HOM-2 Collides.md, Projects/HOM/Specs/HOM-2 Stays.md
 hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 warning[duplicate_number]: HOM-3 is the number of 2 Items: Projects/AWY/Issues/HOM-3 Same name.md, Projects/HOM/Issues/HOM-3 Same name.md
-hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
+hint: name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ otman view HOM-4 --json
 exit: 0
@@ -70,7 +70,7 @@ exit: 0
           "Projects/HOM/Issues/HOM-3 Same name.md"
         ]
       },
-      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }
@@ -103,7 +103,7 @@ hint: move it to Projects/HOM/Issues/HOM-7 No kind.md, or run 'otman doctor --fi
 warning[duplicate_number]: HOM-2 is the number of 2 Items: Projects/AWY/Specs/HOM-2 Collides.md, Projects/HOM/Specs/HOM-2 Stays.md
 hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 warning[duplicate_number]: HOM-3 is the number of 2 Items: Projects/AWY/Issues/HOM-3 Same name.md, Projects/HOM/Issues/HOM-3 Same name.md
-hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
+hint: name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ otman view Projects/AWY/Issues/HOM-1 Wandered off.md --project AWY
 exit: 2
@@ -173,7 +173,7 @@ exit: 0
           "Projects/HOM/Issues/HOM-3 Same name.md"
         ]
       },
-      "hint": "name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
+      "hint": "name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first"
     }
   ]
 }
@@ -218,7 +218,7 @@ warning:
   details:
     id: HOM-3
     paths[2]: Projects/AWY/Issues/HOM-3 Same name.md,Projects/HOM/Issues/HOM-3 Same name.md
-  hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
+  hint: name one by its Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
 
 $ otman view Projects/AWY/Issues/ZZZ-1 Unknown.md
 exit: 3
