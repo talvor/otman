@@ -120,6 +120,7 @@ func (a *app) newRoot() *cobra.Command {
 	root.AddCommand(a.newCreateCmd())
 	root.AddCommand(a.newViewCmd())
 	root.AddCommand(a.newListCmd())
+	root.AddCommand(a.newFrontierCmd())
 	root.AddCommand(a.newEditCmd())
 	root.AddCommand(a.newCommentCmd())
 	root.AddCommand(a.newLabelCmd())

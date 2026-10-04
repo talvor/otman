@@ -26,7 +26,9 @@ type listFlags struct {
 	allProjects   bool
 	parent        string
 	blockedBy     string
-	paging        *paging
+	// unblocked is set by frontier, which has no flag for it.
+	unblocked bool
+	paging    *paging
 }
 
 // listStates are the values of list --state.
@@ -98,6 +100,9 @@ type itemQuery struct {
 	// parent keeps only the direct children of an Item, and blockedBy
 	// only the Items it blocks; nil for no such filter.
 	parent, blockedBy *vault.ItemFile
+	// unblocked keeps only Items with no open blockers. Every blocked_by
+	// link of an Item it would keep must resolve.
+	unblocked bool
 }
 
 // match reports whether the Item summarised by s, with body, passes every
@@ -135,7 +140,8 @@ func (q itemQuery) match(s itemSummary, body string) bool {
 // query validates the filter flags. The caller resolves --assignee, which
 // may name the actor.
 func (f listFlags) query(cmd *cobra.Command) (itemQuery, error) {
-	q := itemQuery{state: f.state, unassigned: f.unassigned, unlabeled: f.unlabeled, search: strings.ToLower(f.search)}
+	q := itemQuery{state: f.state, unassigned: f.unassigned, unlabeled: f.unlabeled,
+		search: strings.ToLower(f.search), unblocked: f.unblocked}
 	if !slices.Contains(listStates, f.state) {
 		return itemQuery{}, invalid("invalid_state", "unknown state "+quoteArg(f.state),
 			map[string]any{"state": f.state, "allowed": listStates}, "use --state open, closed or all")
@@ -317,13 +323,15 @@ func listScope(v *vault.Vault, sel config.Value) ([]string, []output.Problem, er
 // because it drifted: its frontmatter cannot be read, or only its status,
 // missing or neither open nor closed, kept it from --state open or closed.
 // --state all keeps any status. It adds the Labels of every Item it reads,
-// kept or not, to inUse.
+// kept or not, to inUse. With q.unblocked it fails on a blocker of an Item
+// it would otherwise keep that it cannot resolve or read.
 func listProject(v *vault.Vault, key string, q itemQuery, inUse labelSet) ([]itemSummary, []output.Problem, error) {
 	files, err := v.ItemFiles(key)
 	if err != nil {
 		return nil, nil, ioError(err)
 	}
 	links := newItemLinks(files)
+	blockers := blockerStatus{}
 	var found []itemSummary
 	var warnings []output.Problem
 	for _, f := range files {
@@ -347,6 +355,13 @@ func listProject(v *vault.Vault, key string, q itemQuery, inUse labelSet) ([]ite
 			continue
 		}
 		if q.state == "all" || (s.Status != nil && *s.Status == q.state) {
+			if q.unblocked {
+				if blocked, err := blockers.blocked(v, links, f, p); err != nil {
+					return nil, nil, err
+				} else if blocked {
+					continue
+				}
+			}
 			found = append(found, s)
 			continue
 		}

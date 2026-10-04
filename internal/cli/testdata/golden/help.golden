@@ -15,6 +15,7 @@ Available Commands:
   config      Show or change user config
   create      Create an Item in the selected Project
   edit        Change an Item's Kind, body, assignee or Labels
+  frontier    List the ready Items: open, unassigned and with no open blockers
   help        Help about any command
   label       Show the Labels in use
   list        List the Items of the selected Project (default: open ones)

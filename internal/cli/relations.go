@@ -196,6 +196,13 @@ func followLinks(v *vault.Vault, links itemLinks, f vault.ItemFile, key string) 
 			Details: map[string]any{"id": f.ID(), "path": f.Path},
 			Hint:    "fix the YAML between the --- lines in " + f.Path + ", then retry"}
 	}
+	return resolveLinks(links, f, p, key)
+}
+
+// resolveLinks returns the Items named by the links of relation key of
+// Item file f, parsed as p. Every link must resolve to exactly one Item,
+// or the graph operation that follows them fails.
+func resolveLinks(links itemLinks, f vault.ItemFile, p item.Parsed, key string) ([]vault.ItemFile, error) {
 	for _, bad := range p.BadRelations {
 		if bad.Key == key {
 			return nil, graphError(badRelationProblem(f, bad))

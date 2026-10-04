@@ -1,0 +1,549 @@
+$ otman frontier
+tty: true
+exit: 0
+-- stdout --
+ID      KIND   STATUS  ASSIGNEE  TITLE
+REL-1   spec   open    -         Relations spec
+REL-2   issue  open    -         Wikilink scanner
+REL-6   issue  open    -         Loose end
+REL-9   issue  open    -         After the groundwork
+REL-12  issue  open    -         Scanner tests
+-- stderr --
+
+$ otman frontier
+exit: 0
+-- stdout --
+items[5]:
+  - id: REL-1
+    title: Relations spec
+    kind: spec
+    status: open
+    labels[0]:
+    assignee: null
+    parent: null
+    blocked_by[0]:
+    path: Projects/REL/Specs/REL-1 Relations spec.md
+    rev: 213fdef0792d
+  - id: REL-2
+    title: Wikilink scanner
+    kind: issue
+    status: open
+    labels[0]:
+    assignee: null
+    parent:
+      id: REL-1
+      path: Projects/REL/Specs/REL-1 Relations spec.md
+      resolved: true
+    blocked_by[0]:
+    path: Projects/REL/Issues/REL-2 Wikilink scanner.md
+    rev: a7079c558988
+  - id: REL-6
+    title: Loose end
+    kind: issue
+    status: open
+    labels[0]:
+    assignee: null
+    parent: null
+    blocked_by[0]:
+    path: Projects/REL/Issues/REL-6 Loose end.md
+    rev: e2f759fcd650
+  - id: REL-9
+    title: After the groundwork
+    kind: issue
+    status: open
+    labels[1]: docs
+    assignee: null
+    parent: null
+    blocked_by[1]{id,path,resolved}:
+      REL-5,Projects/REL/Issues/REL-5 Old groundwork.md,true
+    path: Projects/REL/Issues/REL-9 After the groundwork.md
+    rev: 21821d4fe7d0
+  - id: REL-12
+    title: Scanner tests
+    kind: issue
+    status: open
+    labels[1]: docs
+    assignee: null
+    parent:
+      id: REL-2
+      path: Projects/REL/Issues/REL-2 Wikilink scanner.md
+      resolved: true
+    blocked_by[0]:
+    path: Projects/REL/Issues/REL-12 Scanner tests.md
+    rev: eed89f201fe5
+total: 5
+count: 5
+has_more: false
+-- stderr --
+
+$ otman frontier --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [
+      {
+        "id": "REL-1",
+        "title": "Relations spec",
+        "kind": "spec",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/REL/Specs/REL-1 Relations spec.md",
+        "rev": "213fdef0792d"
+      },
+      {
+        "id": "REL-2",
+        "title": "Wikilink scanner",
+        "kind": "issue",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": {
+          "id": "REL-1",
+          "path": "Projects/REL/Specs/REL-1 Relations spec.md",
+          "resolved": true
+        },
+        "blocked_by": [],
+        "path": "Projects/REL/Issues/REL-2 Wikilink scanner.md",
+        "rev": "a7079c558988"
+      },
+      {
+        "id": "REL-6",
+        "title": "Loose end",
+        "kind": "issue",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/REL/Issues/REL-6 Loose end.md",
+        "rev": "e2f759fcd650"
+      },
+      {
+        "id": "REL-9",
+        "title": "After the groundwork",
+        "kind": "issue",
+        "status": "open",
+        "labels": [
+          "docs"
+        ],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [
+          {
+            "id": "REL-5",
+            "path": "Projects/REL/Issues/REL-5 Old groundwork.md",
+            "resolved": true
+          }
+        ],
+        "path": "Projects/REL/Issues/REL-9 After the groundwork.md",
+        "rev": "21821d4fe7d0"
+      },
+      {
+        "id": "REL-12",
+        "title": "Scanner tests",
+        "kind": "issue",
+        "status": "open",
+        "labels": [
+          "docs"
+        ],
+        "assignee": null,
+        "parent": {
+          "id": "REL-2",
+          "path": "Projects/REL/Issues/REL-2 Wikilink scanner.md",
+          "resolved": true
+        },
+        "blocked_by": [],
+        "path": "Projects/REL/Issues/REL-12 Scanner tests.md",
+        "rev": "eed89f201fe5"
+      }
+    ],
+    "total": 5,
+    "count": 5,
+    "has_more": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman close REL-2 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "REL-2",
+      "title": "Wikilink scanner",
+      "kind": "issue",
+      "status": "closed",
+      "labels": [],
+      "assignee": null,
+      "parent": {
+        "id": "REL-1",
+        "path": "Projects/REL/Specs/REL-1 Relations spec.md",
+        "resolved": true
+      },
+      "blocked_by": [],
+      "path": "Projects/REL/Issues/REL-2 Wikilink scanner.md",
+      "rev": "859a2b8daa28"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman frontier
+tty: true
+exit: 0
+-- stdout --
+ID      KIND   STATUS  ASSIGNEE  TITLE
+REL-1   spec   open    -         Relations spec
+REL-3   issue  open    -         Parent commands
+REL-6   issue  open    -         Loose end
+REL-9   issue  open    -         After the groundwork
+REL-11  issue  open    -         Half unblocked
+REL-12  issue  open    -         Scanner tests
+-- stderr --
+
+$ otman claim REL-3 --json
+env: OTM_ACTOR=talvor
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "REL-3",
+      "title": "Parent commands",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": "talvor",
+      "parent": {
+        "id": "REL-1",
+        "path": "Projects/REL/Specs/REL-1 Relations spec.md",
+        "resolved": true
+      },
+      "blocked_by": [
+        {
+          "id": "REL-2",
+          "path": "Projects/REL/Issues/REL-2 Wikilink scanner.md",
+          "resolved": true
+        }
+      ],
+      "path": "Projects/REL/Issues/REL-3 Parent commands.md",
+      "rev": "385be2201626"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman frontier --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [
+      {
+        "id": "REL-1",
+        "title": "Relations spec",
+        "kind": "spec",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/REL/Specs/REL-1 Relations spec.md",
+        "rev": "213fdef0792d"
+      },
+      {
+        "id": "REL-6",
+        "title": "Loose end",
+        "kind": "issue",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [],
+        "path": "Projects/REL/Issues/REL-6 Loose end.md",
+        "rev": "e2f759fcd650"
+      },
+      {
+        "id": "REL-9",
+        "title": "After the groundwork",
+        "kind": "issue",
+        "status": "open",
+        "labels": [
+          "docs"
+        ],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [
+          {
+            "id": "REL-5",
+            "path": "Projects/REL/Issues/REL-5 Old groundwork.md",
+            "resolved": true
+          }
+        ],
+        "path": "Projects/REL/Issues/REL-9 After the groundwork.md",
+        "rev": "21821d4fe7d0"
+      },
+      {
+        "id": "REL-11",
+        "title": "Half unblocked",
+        "kind": "issue",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": null,
+        "blocked_by": [
+          {
+            "id": "REL-5",
+            "path": "Projects/REL/Issues/REL-5 Old groundwork.md",
+            "resolved": true
+          },
+          {
+            "id": "REL-2",
+            "path": "Projects/REL/Issues/REL-2 Wikilink scanner.md",
+            "resolved": true
+          }
+        ],
+        "path": "Projects/REL/Issues/REL-11 Half unblocked.md",
+        "rev": "c7d3686ff216"
+      },
+      {
+        "id": "REL-12",
+        "title": "Scanner tests",
+        "kind": "issue",
+        "status": "open",
+        "labels": [
+          "docs"
+        ],
+        "assignee": null,
+        "parent": {
+          "id": "REL-2",
+          "path": "Projects/REL/Issues/REL-2 Wikilink scanner.md",
+          "resolved": true
+        },
+        "blocked_by": [],
+        "path": "Projects/REL/Issues/REL-12 Scanner tests.md",
+        "rev": "eed89f201fe5"
+      }
+    ],
+    "total": 5,
+    "count": 5,
+    "has_more": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "REL"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTH/
+vault/Projects/OTH/Issues/
+-- vault/Projects/OTH/Issues/OTH-1 Elsewhere.md --
+---
+id: OTH-1
+title: Elsewhere
+aliases:
+  - Elsewhere
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTH/OTH.md --
+---
+name: Other
+kind: project
+---
+vault/Projects/REL/
+vault/Projects/REL/Issues/
+-- vault/Projects/REL/Issues/REL-10 Already taken.md --
+---
+id: REL-10
+title: Already taken
+kind: issue
+status: open
+assignee: agent-a
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-11 Half unblocked.md --
+---
+id: REL-11
+title: Half unblocked
+kind: issue
+status: open
+blocked_by: ["[[REL-5 Old groundwork]]", "[[REL-2 Wikilink scanner]]"]
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-12 Scanner tests.md --
+---
+id: REL-12
+title: Scanner tests
+kind: issue
+status: open
+parent: "[[REL-2 Wikilink scanner]]"
+labels: [docs]
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-2 Wikilink scanner.md --
+---
+id: REL-2
+title: Wikilink scanner
+aliases:
+  - Wikilink scanner
+kind: issue
+status: closed
+author: talvor
+parent: "[[REL-1 Relations spec]]"
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-3 Parent commands.md --
+---
+id: REL-3
+title: Parent commands
+aliases:
+  - Parent commands
+kind: issue
+status: open
+author: talvor
+parent: "[[REL-1 Relations spec]]"
+blocked_by:
+  - "[[REL-2 Wikilink scanner]]"
+labels: []
+assignee: talvor
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-4 Block commands.md --
+---
+id: REL-4
+title: Block commands
+aliases:
+  - Block commands
+kind: issue
+status: open
+author: talvor
+parent: "[[REL-1 Relations spec]]"
+blocked_by:
+  - "[[REL-3 Parent commands]]"
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-5 Old groundwork.md --
+---
+id: REL-5
+title: Old groundwork
+aliases:
+  - Old groundwork
+kind: issue
+status: closed
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-6 Loose end.md --
+---
+id: REL-6
+title: Loose end
+aliases:
+  - Loose end
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-9 After the groundwork.md --
+---
+id: REL-9
+title: After the groundwork
+kind: issue
+status: open
+blocked_by: ["[[REL-5 Old groundwork]]"]
+labels: [docs]
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/REL.md --
+---
+name: Relations
+kind: project
+---
+vault/Projects/REL/Specs/
+-- vault/Projects/REL/Specs/REL-1 Relations spec.md --
+---
+id: REL-1
+title: Relations spec
+aliases:
+  - Relations spec
+kind: spec
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments

@@ -1,0 +1,228 @@
+$ otman frontier --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "no_project",
+    "message": "no Project selected",
+    "details": null,
+    "hint": "pass --project or --all-projects, set OTM_PROJECT, run 'otman project link KEY', or 'otman config set project KEY'"
+  }
+}
+
+$ otman frontier --all-projects
+tty: true
+exit: 0
+-- stdout --
+ID     KIND   STATUS  ASSIGNEE  TITLE
+OTH-1  issue  open    -         Elsewhere
+REL-1  spec   open    -         Relations spec
+REL-2  issue  open    -         Wikilink scanner
+REL-6  issue  open    -         Loose end
+-- stderr --
+
+$ otman frontier --all-projects --project REL --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "conflicting_flags",
+    "message": "--all-projects conflicts with --project",
+    "details": {
+      "flags": [
+        "--all-projects",
+        "--project"
+      ]
+    },
+    "hint": "pass either --all-projects or --project, not both"
+  }
+}
+
+$ otman frontier --all-projects --parent REL-1 --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "conflicting_flags",
+    "message": "--all-projects conflicts with --parent",
+    "details": {
+      "flags": [
+        "--all-projects",
+        "--parent"
+      ]
+    },
+    "hint": "drop --all-projects; --parent lists within its Item's Project"
+  }
+}
+
+$ otman frontier --parent REL-1
+tty: true
+exit: 0
+-- stdout --
+ID     KIND   STATUS  ASSIGNEE  TITLE
+REL-2  issue  open    -         Wikilink scanner
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTH/
+vault/Projects/OTH/Issues/
+-- vault/Projects/OTH/Issues/OTH-1 Elsewhere.md --
+---
+id: OTH-1
+title: Elsewhere
+aliases:
+  - Elsewhere
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTH/OTH.md --
+---
+name: Other
+kind: project
+---
+vault/Projects/REL/
+vault/Projects/REL/Issues/
+-- vault/Projects/REL/Issues/REL-2 Wikilink scanner.md --
+---
+id: REL-2
+title: Wikilink scanner
+aliases:
+  - Wikilink scanner
+kind: issue
+status: open
+author: talvor
+parent: "[[REL-1 Relations spec]]"
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-3 Parent commands.md --
+---
+id: REL-3
+title: Parent commands
+aliases:
+  - Parent commands
+kind: issue
+status: open
+author: talvor
+parent: "[[REL-1 Relations spec]]"
+blocked_by:
+  - "[[REL-2 Wikilink scanner]]"
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-4 Block commands.md --
+---
+id: REL-4
+title: Block commands
+aliases:
+  - Block commands
+kind: issue
+status: open
+author: talvor
+parent: "[[REL-1 Relations spec]]"
+blocked_by:
+  - "[[REL-3 Parent commands]]"
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-5 Old groundwork.md --
+---
+id: REL-5
+title: Old groundwork
+aliases:
+  - Old groundwork
+kind: issue
+status: closed
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-6 Loose end.md --
+---
+id: REL-6
+title: Loose end
+aliases:
+  - Loose end
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/REL.md --
+---
+name: Relations
+kind: project
+---
+vault/Projects/REL/Specs/
+-- vault/Projects/REL/Specs/REL-1 Relations spec.md --
+---
+id: REL-1
+title: Relations spec
+aliases:
+  - Relations spec
+kind: spec
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
