@@ -1,0 +1,401 @@
+$ otman view OTM-5 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-5",
+      "title": "Hand edited case",
+      "kind": "issue",
+      "status": "open",
+      "labels": [
+        "Bug",
+        "BUG",
+        "Enhancement"
+      ],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-5 Hand edited case.md",
+      "rev": "8e9a4aa16cbb",
+      "author": null,
+      "body": "",
+      "created": null,
+      "updated": null,
+      "comments": [],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman edit OTM-5 --add-label bug --remove-label wontfix --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-5",
+      "title": "Hand edited case",
+      "kind": "issue",
+      "status": "open",
+      "labels": [
+        "Bug",
+        "BUG",
+        "Enhancement"
+      ],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-5 Hand edited case.md",
+      "rev": "8e9a4aa16cbb"
+    },
+    "changed": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman close OTM-5 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-5",
+      "title": "Hand edited case",
+      "kind": "issue",
+      "status": "closed",
+      "labels": [
+        "bug",
+        "enhancement"
+      ],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-5 Hand edited case.md",
+      "rev": "247086cb90e1"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman comment OTM-7 --body Healed by a comment. --json
+env: OTM_ACTOR=talvor
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-7",
+      "title": "Still invalid",
+      "kind": "issue",
+      "status": "open",
+      "labels": [
+        "needs-triage",
+        "not valid!"
+      ],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-7 Still invalid.md",
+      "rev": "8d98b42badd0"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman close OTM-8 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-8",
+      "title": "Not a list",
+      "kind": "issue",
+      "status": "closed",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-8 Not a list.md",
+      "rev": "f54842b15e4b"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman edit OTM-8 --add-label bug --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-8",
+      "title": "Not a list",
+      "kind": "issue",
+      "status": "closed",
+      "labels": [
+        "bug"
+      ],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-8 Not a list.md",
+      "rev": "e4ef49d9788b"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman close OTM-9 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-9",
+      "title": "Null entry",
+      "kind": "issue",
+      "status": "closed",
+      "labels": [
+        "Bug"
+      ],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-9 Null entry.md",
+      "rev": "a1141ec2c8f7"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman edit OTM-9 --add-label bug --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-9",
+      "title": "Null entry",
+      "kind": "issue",
+      "status": "closed",
+      "labels": [
+        "Bug"
+      ],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-9 Null entry.md",
+      "rev": "a1141ec2c8f7"
+    },
+    "changed": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman edit OTM-9 --remove-label bug --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-9",
+      "title": "Null entry",
+      "kind": "issue",
+      "status": "closed",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-9 Null entry.md",
+      "rev": "52b93804a83e"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/AAA/
+-- vault/Projects/AAA/AAA.md --
+---
+name: unlabelled
+kind: project
+---
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Triage me.md --
+---
+id: OTM-1
+title: Triage me
+kind: issue
+status: open
+labels: [bug, needs-triage]
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-2 Map the way.md --
+---
+id: OTM-2
+title: Map the way
+kind: issue
+status: open
+labels: 
+  - bug
+  - wayfinder:map
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-3 Fixed already.md --
+---
+id: OTM-3
+title: Fixed already
+kind: issue
+status: closed
+labels: [bug]
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-4 Empty labels.md --
+---
+id: OTM-4
+title: Empty labels
+kind: issue
+status: open
+labels: []
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-5 Hand edited case.md --
+---
+id: OTM-5
+title: Hand edited case
+kind: issue
+status: closed
+labels:
+  - bug
+  - enhancement
+assignee: null
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-6 No labels key.md --
+---
+id: OTM-6
+title: No labels key
+kind: issue
+status: open
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-7 Still invalid.md --
+---
+id: OTM-7
+title: Still invalid
+kind: issue
+status: open
+labels:
+  - needs-triage
+  - not valid!
+assignee: null
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-02T03:04:05Z · talvor
+Healed by a comment.
+-- vault/Projects/OTM/Issues/OTM-8 Not a list.md --
+---
+id: OTM-8
+title: Not a list
+kind: issue
+status: closed
+labels:
+  - bug
+assignee: null
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-9 Null entry.md --
+---
+id: OTM-9
+title: Null entry
+kind: issue
+status: closed
+labels: []
+assignee: null
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/WEB/
+vault/Projects/WEB/Issues/
+-- vault/Projects/WEB/Issues/WEB-1 Redesign.md --
+---
+id: WEB-1
+title: Redesign
+kind: issue
+status: open
+labels: [design]
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/WEB/WEB.md --
+---
+name: otman website
+kind: project
+---

@@ -1,0 +1,352 @@
+$ otman create --title X --label has space --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_label",
+    "message": "invalid Label \"has space\" for --label",
+    "details": {
+      "flag": "--label",
+      "label": "has space",
+      "max_length": 64,
+      "pattern": "[a-z0-9][a-z0-9._:/-]*"
+    },
+    "hint": "use lowercase letters, digits and . _ : / -, starting with a letter or digit, at most 64 characters"
+  }
+}
+
+$ otman create --title X --label ""
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[invalid_label]: invalid Label "" for --label
+hint: use lowercase letters, digits and . _ : / -, starting with a letter or digit, at most 64 characters
+
+$ otman create --title X --label ok --label -dash
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_label
+  message: "invalid Label \"-dash\" for --label"
+  details:
+    flag: "--label"
+    label: "-dash"
+    max_length: 64
+    pattern: "[a-z0-9][a-z0-9._:/-]*"
+  hint: "use lowercase letters, digits and . _ : / -, starting with a letter or digit, at most 64 characters"
+
+$ otman create --title X --label aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_label",
+    "message": "invalid Label \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\" for --label",
+    "details": {
+      "flag": "--label",
+      "label": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "max_length": 64,
+      "pattern": "[a-z0-9][a-z0-9._:/-]*"
+    },
+    "hint": "use lowercase letters, digits and . _ : / -, starting with a letter or digit, at most 64 characters"
+  }
+}
+
+$ otman create --title X --label Ünicode
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_label
+  message: "invalid Label \"Ünicode\" for --label"
+  details:
+    flag: "--label"
+    label: Ünicode
+    max_length: 64
+    pattern: "[a-z0-9][a-z0-9._:/-]*"
+  hint: "use lowercase letters, digits and . _ : / -, starting with a letter or digit, at most 64 characters"
+
+$ otman edit OTM-1 --add-label a b --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_label",
+    "message": "invalid Label \"a b\" for --add-label",
+    "details": {
+      "flag": "--add-label",
+      "label": "a b",
+      "max_length": 64,
+      "pattern": "[a-z0-9][a-z0-9._:/-]*"
+    },
+    "hint": "use lowercase letters, digits and . _ : / -, starting with a letter or digit, at most 64 characters"
+  }
+}
+
+$ otman edit OTM-1 --remove-label _x
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[invalid_label]: invalid Label "_x" for --remove-label
+hint: use lowercase letters, digits and . _ : / -, starting with a letter or digit, at most 64 characters
+
+$ otman edit OTM-1 --add-label bug --remove-label BUG --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "conflicting_labels",
+    "message": "--add-label and --remove-label both name \"bug\"",
+    "details": {
+      "flags": [
+        "--add-label",
+        "--remove-label"
+      ],
+      "label": "bug"
+    },
+    "hint": "either add or remove each Label, not both"
+  }
+}
+
+$ otman list --label Bad Label --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_label",
+    "message": "invalid Label \"Bad Label\" for --label",
+    "details": {
+      "flag": "--label",
+      "label": "Bad Label",
+      "max_length": 64,
+      "pattern": "[a-z0-9][a-z0-9._:/-]*"
+    },
+    "hint": "use lowercase letters, digits and . _ : / -, starting with a letter or digit, at most 64 characters"
+  }
+}
+
+$ otman list --without-label why?
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_label
+  message: "invalid Label \"why?\" for --without-label"
+  details:
+    flag: "--without-label"
+    label: why?
+    max_length: 64
+    pattern: "[a-z0-9][a-z0-9._:/-]*"
+  hint: "use lowercase letters, digits and . _ : / -, starting with a letter or digit, at most 64 characters"
+
+$ otman list --label bug --unlabeled --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "conflicting_flags",
+    "message": "--label conflicts with --unlabeled",
+    "details": {
+      "flags": [
+        "--label",
+        "--unlabeled"
+      ]
+    },
+    "hint": "pass either --label or --unlabeled, not both"
+  }
+}
+
+$ otman label list --limit 0 --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "--limit must be a positive integer",
+    "details": {
+      "flag": "--limit",
+      "value": 0
+    },
+    "hint": null
+  }
+}
+
+$ otman label list --all-projects --project OTM --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "conflicting_flags",
+    "message": "--all-projects conflicts with --project",
+    "details": {
+      "flags": [
+        "--all-projects",
+        "--project"
+      ]
+    },
+    "hint": "pass either --all-projects or --project, not both"
+  }
+}
+
+$ otman label list --project NOPE --json
+exit: 3
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "project_not_found",
+    "message": "no Project NOPE in the Vault",
+    "details": {
+      "key": "NOPE",
+      "source": "flag"
+    },
+    "hint": "run 'otman project list' to see the Projects, or 'otman project create NOPE --name NAME'"
+  }
+}
+
+$ otman label list extra
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_arguments
+  message: "unknown command \"extra\" for \"otman label list\""
+  details: null
+  hint: run 'otman --help' for usage
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/AAA/
+-- vault/Projects/AAA/AAA.md --
+---
+name: unlabelled
+kind: project
+---
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Triage me.md --
+---
+id: OTM-1
+title: Triage me
+kind: issue
+status: open
+labels: [bug, needs-triage]
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-2 Map the way.md --
+---
+id: OTM-2
+title: Map the way
+kind: issue
+status: open
+labels: 
+  - bug
+  - wayfinder:map
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-3 Fixed already.md --
+---
+id: OTM-3
+title: Fixed already
+kind: issue
+status: closed
+labels: [bug]
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-4 Empty labels.md --
+---
+id: OTM-4
+title: Empty labels
+kind: issue
+status: open
+labels: []
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-5 Hand edited case.md --
+---
+id: OTM-5
+title: Hand edited case
+kind: issue
+status: open
+labels: 
+  - Bug
+  - BUG
+  - Enhancement
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-6 No labels key.md --
+---
+id: OTM-6
+title: No labels key
+kind: issue
+status: open
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/WEB/
+vault/Projects/WEB/Issues/
+-- vault/Projects/WEB/Issues/WEB-1 Redesign.md --
+---
+id: WEB-1
+title: Redesign
+kind: issue
+status: open
+labels: [design]
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/WEB/WEB.md --
+---
+name: otman website
+kind: project
+---

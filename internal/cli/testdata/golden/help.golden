@@ -13,8 +13,9 @@ Available Commands:
   comment     Append a comment to an Item
   config      Show or change user config
   create      Create an Item in the selected Project
-  edit        Change an Item's Kind, body or assignee
+  edit        Change an Item's Kind, body, assignee or Labels
   help        Help about any command
+  label       Show the Labels in use
   list        List the Items of the selected Project (default: open ones)
   project     Create, list, view and link Projects
   release     Release the actor's Claim on an Item

@@ -1,0 +1,574 @@
+$ otman create --title Known labels --label Bug --label needs-triage --label BUG --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-7",
+      "title": "Known labels",
+      "kind": "issue",
+      "status": "open",
+      "labels": [
+        "bug",
+        "needs-triage"
+      ],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-7 Known labels.md",
+      "rev": "4e1a5ec744a7"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman create --title A typo --label bgu
+tty: true
+exit: 0
+-- stdout --
+Created OTM-8 · A typo
+Projects/OTM/Issues/OTM-8 A typo.md
+-- stderr --
+warning[new_label]: no other Item in OTM has the label "bgu"
+hint: did you mean bug? 'otman label list' shows the Labels in use
+
+$ otman create --title Map typo --label wayfinder:mpa --label triage --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-9",
+      "title": "Map typo",
+      "kind": "issue",
+      "status": "open",
+      "labels": [
+        "wayfinder:mpa",
+        "triage"
+      ],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-9 Map typo.md",
+      "rev": "07924b0bb576"
+    },
+    "changed": true
+  },
+  "warnings": [
+    {
+      "code": "new_label",
+      "message": "no other Item in OTM has the label \"wayfinder:mpa\"",
+      "details": {
+        "closest": [
+          "wayfinder:map"
+        ],
+        "label": "wayfinder:mpa",
+        "project": "OTM"
+      },
+      "hint": "did you mean wayfinder:map? 'otman label list' shows the Labels in use"
+    },
+    {
+      "code": "new_label",
+      "message": "no other Item in OTM has the label \"triage\"",
+      "details": {
+        "closest": [
+          "needs-triage"
+        ],
+        "label": "triage",
+        "project": "OTM"
+      },
+      "hint": "did you mean needs-triage? 'otman label list' shows the Labels in use"
+    }
+  ]
+}
+-- stderr --
+
+$ otman create --title Longest label --label aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa --label x --no-template
+exit: 0
+-- stdout --
+item:
+  id: OTM-10
+  title: Longest label
+  kind: issue
+  status: open
+  labels[2]: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,x
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-10 Longest label.md
+  rev: 7705715d005d
+changed: true
+-- stderr --
+warning:
+  code: new_label
+  message: "no other Item in OTM has the label \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+  details:
+    closest[0]:
+    label: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    project: OTM
+  hint: check the spelling; 'otman label list' shows the Labels in use
+warning:
+  code: new_label
+  message: "no other Item in OTM has the label \"x\""
+  details:
+    closest[0]:
+    label: x
+    project: OTM
+  hint: check the spelling; 'otman label list' shows the Labels in use
+
+$ otman edit OTM-1 --add-label enhancement --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-1",
+      "title": "Triage me",
+      "kind": "issue",
+      "status": "open",
+      "labels": [
+        "bug",
+        "needs-triage",
+        "enhancement"
+      ],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-1 Triage me.md",
+      "rev": "8e5f4ef504c3"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman edit OTM-1 --add-label enhancement --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-1",
+      "title": "Triage me",
+      "kind": "issue",
+      "status": "open",
+      "labels": [
+        "bug",
+        "needs-triage",
+        "enhancement"
+      ],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-1 Triage me.md",
+      "rev": "8e5f4ef504c3"
+    },
+    "changed": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman edit OTM-1 --add-label ENHANCEMENT
+tty: true
+exit: 0
+-- stdout --
+OTM-1 · Triage me is unchanged
+-- stderr --
+
+$ otman edit OTM-1 --remove-label Bug --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-1",
+      "title": "Triage me",
+      "kind": "issue",
+      "status": "open",
+      "labels": [
+        "needs-triage",
+        "enhancement"
+      ],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-1 Triage me.md",
+      "rev": "9fe196175cea"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman edit OTM-1 --remove-label bug --remove-label nothing-here --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-1",
+      "title": "Triage me",
+      "kind": "issue",
+      "status": "open",
+      "labels": [
+        "needs-triage",
+        "enhancement"
+      ],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-1 Triage me.md",
+      "rev": "9fe196175cea"
+    },
+    "changed": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman edit OTM-1 --add-label docs --add-label Docs --remove-label needs-triage
+tty: true
+exit: 0
+-- stdout --
+Edited OTM-1 · Triage me
+Projects/OTM/Issues/OTM-1 Triage me.md
+-- stderr --
+warning[new_label]: no other Item in OTM has the label "docs"
+hint: check the spelling; 'otman label list' shows the Labels in use
+
+$ otman edit OTM-4 --add-label bug --add-label wayfinder:map --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-4",
+      "title": "Empty labels",
+      "kind": "issue",
+      "status": "open",
+      "labels": [
+        "bug",
+        "wayfinder:map"
+      ],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-4 Empty labels.md",
+      "rev": "d4b4d6ff5dd9"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman edit OTM-6 --add-label needs-triage --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-6",
+      "title": "No labels key",
+      "kind": "issue",
+      "status": "open",
+      "labels": [
+        "needs-triage"
+      ],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-6 No labels key.md",
+      "rev": "a15af434f417"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman edit WEB-1 --add-label bug --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "WEB-1",
+      "title": "Redesign",
+      "kind": "issue",
+      "status": "open",
+      "labels": [
+        "design",
+        "bug"
+      ],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/WEB/Issues/WEB-1 Redesign.md",
+      "rev": "3c2d46b58f11"
+    },
+    "changed": true
+  },
+  "warnings": [
+    {
+      "code": "new_label",
+      "message": "no other Item in WEB has the label \"bug\"",
+      "details": {
+        "closest": [],
+        "label": "bug",
+        "project": "WEB"
+      },
+      "hint": "check the spelling; 'otman label list' shows the Labels in use"
+    }
+  ]
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/AAA/
+-- vault/Projects/AAA/AAA.md --
+---
+name: unlabelled
+kind: project
+---
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Triage me.md --
+---
+id: OTM-1
+title: Triage me
+kind: issue
+status: open
+labels:
+  - enhancement
+  - docs
+assignee: null
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-10 Longest label.md --
+---
+id: OTM-10
+title: Longest label
+aliases:
+  - Longest label
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels:
+  - aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  - x
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-2 Map the way.md --
+---
+id: OTM-2
+title: Map the way
+kind: issue
+status: open
+labels: 
+  - bug
+  - wayfinder:map
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-3 Fixed already.md --
+---
+id: OTM-3
+title: Fixed already
+kind: issue
+status: closed
+labels: [bug]
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-4 Empty labels.md --
+---
+id: OTM-4
+title: Empty labels
+kind: issue
+status: open
+labels:
+  - bug
+  - wayfinder:map
+assignee: null
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-5 Hand edited case.md --
+---
+id: OTM-5
+title: Hand edited case
+kind: issue
+status: open
+labels: 
+  - Bug
+  - BUG
+  - Enhancement
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-6 No labels key.md --
+---
+id: OTM-6
+title: No labels key
+kind: issue
+status: open
+assignee: null
+labels:
+  - needs-triage
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-7 Known labels.md --
+---
+id: OTM-7
+title: Known labels
+aliases:
+  - Known labels
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels:
+  - bug
+  - needs-triage
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+## Summary
+
+<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->
+
+## Acceptance criteria
+
+<!-- A checklist that tells anyone, human or agent, when this is done. -->
+- [ ] 
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-8 A typo.md --
+---
+id: OTM-8
+title: A typo
+aliases:
+  - A typo
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels:
+  - bgu
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+## Summary
+
+<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->
+
+## Acceptance criteria
+
+<!-- A checklist that tells anyone, human or agent, when this is done. -->
+- [ ] 
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-9 Map typo.md --
+---
+id: OTM-9
+title: Map typo
+aliases:
+  - Map typo
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels:
+  - wayfinder:mpa
+  - triage
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+## Summary
+
+<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->
+
+## Acceptance criteria
+
+<!-- A checklist that tells anyone, human or agent, when this is done. -->
+- [ ] 
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/WEB/
+vault/Projects/WEB/Issues/
+-- vault/Projects/WEB/Issues/WEB-1 Redesign.md --
+---
+id: WEB-1
+title: Redesign
+kind: issue
+status: open
+labels:
+  - design
+  - bug
+assignee: null
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/WEB/WEB.md --
+---
+name: otman website
+kind: project
+---

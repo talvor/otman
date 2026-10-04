@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -434,6 +435,10 @@ type Update struct {
 	// Assignee sets the assignee; ClearAssignee clears it.
 	Assignee      *string
 	ClearAssignee bool
+	// AddLabels and RemoveLabels are valid, lowercase Labels to add and
+	// remove. Adding a Label the Item has, or removing one it lacks,
+	// changes nothing.
+	AddLabels, RemoveLabels []string
 }
 
 // ErrNoMarker refuses a body rewrite of an Item file that has no comments
@@ -457,6 +462,7 @@ func Apply(file []byte, update Update, now time.Time) (out []byte, changed bool,
 	} else if update.Assignee != nil {
 		edits = append(edits, frontmatter.Edit{Key: "assignee", Value: str(*update.Assignee)})
 	}
+	edits = append(edits, labelEdits(file, update.AddLabels, update.RemoveLabels)...)
 	var transform func([]byte) ([]byte, error)
 	if body := update.Body; body != nil {
 		transform = func(b []byte) ([]byte, error) { return replaceBody(b, *body) }
@@ -466,7 +472,8 @@ func Apply(file []byte, update Update, now time.Time) (out []byte, changed bool,
 
 // rewrite splices edits into file, then applies transform to the text
 // when it is not nil. When that changes the file, it does so again with
-// updated set to now.
+// updated set to now and, unless edits set them, the labels lowercased
+// and deduped: every write heals case-only Label drift.
 func rewrite(file []byte, edits []frontmatter.Edit, transform func([]byte) ([]byte, error), now time.Time) ([]byte, bool, error) {
 	apply := func(edits []frontmatter.Edit) ([]byte, error) {
 		out, err := frontmatter.Splice(file, edits)
@@ -481,7 +488,11 @@ func rewrite(file []byte, edits []frontmatter.Edit, transform func([]byte) ([]by
 	}
 	// The full slice expression makes append copy rather than write into
 	// the caller's backing array.
-	out, err = apply(append(edits[:len(edits):len(edits)], frontmatter.Edit{Key: "updated", Value: timestamp(now)}))
+	edits = append(edits[:len(edits):len(edits)], frontmatter.Edit{Key: "updated", Value: timestamp(now)})
+	if heal := healLabels(file); heal != nil && !slices.ContainsFunc(edits, func(e frontmatter.Edit) bool { return e.Key == "labels" }) {
+		edits = append(edits, *heal)
+	}
+	out, err = apply(edits)
 	return out, err == nil, err
 }
 

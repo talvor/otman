@@ -88,6 +88,7 @@ type NewItem struct {
 	Body     string
 	Author   *string
 	Assignee *string
+	Labels   []string
 	Now      time.Time
 }
 
@@ -119,7 +120,7 @@ func (v *Vault) CreateItem(key string, n NewItem) (ItemFile, []byte, error) {
 	now := n.Now.UTC()
 	data, err := item.Render(item.Fields{
 		ID: f.ID(), Title: n.Title, Kind: n.Kind, Status: item.Open,
-		Author: n.Author, Assignee: n.Assignee,
+		Author: n.Author, Assignee: n.Assignee, Labels: n.Labels,
 		Created: now, Updated: now,
 	}, n.Body)
 	if err != nil {

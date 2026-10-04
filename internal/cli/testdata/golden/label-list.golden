@@ -1,0 +1,294 @@
+$ otman label list --project OTM
+tty: true
+exit: 0
+-- stdout --
+LABEL          OPEN  TOTAL
+bug            3     4
+enhancement    1     1
+needs-triage   1     1
+wayfinder:map  1     1
+-- stderr --
+warning[malformed_frontmatter]: cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Broken.md: yaml: line 1: did not find expected ',' or ']'
+hint: fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Broken.md
+
+$ otman label list --project OTM --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [
+      {
+        "name": "bug",
+        "open": 3,
+        "total": 4
+      },
+      {
+        "name": "enhancement",
+        "open": 1,
+        "total": 1
+      },
+      {
+        "name": "needs-triage",
+        "open": 1,
+        "total": 1
+      },
+      {
+        "name": "wayfinder:map",
+        "open": 1,
+        "total": 1
+      }
+    ],
+    "total": 4,
+    "count": 4,
+    "has_more": false
+  },
+  "warnings": [
+    {
+      "code": "malformed_frontmatter",
+      "message": "cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Broken.md: yaml: line 1: did not find expected ',' or ']'",
+      "details": {
+        "path": "Projects/OTM/Issues/OTM-7 Broken.md"
+      },
+      "hint": "fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Broken.md"
+    }
+  ]
+}
+-- stderr --
+
+$ otman label list --project OTM
+exit: 0
+-- stdout --
+items[4]{name,open,total}:
+  bug,3,4
+  enhancement,1,1
+  needs-triage,1,1
+  "wayfinder:map",1,1
+total: 4
+count: 4
+has_more: false
+-- stderr --
+warning:
+  code: malformed_frontmatter
+  message: "cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Broken.md: yaml: line 1: did not find expected ',' or ']'"
+  details:
+    path: Projects/OTM/Issues/OTM-7 Broken.md
+  hint: fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Broken.md
+
+$ otman label list --all-projects
+tty: true
+exit: 0
+-- stdout --
+LABEL          OPEN  TOTAL
+bug            3     4
+design         1     1
+enhancement    1     1
+needs-triage   1     1
+wayfinder:map  1     1
+-- stderr --
+warning[malformed_frontmatter]: cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Broken.md: yaml: line 1: did not find expected ',' or ']'
+hint: fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Broken.md
+
+$ otman label list --project OTM --limit 2 --offset 1 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [
+      {
+        "name": "enhancement",
+        "open": 1,
+        "total": 1
+      },
+      {
+        "name": "needs-triage",
+        "open": 1,
+        "total": 1
+      }
+    ],
+    "total": 4,
+    "count": 2,
+    "has_more": true
+  },
+  "warnings": [
+    {
+      "code": "malformed_frontmatter",
+      "message": "cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Broken.md: yaml: line 1: did not find expected ',' or ']'",
+      "details": {
+        "path": "Projects/OTM/Issues/OTM-7 Broken.md"
+      },
+      "hint": "fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Broken.md"
+    }
+  ]
+}
+-- stderr --
+
+$ otman label list --project OTM --limit 2
+tty: true
+exit: 0
+-- stdout --
+LABEL        OPEN  TOTAL
+bug          3     4
+enhancement  1     1
+
+Showing 1-2 of 4; pass --offset 2 for more, or --all
+-- stderr --
+warning[malformed_frontmatter]: cannot read the frontmatter of Projects/OTM/Issues/OTM-7 Broken.md: yaml: line 1: did not find expected ',' or ']'
+hint: fix the YAML between the --- lines in Projects/OTM/Issues/OTM-7 Broken.md
+
+$ otman label list --project AAA --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [],
+    "total": 0,
+    "count": 0,
+    "has_more": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman label list --project AAA
+tty: true
+exit: 0
+-- stdout --
+No Labels in use
+-- stderr --
+
+$ otman label list --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "no_project",
+    "message": "no Project selected",
+    "details": null,
+    "hint": "pass --project or --all-projects, set OTM_PROJECT, run 'otman project link KEY', or 'otman config set project KEY'"
+  }
+}
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/AAA/
+-- vault/Projects/AAA/AAA.md --
+---
+name: unlabelled
+kind: project
+---
+vault/Projects/OTM/
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Triage me.md --
+---
+id: OTM-1
+title: Triage me
+kind: issue
+status: open
+labels: [bug, needs-triage]
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-2 Map the way.md --
+---
+id: OTM-2
+title: Map the way
+kind: issue
+status: open
+labels: 
+  - bug
+  - wayfinder:map
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-3 Fixed already.md --
+---
+id: OTM-3
+title: Fixed already
+kind: issue
+status: closed
+labels: [bug]
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-4 Empty labels.md --
+---
+id: OTM-4
+title: Empty labels
+kind: issue
+status: open
+labels: []
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-5 Hand edited case.md --
+---
+id: OTM-5
+title: Hand edited case
+kind: issue
+status: open
+labels: 
+  - Bug
+  - BUG
+  - Enhancement
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-6 No labels key.md --
+---
+id: OTM-6
+title: No labels key
+kind: issue
+status: open
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-7 Broken.md --
+---
+labels: [bug
+---
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/WEB/
+vault/Projects/WEB/Issues/
+-- vault/Projects/WEB/Issues/WEB-1 Redesign.md --
+---
+id: WEB-1
+title: Redesign
+kind: issue
+status: open
+labels: [design]
+assignee: null
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/WEB/WEB.md --
+---
+name: otman website
+kind: project
+---

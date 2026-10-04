@@ -122,6 +122,7 @@ func (a *app) newRoot() *cobra.Command {
 	root.AddCommand(a.newListCmd())
 	root.AddCommand(a.newEditCmd())
 	root.AddCommand(a.newCommentCmd())
+	root.AddCommand(a.newLabelCmd())
 	for _, c := range statusCommands {
 		root.AddCommand(a.newStatusCmd(c))
 	}
