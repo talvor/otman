@@ -68,8 +68,12 @@ type renumbering struct {
 	// created at the same time, or keeper has no created time.
 	byFilename bool
 	// rewritable is set when the file's text can be rewritten for its new
-	// number.
+	// number: its frontmatter reads, and its comments marker is there or
+	// can be restored without guessing (ADR 0005).
 	rewritable bool
+	// restoresMarker is set when the renumbering comment restores the
+	// missing comments marker on the way.
+	restoresMarker bool
 }
 
 // planRenumbers is how doctor --fix settles the duplicate numbers among
@@ -81,9 +85,9 @@ func planRenumbers(v *vault.Vault, files []vault.ItemFile) ([]renumbering, error
 	var plans []renumbering
 	for _, g := range duplicateGroups(files) {
 		type entry struct {
-			file       vault.ItemFile
-			created    *time.Time
-			rewritable bool
+			file                       vault.ItemFile
+			created                    *time.Time
+			rewritable, restoresMarker bool
 		}
 		entries := make([]entry, len(g))
 		for i, f := range g {
@@ -92,7 +96,8 @@ func planRenumbers(v *vault.Vault, files []vault.ItemFile) ([]renumbering, error
 				return nil, err
 			}
 			p := item.Parse(data)
-			e := entry{file: f, rewritable: p.HasFrontmatter && p.FrontmatterErr == nil && p.MarkerLines <= 1}
+			e := entry{file: f, restoresMarker: p.MarkerLines == 0 && item.RestorableMarker(data)}
+			e.rewritable = p.HasFrontmatter && p.FrontmatterErr == nil && (p.MarkerLines == 1 || e.restoresMarker)
 			if p.Created != nil {
 				if t, err := time.Parse(time.RFC3339, *p.Created); err == nil {
 					e.created = &t
@@ -115,10 +120,11 @@ func planRenumbers(v *vault.Vault, files []vault.ItemFile) ([]renumbering, error
 		keeper := entries[0]
 		for _, e := range entries[1:] {
 			plans = append(plans, renumbering{
-				file:       e.file,
-				keeper:     keeper.file,
-				byFilename: keeper.created == nil || e.created != nil && e.created.Equal(*keeper.created),
-				rewritable: e.rewritable,
+				file:           e.file,
+				keeper:         keeper.file,
+				byFilename:     keeper.created == nil || e.created != nil && e.created.Equal(*keeper.created),
+				rewritable:     e.rewritable,
+				restoresMarker: e.restoresMarker,
 			})
 		}
 	}

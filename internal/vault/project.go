@@ -62,7 +62,7 @@ func (v *Vault) Project(key string) (Project, bool, []output.Problem, error) {
 	if !ValidKey(key) {
 		return Project{}, false, nil, nil
 	}
-	if ok, err := isDir(filepath.Join(v.Root, ProjectsDir, key)); err != nil || !ok {
+	if ok, err := v.hasProject(key); err != nil || !ok {
 		return Project{}, false, nil, err
 	}
 	p, ws, err := v.loadProject(key)
@@ -99,6 +99,11 @@ func (v *Vault) projectKeys() ([]string, []output.Problem, error) {
 	}
 	sort.Strings(keys)
 	return keys, warnings, nil
+}
+
+// hasProject reports whether the Vault has a Project folder for key.
+func (v *Vault) hasProject(key string) (bool, error) {
+	return isDir(filepath.Join(v.Root, ProjectsDir, key))
 }
 
 // isDir reports whether p is a directory, following symlinks. A missing p
@@ -155,7 +160,7 @@ func (v *Vault) adopt() error {
 	}
 	highest := make(map[string]int, len(keys))
 	for _, k := range keys {
-		files, err := v.itemFiles(k)
+		files, err := v.scanProject(k)
 		if err != nil {
 			return err
 		}

@@ -1,0 +1,201 @@
+$ otman doctor Projects/AWY/Issues/HOM-3 Same name.md
+exit: 4
+-- stdout --
+findings[2]{code,path,message,fix}:
+  duplicate_number,Projects/HOM/Issues/HOM-3 Same name.md,"HOM-3 is also the number of Projects/AWY/Issues/HOM-3 Same name.md, which keeps it as the Item created earlier",auto
+  misplaced_item,Projects/AWY/Issues/HOM-3 Same name.md,"HOM-3 is in Projects/AWY/Issues, a folder of Project AWY, so it is read as an Item of Project HOM",auto
+fixed[0]:
+-- stderr --
+warning:
+  code: duplicate_number
+  message: "HOM-2 is the number of 2 Items: Projects/AWY/Specs/HOM-2 Collides.md, Projects/HOM/Specs/HOM-2 Stays.md"
+  details:
+    id: HOM-2
+    paths[2]: Projects/AWY/Specs/HOM-2 Collides.md,Projects/HOM/Specs/HOM-2 Stays.md
+  hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
+warning:
+  code: duplicate_number
+  message: "HOM-3 is the number of 2 Items: Projects/AWY/Issues/HOM-3 Same name.md, Projects/HOM/Issues/HOM-3 Same name.md"
+  details:
+    id: HOM-3
+    paths[2]: Projects/AWY/Issues/HOM-3 Same name.md,Projects/HOM/Issues/HOM-3 Same name.md
+  hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
+
+$ otman doctor Projects/AWY/Issues/HOM-3 Same name.md --fix
+exit: 0
+-- stdout --
+findings[0]:
+fixed[2]{code,path,old,new}:
+  duplicate_number,Projects/HOM/Issues/HOM-3 Same name.md,HOM-3,HOM-8
+  misplaced_item,Projects/AWY/Issues/HOM-3 Same name.md,"\"Projects/AWY/Issues\"","\"Projects/HOM/Issues\""
+-- stderr --
+warning:
+  code: duplicate_number
+  message: "HOM-2 is the number of 2 Items: Projects/AWY/Specs/HOM-2 Collides.md, Projects/HOM/Specs/HOM-2 Stays.md"
+  details:
+    id: HOM-2
+    paths[2]: Projects/AWY/Specs/HOM-2 Collides.md,Projects/HOM/Specs/HOM-2 Stays.md
+  hint: name one by its full filename or Vault-relative path; 'otman doctor --fix' renumbers all but the one created first
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "HOM"
+actor = "talvor"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/AWY/
+-- vault/Projects/AWY/AWY.md --
+---
+name: Away
+kind: project
+---
+vault/Projects/AWY/Issues/
+-- vault/Projects/AWY/Issues/AWY-1 Native.md --
+---
+id: AWY-1
+title: Native
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+Found [[Projects/AWY/Issues/HOM-1 Wandered off]] in our folder.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/AWY/Issues/HOM-1 Wandered off.md --
+---
+id: HOM-1
+title: Wandered off
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+Moved here by hand.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/AWY/Issues/HOM-7 No kind.md --
+---
+id: HOM-7
+title: No kind
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/AWY/Issues/ZZZ-1 Unknown.md --
+---
+id: ZZZ-1
+title: Unknown
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/AWY/Specs/
+-- vault/Projects/AWY/Specs/HOM-2 Collides.md --
+---
+id: HOM-2
+title: Collides
+kind: spec
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/HOM/
+-- vault/Projects/HOM/HOM.md --
+---
+name: Home
+kind: project
+---
+vault/Projects/HOM/Issues/
+-- vault/Projects/HOM/Issues/HOM-3 Same name.md --
+---
+id: HOM-3
+title: Same name
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T08:00:00Z
+updated: 2026-01-01T08:00:00Z
+---
+The earlier one.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/HOM/Issues/HOM-4 Links home.md --
+---
+id: HOM-4
+title: Links home
+kind: issue
+status: open
+parent: "[[HOM-1 Wandered off]]"
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+See [[HOM-2 Collides]].
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/HOM/Issues/HOM-8 Same name.md --
+---
+id: HOM-8
+title: Same name
+kind: issue
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+The later one.
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-02T03:04:05Z · talvor
+Renumbered from HOM-3 by otman doctor
+vault/Projects/HOM/Specs/
+-- vault/Projects/HOM/Specs/HOM-2 Stays.md --
+---
+id: HOM-2
+title: Stays
+kind: spec
+status: open
+labels: []
+assignee: null
+created: 2026-01-01T09:00:00Z
+updated: 2026-01-01T09:00:00Z
+---
+<!-- otman:comments -->
+## Comments

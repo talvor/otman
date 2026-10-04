@@ -177,49 +177,11 @@ func (a *app) runDoctor(v *vault.Vault, s resolved, ref string, sel config.Value
 		}
 		// Duplicate numbers are settled first, so that a misplaced Item
 		// whose number is taken in its own Project can then move there.
-		renumbers, err := planRenumbers(v, all)
+		dup, err := a.settleDuplicates(v, s, all, only, f.fix, &res, &ws)
 		if err != nil {
-			return res, ws, ioError(err)
+			return res, ws, err
 		}
-		dups := map[string]doctorFinding{} // by path
-		vacating := map[string]bool{}      // the paths --fix renumbers away
-		renumbered := false
-		narrowed := only != nil
-		var onlyPath string
-		if narrowed {
-			onlyPath = only[0].Path
-		}
-		for _, r := range renumbers {
-			if narrowed && r.file.Path != onlyPath {
-				continue
-			}
-			if !f.fix || !r.rewritable {
-				dups[r.file.Path] = r.finding()
-				vacating[r.file.Path] = r.rewritable
-				continue
-			}
-			moved, err := a.renumber(v, s, r)
-			if err != nil {
-				// The Item may be part-way through its journal, so it is
-				// left for the next run.
-				ws = append(ws, repairBlocked(r.file, err))
-				res.Findings = append(res.Findings, r.finding())
-				if narrowed {
-					only = []vault.ItemFile{}
-				}
-				continue
-			}
-			renumbered = true
-			res.Fixed = append(res.Fixed, doctorFix{Code: "duplicate_number", Path: r.file.Path, Old: r.file.ID(), New: moved.ID()})
-			if narrowed {
-				only = []vault.ItemFile{moved}
-			}
-		}
-		if renumbered {
-			if all, err = v.ItemFiles(key); err != nil {
-				return res, ws, ioError(err)
-			}
-		}
+		all, only, vacating := dup.all, dup.only, dup.vacating
 		targets := all
 		if only != nil {
 			targets = only
@@ -236,7 +198,7 @@ func (a *app) runDoctor(v *vault.Vault, s resolved, ref string, sel config.Value
 				snap = &got
 			}
 			pl := planDoctor(v, file, data, all, snap, f.prefer, vacating)
-			if fd, ok := dups[file.Path]; ok {
+			if fd, ok := dup.findings[file.Path]; ok {
 				res.Findings = append(res.Findings, fd)
 			}
 			if !f.fix {
@@ -275,7 +237,91 @@ func (a *app) runDoctor(v *vault.Vault, s resolved, ref string, sel config.Value
 			}
 		}
 	}
+	if ref != "" {
+		// A run narrowed to one Item may leave duplicates it does not
+		// report as findings, so it warns about them as other commands do.
+		dups, err := duplicateWarnings(v)
+		if err != nil {
+			return res, ws, ioError(err)
+		}
+		ws = append(ws, dups...)
+	}
 	return res, ws, nil
+}
+
+// settledDuplicates is what settleDuplicates leaves for the rest of a
+// doctor run over one Project.
+type settledDuplicates struct {
+	all  []vault.ItemFile // the Project's Item files after any renumbering
+	only []vault.ItemFile // the Item a REF narrows the run to, renumbered or not; nil without a REF
+	// findings are the duplicate_number findings left for the per-Item
+	// pass to report, by path.
+	findings map[string]doctorFinding
+	// vacating holds the paths --fix would renumber away, so that a report
+	// can tell a move whose target they hold will go ahead.
+	vacating map[string]bool
+}
+
+// settleDuplicates settles the duplicate numbers among all, the Item files
+// of one Project: it renumbers every Item planRenumbers picks when fix is
+// set, and otherwise leaves them as findings. A REF, only, narrows it to
+// the duplicates of that Item's number. Repairs go to res, warnings for
+// repairs that fail to ws.
+func (a *app) settleDuplicates(v *vault.Vault, s resolved, all, only []vault.ItemFile, fix bool, res *doctorResult, ws *[]output.Problem) (settledDuplicates, error) {
+	out := settledDuplicates{all: all, only: only, findings: map[string]doctorFinding{}, vacating: map[string]bool{}}
+	renumbers, err := planRenumbers(v, all)
+	if err != nil {
+		return out, ioError(err)
+	}
+	narrowed := only != nil
+	var onlyPath string
+	if narrowed {
+		onlyPath = only[0].Path
+	}
+	renumbered := false
+	for _, r := range renumbers {
+		if narrowed && r.file.Path != onlyPath && r.keeper.Path != onlyPath {
+			continue
+		}
+		if !fix || !r.rewritable {
+			if narrowed && r.file.Path != onlyPath {
+				// The per-Item pass sees only the narrowed Item.
+				res.Findings = append(res.Findings, r.finding())
+			} else {
+				out.findings[r.file.Path] = r.finding()
+			}
+			if r.rewritable {
+				out.vacating[r.file.Path] = true
+			}
+			continue
+		}
+		moved, err := a.renumber(v, s, r)
+		if err != nil {
+			// The Item may be part-way through its journal, so it is left
+			// for the next run.
+			*ws = append(*ws, repairBlocked(r.file, err))
+			res.Findings = append(res.Findings, r.finding())
+			if r.file.Path == onlyPath {
+				out.only = []vault.ItemFile{}
+			}
+			continue
+		}
+		renumbered = true
+		res.Fixed = append(res.Fixed, doctorFix{Code: "duplicate_number", Path: r.file.Path, Old: r.file.ID(), New: moved.ID()})
+		if r.restoresMarker {
+			res.Fixed = append(res.Fixed, doctorFix{Code: "missing_comments_marker", Path: r.file.Path,
+				Old: "(no marker)", New: "restored before " + item.CommentsHeading})
+		}
+		if r.file.Path == onlyPath {
+			out.only = []vault.ItemFile{moved}
+		}
+	}
+	if renumbered {
+		if out.all, err = v.ItemFiles(all[0].Key); err != nil {
+			return out, ioError(err)
+		}
+	}
+	return out, nil
 }
 
 // repairBlocked is the warning for a repair the vault or the Item's text
@@ -404,10 +450,15 @@ func planDoctor(v *vault.Vault, f vault.ItemFile, data []byte, all []vault.ItemF
 				pl.repairs.Kind = &kind
 			}
 		case "unexpected_folder", "misplaced_item":
-			if p.Kind != nil {
-				kind := *p.Kind
-				moveKind = &kind
-				fd.set("auto", quoteArg(path.Dir(f.Path)), quoteArg(path.Dir(f.KindPath(kind))))
+			kind := p.Kind
+			if kind == nil && pr.Code == "misplaced_item" {
+				// A misplaced Item with no kind goes to the Kind of the
+				// folder it was filed in, which a missing_key repair writes.
+				kind = d.Kind
+			}
+			if kind != nil {
+				moveKind = kind
+				fd.set("auto", quoteArg(path.Dir(f.Path)), quoteArg(path.Dir(f.KindPath(*kind))))
 				moves = append(moves, fd)
 			}
 		case "missing_comments_marker":

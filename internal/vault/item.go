@@ -35,11 +35,12 @@ func (f ItemFile) ID() string { return fmt.Sprintf("%s-%d", f.Key, f.Number) }
 // Name is the file name.
 func (f ItemFile) Name() string { return path.Base(f.Path) }
 
-// folderKind is the Kind whose folder, directly under the Project's
-// folder, holds the file, and false when the file is anywhere else.
+// folderKind is the Kind whose folder, directly under the folder of the
+// Project that holds the file, holds it, and false when the file is
+// anywhere else. A misplaced file's folder is another Project's.
 func (f ItemFile) folderKind() (item.Kind, bool) {
 	dir, folder := path.Split(path.Dir(f.Path))
-	if dir != path.Join(ProjectsDir, f.Key)+"/" {
+	if dir != path.Join(ProjectsDir, f.FolderKey())+"/" {
 		return "", false
 	}
 	return item.KindOfFolder(folder)
@@ -74,7 +75,7 @@ func (v *Vault) ItemFiles(key string) ([]ItemFile, error) {
 		v.scanned = map[string]bool{}
 	}
 	v.scanned[key] = true
-	return v.itemFiles(key)
+	return v.scanProject(key)
 }
 
 // Scanned is the keys of the Projects whose Item files the Vault has listed
@@ -88,8 +89,9 @@ func (v *Vault) Scanned() []string {
 	return keys
 }
 
-// itemFiles is ItemFiles without remembering key.
-func (v *Vault) itemFiles(key string) ([]ItemFile, error) {
+// scanProject is ItemFiles without remembering key, for the Vault's own
+// scans, such as reconciling the high-water mark.
+func (v *Vault) scanProject(key string) ([]ItemFile, error) {
 	all, err := v.scanItems()
 	if err != nil {
 		return nil, err
@@ -117,7 +119,7 @@ func (v *Vault) StrayFiles(key string) ([]ItemFile, error) {
 		if f.FolderKey() != key || f.Key == key {
 			continue
 		}
-		if ok, err := isDir(filepath.Join(v.Root, ProjectsDir, f.Key)); err != nil {
+		if ok, err := v.hasProject(f.Key); err != nil {
 			return nil, err
 		} else if !ok {
 			files = append(files, f)
@@ -242,7 +244,7 @@ func (v *Vault) CreateItem(key string, n NewItem) (ItemFile, []byte, error) {
 // for fails. The caller holds the Vault lock, which serialises the scan,
 // the allocation and the write that uses it.
 func (v *Vault) Allocate(key string) (int, error) {
-	files, err := v.itemFiles(key)
+	files, err := v.scanProject(key)
 	if err != nil {
 		return 0, err
 	}
@@ -287,7 +289,7 @@ func (v *Vault) writeFile(p string, data []byte) error {
 func (v *Vault) abs(p string) string { return filepath.Join(v.Root, filepath.FromSlash(p)) }
 
 // ItemAt returns the Item file at the Vault-relative path p, and false
-// when p is not an Item file: outside Projects/<KEY>/, in Templates/,
+// when p is not an Item file: outside a Project folder, in Templates/,
 // without the <KEY>-<n> prefix, misplaced under a prefix no Project has,
 // or missing.
 func (v *Vault) ItemAt(p string) (ItemFile, bool, error) {
@@ -299,10 +301,10 @@ func (v *Vault) ItemAt(p string) (ItemFile, bool, error) {
 	if !ok {
 		return ItemFile{}, false, nil
 	}
-	if strings.Split(p, "/")[1] != key {
+	if f := (ItemFile{Key: key, Number: n, Path: p}); f.Misplaced() {
 		// A misplaced file is an Item of the Project its prefix names,
 		// and of none when there is no such Project.
-		if ok, err := isDir(filepath.Join(v.Root, ProjectsDir, key)); err != nil || !ok {
+		if ok, err := v.hasProject(key); err != nil || !ok {
 			return ItemFile{}, false, err
 		}
 	}

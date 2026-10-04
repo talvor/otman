@@ -1,3 +1,7 @@
+$ write "vault/Projects/DUP/Issues/DUP-1 Stray text.md"
+
+$ write "vault/Projects/DUP/Issues/DUP-2 Marker gone.md"
+
 $ write "vault/Projects/DUP/Issues/DUP-3 Flow.md"
 
 $ write "vault/Projects/DUP/Issues/DUP-5 No date.md"
@@ -5,13 +9,17 @@ $ write "vault/Projects/DUP/Issues/DUP-5 No date.md"
 $ otman doctor --fix
 exit: 4
 -- stdout --
-findings[2]{code,path,message,fix}:
+findings[4]{code,path,message,fix}:
+  duplicate_number,Projects/DUP/Issues/DUP-1 Stray text.md,"DUP-1 is also the number of Projects/DUP/Issues/DUP-1 Second take.md, which keeps it as the Item created earlier",none
+  missing_comments_marker,Projects/DUP/Issues/DUP-1 Stray text.md,"DUP-1 has no <!-- otman:comments --> line, so its comments are read from the last ## Comments heading",none
   duplicate_number,Projects/DUP/Issues/DUP-3 Flow.md,"DUP-3 is also the number of Projects/DUP/Issues/DUP-3 Links.md, which keeps it as the Item created earlier",none
   malformed_frontmatter,Projects/DUP/Issues/DUP-3 Flow.md,"cannot read the frontmatter of Projects/DUP/Issues/DUP-3 Flow.md: the frontmatter is flow-style YAML",none
-fixed[3]{code,path,old,new}:
+fixed[5]{code,path,old,new}:
   duplicate_number,Projects/DUP/Issues/DUP-1 First take.md,DUP-1,DUP-6
   duplicate_number,Projects/DUP/Specs/DUP-2 Tie b.md,DUP-2,DUP-7
-  duplicate_number,Projects/DUP/Issues/DUP-5 No date.md,DUP-5,DUP-8
+  duplicate_number,Projects/DUP/Issues/DUP-2 Marker gone.md,DUP-2,DUP-8
+  missing_comments_marker,Projects/DUP/Issues/DUP-2 Marker gone.md,(no marker),restored before ## Comments
+  duplicate_number,Projects/DUP/Issues/DUP-5 No date.md,DUP-5,DUP-9
 -- stderr --
 
 $ otman doctor --json
@@ -21,6 +29,18 @@ exit: 4
   "schema_version": 1,
   "data": {
     "findings": [
+      {
+        "code": "duplicate_number",
+        "path": "Projects/DUP/Issues/DUP-1 Stray text.md",
+        "message": "DUP-1 is also the number of Projects/DUP/Issues/DUP-1 Second take.md, which keeps it as the Item created earlier",
+        "fix": "none"
+      },
+      {
+        "code": "missing_comments_marker",
+        "path": "Projects/DUP/Issues/DUP-1 Stray text.md",
+        "message": "DUP-1 has no <!-- otman:comments --> line, so its comments are read from the last ## Comments heading",
+        "fix": "none"
+      },
       {
         "code": "duplicate_number",
         "path": "Projects/DUP/Issues/DUP-3 Flow.md",
@@ -81,6 +101,17 @@ Made on the desktop, earlier.
 
 <!-- otman:comments -->
 ## Comments
+-- vault/Projects/DUP/Issues/DUP-1 Stray text.md --
+---
+id: DUP-1
+title: Stray text
+kind: issue
+status: open
+created: 2026-01-01T11:00:00Z
+---
+## Comments
+
+Not a comment, just prose.
 -- vault/Projects/DUP/Issues/DUP-2 Tie a.md --
 ---
 id: DUP-2
@@ -147,9 +178,26 @@ Made on the laptop, later.
 
 ### 2026-01-02T03:04:05Z · talvor
 Renumbered from DUP-1 by otman doctor
--- vault/Projects/DUP/Issues/DUP-8 No date.md --
+-- vault/Projects/DUP/Issues/DUP-8 Marker gone.md --
 ---
 id: DUP-8
+title: Marker gone
+kind: issue
+status: open
+created: 2026-01-01T11:00:00Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T11:00:00Z · talvor
+A real comment.
+
+### 2026-01-02T03:04:05Z · talvor
+Renumbered from DUP-2 by otman doctor
+-- vault/Projects/DUP/Issues/DUP-9 No date.md --
+---
+id: DUP-9
 title: No date
 kind: issue
 status: open

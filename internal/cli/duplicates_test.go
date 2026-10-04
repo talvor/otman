@@ -88,20 +88,26 @@ func TestDuplicateRenumber(t *testing.T) {
 	})
 }
 
-// A REF narrows doctor to one Item: the duplicate named by its path is
-// renumbered, and the Item that keeps the number has nothing to report.
+// A REF narrows doctor to the duplicates of one Item's number: the Item
+// that keeps the number reports the one that would be renumbered, the
+// duplicate named by its path is renumbered, and an Item with no
+// duplicate warns about the duplicates it leaves, as other commands do.
 func TestDuplicateRenumberRef(t *testing.T) {
 	runGolden(t, goldenCase{
 		name: "duplicate-renumber-ref", fixture: "duplicates", files: dupConfig,
 		steps: []step{
 			{args: []string{"doctor", "DUP-1 Second take.md"}},
 			{args: []string{"doctor", "Projects/DUP/Specs/DUP-2 Tie b.md", "--fix", "--json"}},
+			{args: []string{"doctor", "DUP-5"}},
 		},
 	})
 }
 
-// An Item without a created timestamp gives way to one that has one, and
-// one whose frontmatter cannot be read is reported but never renumbered.
+// An Item without a created timestamp gives way to one that has one. One
+// whose frontmatter cannot be read, or whose missing comments marker
+// cannot be restored without guessing (ADR 0005), is reported but never
+// renumbered. One whose missing marker can be restored has it restored by
+// the renumbering comment.
 func TestDuplicateRenumberUnreadable(t *testing.T) {
 	runGolden(t, goldenCase{
 		name: "duplicate-renumber-unreadable", fixture: "duplicates", files: dupConfig,
@@ -109,6 +115,10 @@ func TestDuplicateRenumberUnreadable(t *testing.T) {
 			{write: map[string]string{
 				"vault/Projects/DUP/Issues/DUP-5 No date.md": "---\nid: DUP-5\ntitle: No date\nkind: issue\nstatus: open\n---\n<!-- otman:comments -->\n## Comments\n",
 				"vault/Projects/DUP/Issues/DUP-3 Flow.md":    "---\n{id: DUP-3, title: Flow}\n---\n",
+				"vault/Projects/DUP/Issues/DUP-1 Stray text.md": "---\nid: DUP-1\ntitle: Stray text\nkind: issue\nstatus: open\n" +
+					"created: 2026-01-01T11:00:00Z\n---\n## Comments\n\nNot a comment, just prose.\n",
+				"vault/Projects/DUP/Issues/DUP-2 Marker gone.md": "---\nid: DUP-2\ntitle: Marker gone\nkind: issue\nstatus: open\n" +
+					"created: 2026-01-01T11:00:00Z\n---\n## Comments\n\n### 2026-01-01T11:00:00Z · talvor\nA real comment.\n",
 			}, args: []string{"doctor", "--fix"}},
 			{args: []string{"doctor", "--json"}},
 		},
@@ -136,7 +146,8 @@ func TestMisplacedRead(t *testing.T) {
 // doctor reports each misplaced Item under its own Project, and the file
 // with a KEY no Project has under the Project whose folder holds it.
 // --fix moves each misplaced Item into its own Project's Kind folder,
-// rewriting the links that name its path. Where its number is taken there,
+// rewriting the links that name its path; one with no kind takes the Kind
+// of the folder it was filed in. Where its number is taken there,
 // the duplicate rules decide which Item is renumbered first: the later
 // created, whether it is the misplaced one or not. The unknown KEY stays,
 // report-only.
@@ -148,6 +159,19 @@ func TestMisplacedFix(t *testing.T) {
 			{args: []string{"doctor", "--project", "AWY", "--json"}},
 			{args: []string{"doctor", "--all-projects", "--fix"}, tty: true},
 			{args: []string{"doctor", "--all-projects", "--json"}},
+		},
+	})
+}
+
+// A REF narrows doctor to the duplicates of one Item's number, so a
+// misplaced Item that keeps its number moves home once the duplicate in
+// its way is renumbered.
+func TestMisplacedFixRef(t *testing.T) {
+	runGolden(t, goldenCase{
+		name: "misplaced-fix-ref", fixture: "misplaced", files: misplacedConfig,
+		steps: []step{
+			{args: []string{"doctor", "Projects/AWY/Issues/HOM-3 Same name.md"}},
+			{args: []string{"doctor", "Projects/AWY/Issues/HOM-3 Same name.md", "--fix"}},
 		},
 	})
 }

@@ -97,8 +97,8 @@ func TestRoundTrip(t *testing.T) {
 	eachFixtureItem(t, roundTrip)
 }
 
-// isDir reports whether p is a directory.
-func isDir(p string) bool {
+// dirExists reports whether p is a directory.
+func dirExists(p string) bool {
 	fi, err := os.Stat(p)
 	return err == nil && fi.IsDir()
 }
@@ -119,7 +119,7 @@ func eachFixtureItem(t *testing.T, test func(t *testing.T, fixture, rel string))
 			if _, ok := item.KindOfFolder(filepath.Base(filepath.Dir(p))); !ok {
 				return nil // not an Item, e.g. a template
 			}
-			if key, _, _, _ := item.ParseFilename(d.Name()); !isDir(filepath.Join(src, "Projects", key)) {
+			if key, _, _, _ := item.ParseFilename(d.Name()); !dirExists(filepath.Join(src, "Projects", key)) {
 				return nil // not an Item: no Project has its prefix
 			}
 			rel, _ := filepath.Rel(src, p)

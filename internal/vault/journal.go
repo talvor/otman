@@ -127,8 +127,8 @@ func (e *AmbiguousLinkError) Error() string {
 // *LinkRewriteError and a link anywhere in a note, frontmatter included,
 // to another note that the new path would make ambiguous with an
 // *AmbiguousLinkError. It then runs through a journal. operation names it
-// in the journal: RetitleOperation, MoveOperation or RenumberOperation. RenameItem returns the
-// moved Item file and its final bytes.
+// in the journal: RetitleOperation, MoveOperation or RenumberOperation.
+// RenameItem returns the moved Item file and its final bytes.
 func (v *Vault) RenameItem(f ItemFile, to string, data []byte, operation string) (ItemFile, []byte, error) {
 	if err := v.CheckMove(f, to); err != nil {
 		return f, nil, err
