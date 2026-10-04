@@ -16,6 +16,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/talvor/otman/internal/frontmatter"
+	"github.com/talvor/otman/internal/wikilink"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -200,8 +201,12 @@ type Fields struct {
 	Author   *string
 	Assignee *string
 	Labels   []string
-	Created  time.Time
-	Updated  time.Time
+	// Parent and BlockedBy are relation wikilinks, such as
+	// "[[OTM-1 Title]]"; nil for none.
+	Parent    *string
+	BlockedBy []string
+	Created   time.Time
+	Updated   time.Time
 }
 
 // Render writes a new Item file: flat frontmatter with every owned key,
@@ -223,8 +228,8 @@ func Render(f Fields, body string) ([]byte, error) {
 	add("kind", str(string(f.Kind)))
 	add("status", str(f.Status))
 	add("author", optional(f.Author))
-	add("parent", null())
-	add("blocked_by", list(nil))
+	add("parent", optionalLink(f.Parent))
+	add("blocked_by", links(f.BlockedBy))
 	add("labels", list(labels))
 	add("assignee", optional(f.Assignee))
 	add("created", timestamp(f.Created))
@@ -268,6 +273,39 @@ func optional(s *string) *yaml.Node {
 	return str(*s)
 }
 
+// quoted is s as a double-quoted scalar, the way relation wikilinks are
+// written.
+func quoted(s string) *yaml.Node {
+	return &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: s, Style: yaml.DoubleQuotedStyle}
+}
+
+func optionalLink(link *string) *yaml.Node {
+	if link == nil {
+		return null()
+	}
+	return quoted(*link)
+}
+
+// links is a list of quoted relation wikilinks.
+func links(items []string) *yaml.Node { return sequence(quotedAll(items)) }
+
+func quotedAll(items []string) []*yaml.Node {
+	nodes := make([]*yaml.Node, len(items))
+	for i, s := range items {
+		nodes[i] = quoted(s)
+	}
+	return nodes
+}
+
+// sequence is a list of nodes, written [] when empty.
+func sequence(nodes []*yaml.Node) *yaml.Node {
+	n := &yaml.Node{Kind: yaml.SequenceNode, Tag: "!!seq", Content: nodes}
+	if len(nodes) == 0 {
+		n.Style = yaml.FlowStyle
+	}
+	return n
+}
+
 func null() *yaml.Node { return &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!null", Value: "null"} }
 
 func list(items []string) *yaml.Node {
@@ -301,9 +339,11 @@ type Parsed struct {
 	Labels                                            []string
 
 	// Parent and BlockedBy are the relation wikilinks as written, such as
-	// "[[OTM-1 Title]]". A value that is not a wikilink is left out.
-	Parent    *string
-	BlockedBy []string
+	// "[[OTM-1 Title]]". A value that is not a wikilink is left out and
+	// listed in BadRelations.
+	Parent       *string
+	BlockedBy    []string
+	BadRelations []BadRelation
 
 	Body     string
 	Comments []Comment
@@ -311,6 +351,18 @@ type Parsed struct {
 	// FrontmatterErr is why the frontmatter could not be read, leaving
 	// every field nil; nil when it was read or there is none.
 	FrontmatterErr error
+}
+
+// BadRelation is a relation value that is not a wikilink: the whole
+// parent value, or the whole blocked_by value or one of its entries. Such
+// a value reads as absent.
+type BadRelation struct {
+	Key string // parent or blocked_by
+	// Entry is true for one entry of a blocked_by list, false for a
+	// whole value.
+	Entry bool
+	// Value is the text of a scalar, or nil for a list or mapping.
+	Value *string
 }
 
 // Parse reads an Item file. Without a comments marker line, the body ends
@@ -368,15 +420,40 @@ func (p *Parsed) readFrontmatter(fm []byte) {
 		case "parent":
 			if l := scalar(v); l != nil && IsLink(*l) {
 				p.Parent = l
+			} else if !isNull(v) {
+				p.BadRelations = append(p.BadRelations, BadRelation{Key: "parent", Value: scalarText(v)})
 			}
 		case "blocked_by":
-			for _, l := range scalars(v) {
-				if IsLink(l) {
-					p.BlockedBy = append(p.BlockedBy, l)
+			if v.Kind != yaml.SequenceNode {
+				if !isNull(v) {
+					p.BadRelations = append(p.BadRelations, BadRelation{Key: "blocked_by", Value: scalarText(v)})
+				}
+				break
+			}
+			for _, c := range v.Content {
+				if l := scalar(c); l != nil && IsLink(*l) {
+					p.BlockedBy = append(p.BlockedBy, *l)
+				} else {
+					p.BadRelations = append(p.BadRelations, BadRelation{Key: "blocked_by", Entry: true, Value: scalarText(c)})
 				}
 			}
 		}
 	}
+}
+
+// isNull reports whether n is a null scalar, such as null, ~ or nothing.
+func isNull(n *yaml.Node) bool {
+	return n.Kind == yaml.ScalarNode && n.Tag == "!!null"
+}
+
+// scalarText is a scalar's text as written, null included, or nil for a
+// list or mapping.
+func scalarText(n *yaml.Node) *string {
+	if n.Kind != yaml.ScalarNode {
+		return nil
+	}
+	s := n.Value
+	return &s
 }
 
 // scalar is a non-null scalar's text, or nil.
@@ -439,6 +516,14 @@ type Update struct {
 	// remove. Adding a Label the Item has, or removing one it lacks,
 	// changes nothing.
 	AddLabels, RemoveLabels []string
+	// Parent sets the parent to a relation wikilink; ClearParent clears
+	// it.
+	Parent      *string
+	ClearParent bool
+	// AddBlockers are relation wikilinks to append to blocked_by, and
+	// RemoveBlockers entries to drop from it, exactly as written. Other
+	// entries are kept as they are.
+	AddBlockers, RemoveBlockers []string
 }
 
 // ErrNoMarker refuses a body rewrite of an Item file that has no comments
@@ -463,6 +548,18 @@ func Apply(file []byte, update Update, now time.Time) (out []byte, changed bool,
 		edits = append(edits, frontmatter.Edit{Key: "assignee", Value: str(*update.Assignee)})
 	}
 	edits = append(edits, labelEdits(file, update.AddLabels, update.RemoveLabels)...)
+	if update.ClearParent {
+		edits = append(edits, frontmatter.Edit{Key: "parent", Value: null()})
+	} else if update.Parent != nil {
+		edits = append(edits, frontmatter.Edit{Key: "parent", Value: quoted(*update.Parent)})
+	}
+	if len(update.AddBlockers) > 0 || len(update.RemoveBlockers) > 0 {
+		blockers, err := blockerList(file, update.AddBlockers, update.RemoveBlockers)
+		if err != nil {
+			return nil, false, err
+		}
+		edits = append(edits, frontmatter.Edit{Key: "blocked_by", Value: blockers})
+	}
 	var transform func([]byte) ([]byte, error)
 	if body := update.Body; body != nil {
 		transform = func(b []byte) ([]byte, error) { return replaceBody(b, *body) }
@@ -635,24 +732,59 @@ func parseComments(text string) []Comment {
 	return out
 }
 
-// wikilink is a whole relation value: [[target]], optionally with a
-// #heading and an |alias.
-var wikilink = regexp.MustCompile(`^\[\[([^\[\]|#]+)(?:#[^\[\]|]*)?(?:\|[^\[\]]*)?\]\]$`)
+// IsLink reports whether s is a relation wikilink: one whole link to a
+// note, such as "[[OTM-1 Title]]", optionally with a heading, an alias,
+// a path or the embed marker.
+func IsLink(s string) bool {
+	l, ok := wikilink.Parse(s)
+	return ok && l.Target != ""
+}
 
-// IsLink reports whether s is a relation wikilink.
-func IsLink(s string) bool { return wikilink.MatchString(s) }
+// Link is the relation wikilink to the Item file named name: its full
+// filename without ".md".
+func Link(name string) string { return "[[" + strings.TrimSuffix(name, ".md") + "]]" }
 
-// LinkName is the note name a relation wikilink points at, which Obsidian
-// resolves by basename: the target's last path segment, without ".md".
-// ok is false when link is not a wikilink.
-func LinkName(link string) (name string, ok bool) {
-	m := wikilink.FindStringSubmatch(link)
-	if m == nil {
-		return "", false
+// ErrBlockersNotList refuses to rewrite a blocked_by value that is
+// neither a list nor null, which otman would have to discard.
+var ErrBlockersNotList = errors.New("its blocked_by is not a list, and rewriting it would lose that value")
+
+// blockerList is the blocked_by value of file with the entries remove
+// names dropped and the links add appended as quoted scalars. Entries of
+// an existing list are otherwise kept as they are. A missing or null
+// value is no blockers; any other value that is not a list fails with
+// ErrBlockersNotList rather than be replaced.
+func blockerList(file []byte, add, remove []string) (*yaml.Node, error) {
+	var entries []*yaml.Node
+	if v := frontmatterValue(file, "blocked_by"); v != nil && v.Kind == yaml.SequenceNode {
+		for _, c := range v.Content {
+			if s := scalar(c); s == nil || !slices.Contains(remove, *s) {
+				entries = append(entries, c)
+			}
+		}
+	} else if v != nil && !isNull(v) {
+		return nil, ErrBlockersNotList
 	}
-	target := strings.TrimSpace(m[1])
-	target = target[strings.LastIndexByte(target, '/')+1:]
-	return strings.TrimSuffix(target, ".md"), true
+	return sequence(append(entries, quotedAll(add)...)), nil
+}
+
+// frontmatterValue is the value of the top-level key of file's
+// frontmatter, or nil when it is missing or the frontmatter cannot be read.
+func frontmatterValue(file []byte, key string) *yaml.Node {
+	fm, _, found := frontmatter.Split(file)
+	if !found {
+		return nil
+	}
+	var doc yaml.Node
+	if yaml.Unmarshal(fm, &doc) != nil || len(doc.Content) == 0 || doc.Content[0].Kind != yaml.MappingNode {
+		return nil
+	}
+	m := doc.Content[0]
+	for i := 0; i+1 < len(m.Content); i += 2 {
+		if m.Content[i].Value == key {
+			return m.Content[i+1]
+		}
+	}
+	return nil
 }
 
 // TruncateText cuts s to at most limit Unicode characters, reporting

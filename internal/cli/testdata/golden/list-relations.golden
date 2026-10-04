@@ -1,0 +1,428 @@
+$ otman list --parent REL-1
+tty: true
+exit: 0
+-- stdout --
+ID     KIND   STATUS  ASSIGNEE  TITLE
+REL-2  issue  open    -         Wikilink scanner
+REL-3  issue  open    -         Parent commands
+REL-4  issue  open    -         Block commands
+-- stderr --
+
+$ otman list --parent REL-1 --state all --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [
+      {
+        "id": "REL-2",
+        "title": "Wikilink scanner",
+        "kind": "issue",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": {
+          "id": "REL-1",
+          "path": "Projects/REL/Specs/REL-1 Relations spec.md",
+          "resolved": true
+        },
+        "blocked_by": [],
+        "path": "Projects/REL/Issues/REL-2 Wikilink scanner.md",
+        "rev": "a7079c558988"
+      },
+      {
+        "id": "REL-3",
+        "title": "Parent commands",
+        "kind": "issue",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": {
+          "id": "REL-1",
+          "path": "Projects/REL/Specs/REL-1 Relations spec.md",
+          "resolved": true
+        },
+        "blocked_by": [
+          {
+            "id": "REL-2",
+            "path": "Projects/REL/Issues/REL-2 Wikilink scanner.md",
+            "resolved": true
+          }
+        ],
+        "path": "Projects/REL/Issues/REL-3 Parent commands.md",
+        "rev": "920a96134cee"
+      },
+      {
+        "id": "REL-4",
+        "title": "Block commands",
+        "kind": "issue",
+        "status": "open",
+        "labels": [],
+        "assignee": null,
+        "parent": {
+          "id": "REL-1",
+          "path": "Projects/REL/Specs/REL-1 Relations spec.md",
+          "resolved": true
+        },
+        "blocked_by": [
+          {
+            "id": "REL-3",
+            "path": "Projects/REL/Issues/REL-3 Parent commands.md",
+            "resolved": true
+          }
+        ],
+        "path": "Projects/REL/Issues/REL-4 Block commands.md",
+        "rev": "3ce9366fa5bd"
+      },
+      {
+        "id": "REL-8",
+        "title": "Closed child",
+        "kind": "issue",
+        "status": "closed",
+        "labels": [],
+        "assignee": null,
+        "parent": {
+          "id": "REL-1",
+          "path": "Projects/REL/Specs/REL-1 Relations spec.md",
+          "resolved": true
+        },
+        "blocked_by": [
+          {
+            "id": "REL-2",
+            "path": "Projects/REL/Issues/REL-2 Wikilink scanner.md",
+            "resolved": true
+          }
+        ],
+        "path": "Projects/REL/Issues/REL-8 Closed child.md",
+        "rev": "1e614c53680b"
+      }
+    ],
+    "total": 4,
+    "count": 4,
+    "has_more": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman list --blocked-by REL-2 --state all
+tty: true
+exit: 0
+-- stdout --
+ID     KIND   STATUS  ASSIGNEE  TITLE
+REL-3  issue  open    -         Parent commands
+REL-8  issue  closed  -         Closed child
+-- stderr --
+
+$ otman list --parent 1 --blocked-by REL-3
+exit: 0
+-- stdout --
+items[1]:
+  - id: REL-4
+    title: Block commands
+    kind: issue
+    status: open
+    labels[0]:
+    assignee: null
+    parent:
+      id: REL-1
+      path: Projects/REL/Specs/REL-1 Relations spec.md
+      resolved: true
+    blocked_by[1]{id,path,resolved}:
+      REL-3,Projects/REL/Issues/REL-3 Parent commands.md,true
+    path: Projects/REL/Issues/REL-4 Block commands.md
+    rev: 3ce9366fa5bd
+total: 1
+count: 1
+has_more: false
+-- stderr --
+
+$ otman list --blocked-by REL-5 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [],
+    "total": 0,
+    "count": 0,
+    "has_more": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman list --parent REL-1
+env: OTM_PROJECT=OTH
+tty: true
+exit: 0
+-- stdout --
+ID     KIND   STATUS  ASSIGNEE  TITLE
+REL-2  issue  open    -         Wikilink scanner
+REL-3  issue  open    -         Parent commands
+REL-4  issue  open    -         Block commands
+-- stderr --
+
+$ otman list --parent REL-1 --project OTH --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "project_mismatch",
+    "message": "REL-1 is in Project REL, but --project is OTH",
+    "details": {
+      "flag": "OTH",
+      "project": "REL",
+      "ref": "REL-1"
+    },
+    "hint": "drop --project, or pass --project REL"
+  }
+}
+
+$ otman list --parent REL-1 --blocked-by OTH-1 --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "project_mismatch",
+    "message": "--parent REL-1 is in Project REL, but --blocked-by OTH-1 is in Project OTH",
+    "details": {
+      "flags": [
+        "--parent",
+        "--blocked-by"
+      ],
+      "projects": [
+        "REL",
+        "OTH"
+      ]
+    },
+    "hint": "name Items of one Project; relations stay within a Project"
+  }
+}
+
+$ otman list --all-projects --blocked-by REL-2 --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "conflicting_flags",
+    "message": "--all-projects conflicts with --blocked-by",
+    "details": {
+      "flags": [
+        "--all-projects",
+        "--blocked-by"
+      ]
+    },
+    "hint": "drop --all-projects; --blocked-by lists within its Item's Project"
+  }
+}
+
+$ otman list --parent REL-99 --json
+exit: 3
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "item_not_found",
+    "message": "no Item matches \"REL-99\" in Project REL",
+    "details": {
+      "project": "REL",
+      "ref": "REL-99"
+    },
+    "hint": "name an Item by its ID (OTM-12), its number, its full filename or its Vault-relative path; titles do not match"
+  }
+}
+
+$ otman list --parent "" --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "--parent cannot be empty",
+    "details": {
+      "flag": "--parent"
+    },
+    "hint": "pass an Item, or omit --parent"
+  }
+}
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "REL"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTH/
+vault/Projects/OTH/Issues/
+-- vault/Projects/OTH/Issues/OTH-1 Elsewhere.md --
+---
+id: OTH-1
+title: Elsewhere
+aliases:
+  - Elsewhere
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTH/OTH.md --
+---
+name: Other
+kind: project
+---
+vault/Projects/REL/
+vault/Projects/REL/Issues/
+-- vault/Projects/REL/Issues/REL-2 Wikilink scanner.md --
+---
+id: REL-2
+title: Wikilink scanner
+aliases:
+  - Wikilink scanner
+kind: issue
+status: open
+author: talvor
+parent: "[[REL-1 Relations spec]]"
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-3 Parent commands.md --
+---
+id: REL-3
+title: Parent commands
+aliases:
+  - Parent commands
+kind: issue
+status: open
+author: talvor
+parent: "[[REL-1 Relations spec]]"
+blocked_by:
+  - "[[REL-2 Wikilink scanner]]"
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-4 Block commands.md --
+---
+id: REL-4
+title: Block commands
+aliases:
+  - Block commands
+kind: issue
+status: open
+author: talvor
+parent: "[[REL-1 Relations spec]]"
+blocked_by:
+  - "[[REL-3 Parent commands]]"
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-5 Old groundwork.md --
+---
+id: REL-5
+title: Old groundwork
+aliases:
+  - Old groundwork
+kind: issue
+status: closed
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-6 Loose end.md --
+---
+id: REL-6
+title: Loose end
+aliases:
+  - Loose end
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-8 Closed child.md --
+---
+id: REL-8
+title: Closed child
+kind: issue
+status: closed
+parent: "[[REL-1 Relations spec|the spec]]"
+blocked_by: ["[[Issues/REL-2 Wikilink scanner]]"]
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/REL.md --
+---
+name: Relations
+kind: project
+---
+vault/Projects/REL/Specs/
+-- vault/Projects/REL/Specs/REL-1 Relations spec.md --
+---
+id: REL-1
+title: Relations spec
+aliases:
+  - Relations spec
+kind: spec
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments

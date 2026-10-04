@@ -161,11 +161,11 @@ func (a *app) edit(cmd *cobra.Command, ref string, f editFlags) error {
 				return writeError(file, err)
 			}
 		}
-		files, err := v.ItemFiles(file.Key)
+		summary, ws, err := summarize(v, file, data)
 		if err != nil {
-			return ioError(err)
+			return err
 		}
-		summary := newItemSummary(file, item.Parse(data), data, newItemLinks(files))
+		warnings = append(warnings, ws...)
 		human := fmt.Sprintf("Edited %s · %s\n%s\n", summary.ID, summary.Title, summary.Path)
 		if !changed {
 			human = fmt.Sprintf("%s · %s is unchanged\n", summary.ID, summary.Title)

@@ -98,11 +98,11 @@ func (a *app) setClaim(c claimCommand, ref string) error {
 				return ioError(err)
 			}
 		}
-		files, err := v.ItemFiles(f.Key)
+		summary, ws, err := summarize(v, f, out)
 		if err != nil {
-			return ioError(err)
+			return err
 		}
-		summary := newItemSummary(f, item.Parse(out), out, newItemLinks(files))
+		warnings = append(warnings, ws...)
 		human := fmt.Sprintf("%s %s · %s\n", c.done, summary.ID, summary.Title)
 		if !changed {
 			human = fmt.Sprintf("%s · %s %s\n", summary.ID, summary.Title, c.unchanged(actor))

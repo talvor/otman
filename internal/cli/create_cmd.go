@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -21,12 +22,14 @@ type createFlags struct {
 	noTemplate bool
 	assignee   string
 	labels     []string
+	parent     string
+	blockedBy  []string
 }
 
 func (a *app) newCreateCmd() *cobra.Command {
 	var f createFlags
 	cmd := &cobra.Command{
-		Use:   "create --title TEXT [--kind issue|prd|spec] [--body TEXT | --body-file PATH|- | --no-template] [--label L]... [--assignee NAME|@me]",
+		Use:   "create --title TEXT [--kind issue|prd|spec] [--body TEXT | --body-file PATH|- | --no-template] [--label L]... [--assignee NAME|@me] [--parent REF] [--blocked-by REF]...",
 		Short: "Create an Item in the selected Project",
 		Args:  cobra.NoArgs,
 	}
@@ -38,6 +41,8 @@ func (a *app) newCreateCmd() *cobra.Command {
 	fl.BoolVar(&f.noTemplate, "no-template", false, "start with an empty body instead of the Kind's Template")
 	fl.StringArrayVar(&f.labels, "label", nil, "add the Label L (repeatable)")
 	fl.StringVar(&f.assignee, "assignee", "", "assign the Item to NAME, or to the actor with @me")
+	fl.StringVar(&f.parent, "parent", "", "make REF, an Item of the same Project, the parent")
+	fl.StringArrayVar(&f.blockedBy, "blocked-by", nil, "record that REF, an Item of the same Project, blocks the new Item (repeatable)")
 	cmd.RunE = func(cmd *cobra.Command, _ []string) error { return a.create(cmd, f) }
 	return cmd
 }
@@ -92,6 +97,14 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 	if err != nil {
 		return err
 	}
+	if cmd.Flags().Changed("parent") && f.parent == "" {
+		return invalid("invalid_arguments", "--parent cannot be empty",
+			map[string]any{"flag": "--parent"}, "pass the parent Item, or omit --parent")
+	}
+	if slices.Contains(f.blockedBy, "") {
+		return invalid("invalid_arguments", "--blocked-by cannot be empty",
+			map[string]any{"flag": "--blocked-by"}, "pass the blocking Item, or omit --blocked-by")
+	}
 	s, err := a.settings()
 	if err != nil {
 		return err
@@ -125,13 +138,18 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 				return err
 			}
 		}
+		parent, blockers, err := createRelations(v, key.Value, f.parent, f.blockedBy)
+		if err != nil {
+			return err
+		}
 		inUse, err := labelsInUse(v, key.Value, "")
 		if err != nil {
 			return ioError(err)
 		}
 		file, data, err := v.CreateItem(key.Value, vault.NewItem{
 			Title: title, Kind: kind, Body: body,
-			Author: author, Assignee: assignee, Labels: labels, Now: a.opts.Now(),
+			Author: author, Assignee: assignee, Labels: labels,
+			Parent: parent, BlockedBy: blockers, Now: a.opts.Now(),
 		})
 		if err != nil {
 			return ioError(err)
@@ -145,6 +163,32 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 		human := fmt.Sprintf("Created %s · %s\n%s\n", summary.ID, summary.Title, summary.Path)
 		return a.emit(mutationResult{summary, true, human}, warnings)
 	})
+}
+
+// createRelations resolves the --parent (none when "") and --blocked-by targets of a new
+// Item in Project key to the wikilinks it stores, without repeats. A new
+// Item has no children and blocks nothing, so no edge can close a cycle.
+func createRelations(v *vault.Vault, key, parentRef string, blockerRefs []string) (*string, []string, error) {
+	var parent *string
+	if parentRef != "" {
+		t, err := resolveTarget(v, key, parentRef, "parent")
+		if err != nil {
+			return nil, nil, err
+		}
+		link := item.Link(t.Name())
+		parent = &link
+	}
+	var blockers []string
+	for _, ref := range blockerRefs {
+		t, err := resolveTarget(v, key, ref, "blocker")
+		if err != nil {
+			return nil, nil, err
+		}
+		if link := item.Link(t.Name()); !slices.Contains(blockers, link) {
+			blockers = append(blockers, link)
+		}
+	}
+	return parent, blockers, nil
 }
 
 // templateBody is the body a new Item of Kind kind in Project key starts

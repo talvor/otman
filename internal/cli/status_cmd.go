@@ -88,11 +88,11 @@ func (a *app) setStatus(cmd *cobra.Command, c statusCommand, ref, commentText, c
 				return ioError(err)
 			}
 		}
-		files, err := v.ItemFiles(f.Key)
+		summary, ws, err := summarize(v, f, data)
 		if err != nil {
-			return ioError(err)
+			return err
 		}
-		summary := newItemSummary(f, item.Parse(data), data, newItemLinks(files))
+		warnings = append(warnings, ws...)
 		already := before.Status != nil && *before.Status == c.status
 		var human string
 		switch {
@@ -120,6 +120,9 @@ func writeError(f vault.ItemFile, err error) error {
 	case errors.As(err, &unsafe):
 		return unsafeWrite(f.Path, unsafe.Reason,
 			"make the frontmatter plain block-style YAML between --- lines, then retry")
+	case errors.Is(err, item.ErrBlockersNotList):
+		return unsafeWrite(f.Path, err.Error(),
+			`make blocked_by in `+f.Path+` a list of quoted wikilinks, such as blocked_by: ["[[`+f.Key+`-1 Title]]"], then retry`)
 	case errors.Is(err, item.ErrNoMarker):
 		return unsafeWrite(f.Path, err.Error(), "put the line "+item.CommentsMarker+
 			" back just before "+item.CommentsHeading+", then retry")

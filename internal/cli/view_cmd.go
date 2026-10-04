@@ -78,7 +78,9 @@ func (a *app) view(ref string, comments, full bool) error {
 		if err != nil {
 			return ioError(err)
 		}
-		it := newItemFull(f, item.Parse(data), data, links, r)
+		p := item.Parse(data)
+		warnings = append(warnings, relationProblems(f, p, links)...)
+		it := newItemFull(f, p, data, links, r)
 		if a.out == output.JSON {
 			return a.emit(viewResult{it}, warnings)
 		}
@@ -283,15 +285,7 @@ func resolveRef(s resolved, v *vault.Vault, ref string) (vault.ItemFile, error) 
 			return vault.ItemFile{}, itemNotFound(ref, "")
 		}
 		key = k
-		match = func(fs []vault.ItemFile) []vault.ItemFile {
-			var out []vault.ItemFile
-			for _, f := range fs {
-				if f.Name() == ref {
-					out = append(out, f)
-				}
-			}
-			return out
-		}
+		match = func(fs []vault.ItemFile) []vault.ItemFile { return matchName(fs, ref) }
 	}
 	if err := checkRefProject(s, ref, key); err != nil {
 		return vault.ItemFile{}, err
@@ -341,6 +335,17 @@ func matchNumber(files []vault.ItemFile, n int) []vault.ItemFile {
 	var out []vault.ItemFile
 	for _, f := range files {
 		if f.Number == n {
+			out = append(out, f)
+		}
+	}
+	return out
+}
+
+// matchName is the files whose full filename is name.
+func matchName(files []vault.ItemFile, name string) []vault.ItemFile {
+	var out []vault.ItemFile
+	for _, f := range files {
+		if f.Name() == name {
 			out = append(out, f)
 		}
 	}

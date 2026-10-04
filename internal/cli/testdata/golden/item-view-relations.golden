@@ -69,7 +69,67 @@ exit: 0
       ]
     }
   },
-  "warnings": []
+  "warnings": [
+    {
+      "code": "dangling_link",
+      "message": "OTM-10 blocked_by link [[OTM-99 Gone]] matches no Item in Project OTM",
+      "details": {
+        "id": "OTM-10",
+        "key": "blocked_by",
+        "link": "[[OTM-99 Gone]]",
+        "path": "Projects/OTM/Specs/OTM-10 Relations hub.md"
+      },
+      "hint": "fix or remove the link in Projects/OTM/Specs/OTM-10 Relations hub.md"
+    },
+    {
+      "code": "ambiguous_link",
+      "message": "OTM-10 blocked_by link [[OTM-3 Twin]] matches 2 Items: Projects/OTM/Issues/OTM-3 Twin.md, Projects/OTM/PRDs/OTM-3 Twin.md",
+      "details": {
+        "id": "OTM-10",
+        "key": "blocked_by",
+        "link": "[[OTM-3 Twin]]",
+        "path": "Projects/OTM/Specs/OTM-10 Relations hub.md",
+        "paths": [
+          "Projects/OTM/Issues/OTM-3 Twin.md",
+          "Projects/OTM/PRDs/OTM-3 Twin.md"
+        ]
+      },
+      "hint": "fix or remove the link in Projects/OTM/Specs/OTM-10 Relations hub.md, or name one Item by its path, such as [[Projects/OTM/Issues/OTM-3 Twin]]"
+    },
+    {
+      "code": "dangling_link",
+      "message": "OTM-10 blocked_by link [[WEB-1 Landing page]] matches no Item in Project OTM",
+      "details": {
+        "id": "OTM-10",
+        "key": "blocked_by",
+        "link": "[[WEB-1 Landing page]]",
+        "path": "Projects/OTM/Specs/OTM-10 Relations hub.md"
+      },
+      "hint": "fix or remove the link in Projects/OTM/Specs/OTM-10 Relations hub.md"
+    },
+    {
+      "code": "malformed_relation",
+      "message": "a blocked_by entry of OTM-10 is \"OTM-2\", not a wikilink, so it is ignored",
+      "details": {
+        "id": "OTM-10",
+        "key": "blocked_by",
+        "path": "Projects/OTM/Specs/OTM-10 Relations hub.md",
+        "value": "OTM-2"
+      },
+      "hint": "write blocked_by in Projects/OTM/Specs/OTM-10 Relations hub.md as quoted wikilinks, such as blocked_by: [\"[[OTM-1 Title]]\"]"
+    },
+    {
+      "code": "malformed_relation",
+      "message": "a blocked_by entry of OTM-10 is \"7\", not a wikilink, so it is ignored",
+      "details": {
+        "id": "OTM-10",
+        "key": "blocked_by",
+        "path": "Projects/OTM/Specs/OTM-10 Relations hub.md",
+        "value": "7"
+      },
+      "hint": "write blocked_by in Projects/OTM/Specs/OTM-10 Relations hub.md as quoted wikilinks, such as blocked_by: [\"[[OTM-1 Title]]\"]"
+    }
+  ]
 }
 -- stderr --
 
@@ -88,6 +148,16 @@ Path: Projects/OTM/Specs/OTM-10 Relations hub.md
 
 (no body)
 -- stderr --
+warning[dangling_link]: OTM-10 blocked_by link [[OTM-99 Gone]] matches no Item in Project OTM
+hint: fix or remove the link in Projects/OTM/Specs/OTM-10 Relations hub.md
+warning[ambiguous_link]: OTM-10 blocked_by link [[OTM-3 Twin]] matches 2 Items: Projects/OTM/Issues/OTM-3 Twin.md, Projects/OTM/PRDs/OTM-3 Twin.md
+hint: fix or remove the link in Projects/OTM/Specs/OTM-10 Relations hub.md, or name one Item by its path, such as [[Projects/OTM/Issues/OTM-3 Twin]]
+warning[dangling_link]: OTM-10 blocked_by link [[WEB-1 Landing page]] matches no Item in Project OTM
+hint: fix or remove the link in Projects/OTM/Specs/OTM-10 Relations hub.md
+warning[malformed_relation]: a blocked_by entry of OTM-10 is "OTM-2", not a wikilink, so it is ignored
+hint: write blocked_by in Projects/OTM/Specs/OTM-10 Relations hub.md as quoted wikilinks, such as blocked_by: ["[[OTM-1 Title]]"]
+warning[malformed_relation]: a blocked_by entry of OTM-10 is "7", not a wikilink, so it is ignored
+hint: write blocked_by in Projects/OTM/Specs/OTM-10 Relations hub.md as quoted wikilinks, such as blocked_by: ["[[OTM-1 Title]]"]
 
 $ otman view OTM-10
 exit: 0
@@ -132,6 +202,52 @@ item:
     OTM-12,Projects/OTM/Issues/OTM-12 Lowercase link.md,true
 truncated: false
 -- stderr --
+warning:
+  code: dangling_link
+  message: "OTM-10 blocked_by link [[OTM-99 Gone]] matches no Item in Project OTM"
+  details:
+    id: OTM-10
+    key: blocked_by
+    link: "[[OTM-99 Gone]]"
+    path: Projects/OTM/Specs/OTM-10 Relations hub.md
+  hint: fix or remove the link in Projects/OTM/Specs/OTM-10 Relations hub.md
+warning:
+  code: ambiguous_link
+  message: "OTM-10 blocked_by link [[OTM-3 Twin]] matches 2 Items: Projects/OTM/Issues/OTM-3 Twin.md, Projects/OTM/PRDs/OTM-3 Twin.md"
+  details:
+    id: OTM-10
+    key: blocked_by
+    link: "[[OTM-3 Twin]]"
+    path: Projects/OTM/Specs/OTM-10 Relations hub.md
+    paths[2]: Projects/OTM/Issues/OTM-3 Twin.md,Projects/OTM/PRDs/OTM-3 Twin.md
+  hint: "fix or remove the link in Projects/OTM/Specs/OTM-10 Relations hub.md, or name one Item by its path, such as [[Projects/OTM/Issues/OTM-3 Twin]]"
+warning:
+  code: dangling_link
+  message: "OTM-10 blocked_by link [[WEB-1 Landing page]] matches no Item in Project OTM"
+  details:
+    id: OTM-10
+    key: blocked_by
+    link: "[[WEB-1 Landing page]]"
+    path: Projects/OTM/Specs/OTM-10 Relations hub.md
+  hint: fix or remove the link in Projects/OTM/Specs/OTM-10 Relations hub.md
+warning:
+  code: malformed_relation
+  message: "a blocked_by entry of OTM-10 is \"OTM-2\", not a wikilink, so it is ignored"
+  details:
+    id: OTM-10
+    key: blocked_by
+    path: Projects/OTM/Specs/OTM-10 Relations hub.md
+    value: OTM-2
+  hint: "write blocked_by in Projects/OTM/Specs/OTM-10 Relations hub.md as quoted wikilinks, such as blocked_by: [\"[[OTM-1 Title]]\"]"
+warning:
+  code: malformed_relation
+  message: "a blocked_by entry of OTM-10 is \"7\", not a wikilink, so it is ignored"
+  details:
+    id: OTM-10
+    key: blocked_by
+    path: Projects/OTM/Specs/OTM-10 Relations hub.md
+    value: "7"
+  hint: "write blocked_by in Projects/OTM/Specs/OTM-10 Relations hub.md as quoted wikilinks, such as blocked_by: [\"[[OTM-1 Title]]\"]"
 
 $ otman view OTM-11 --json
 exit: 0
@@ -246,7 +362,30 @@ exit: 0
       "blocks": []
     }
   },
-  "warnings": []
+  "warnings": [
+    {
+      "code": "malformed_relation",
+      "message": "the parent of OTM-13 is \"42\", not a wikilink, so it is ignored",
+      "details": {
+        "id": "OTM-13",
+        "key": "parent",
+        "path": "Projects/OTM/Issues/OTM-13 Malformed relations.md",
+        "value": "42"
+      },
+      "hint": "write parent in Projects/OTM/Issues/OTM-13 Malformed relations.md as quoted wikilinks, such as parent: \"[[OTM-1 Title]]\""
+    },
+    {
+      "code": "malformed_relation",
+      "message": "the blocked_by of OTM-13 is \"[[OTM-10 Relations hub]]\", not a list of wikilinks, so it is ignored",
+      "details": {
+        "id": "OTM-13",
+        "key": "blocked_by",
+        "path": "Projects/OTM/Issues/OTM-13 Malformed relations.md",
+        "value": "[[OTM-10 Relations hub]]"
+      },
+      "hint": "write blocked_by in Projects/OTM/Issues/OTM-13 Malformed relations.md as quoted wikilinks, such as blocked_by: [\"[[OTM-1 Title]]\"]"
+    }
+  ]
 }
 -- stderr --
 
@@ -276,7 +415,19 @@ exit: 0
       "blocks": []
     }
   },
-  "warnings": []
+  "warnings": [
+    {
+      "code": "malformed_relation",
+      "message": "the parent of OTM-14 is a list or mapping, not a wikilink, so it is ignored",
+      "details": {
+        "id": "OTM-14",
+        "key": "parent",
+        "path": "Projects/OTM/Issues/OTM-14 Unquoted link.md",
+        "value": null
+      },
+      "hint": "write parent in Projects/OTM/Issues/OTM-14 Unquoted link.md as quoted wikilinks, such as parent: \"[[OTM-1 Title]]\""
+    }
+  ]
 }
 -- stderr --
 

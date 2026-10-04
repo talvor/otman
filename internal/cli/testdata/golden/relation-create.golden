@@ -1,0 +1,402 @@
+$ otman create --title Relation goldens --parent REL-1 --blocked-by REL-3 --blocked-by 4 --blocked-by REL-3 Parent commands.md --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "REL-7",
+      "title": "Relation goldens",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": {
+        "id": "REL-1",
+        "path": "Projects/REL/Specs/REL-1 Relations spec.md",
+        "resolved": true
+      },
+      "blocked_by": [
+        {
+          "id": "REL-3",
+          "path": "Projects/REL/Issues/REL-3 Parent commands.md",
+          "resolved": true
+        },
+        {
+          "id": "REL-4",
+          "path": "Projects/REL/Issues/REL-4 Block commands.md",
+          "resolved": true
+        }
+      ],
+      "path": "Projects/REL/Issues/REL-7 Relation goldens.md",
+      "rev": "7daa8da8aa2d"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman create --title Blocked by a closed Item --blocked-by 5 --parent 5
+tty: true
+exit: 0
+-- stdout --
+Created REL-8 · Blocked by a closed Item
+Projects/REL/Issues/REL-8 Blocked by a closed Item.md
+-- stderr --
+
+$ otman create --title Elsewhere --parent OTH-1 --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "cross_project",
+    "message": "the parent OTH-1 is in Project OTH, not REL; relations stay within one Project",
+    "details": {
+      "project": "REL",
+      "ref": "OTH-1",
+      "role": "parent",
+      "target_project": "OTH"
+    },
+    "hint": "name an Item of Project REL"
+  }
+}
+
+$ otman create --title Missing --blocked-by REL-3 --blocked-by REL-99
+tty: true
+exit: 4
+-- stdout --
+-- stderr --
+error[missing_target]: the blocker "REL-99" matches no Item in Project REL
+hint: name an existing Item of Project REL by its ID, its number, its full filename or its Vault-relative path
+
+$ otman create --title Empty --parent "" --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "--parent cannot be empty",
+    "details": {
+      "flag": "--parent"
+    },
+    "hint": "pass the parent Item, or omit --parent"
+  }
+}
+
+$ otman create --title Empty --blocked-by ""
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_arguments
+  message: "--blocked-by cannot be empty"
+  details:
+    flag: "--blocked-by"
+  hint: "pass the blocking Item, or omit --blocked-by"
+
+$ otman create --title Plain
+tty: true
+exit: 0
+-- stdout --
+Created REL-9 · Plain
+Projects/REL/Issues/REL-9 Plain.md
+-- stderr --
+
+$ otman view REL-3 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "REL-3",
+      "title": "Parent commands",
+      "kind": "issue",
+      "status": "open",
+      "labels": [],
+      "assignee": null,
+      "parent": {
+        "id": "REL-1",
+        "path": "Projects/REL/Specs/REL-1 Relations spec.md",
+        "resolved": true
+      },
+      "blocked_by": [
+        {
+          "id": "REL-2",
+          "path": "Projects/REL/Issues/REL-2 Wikilink scanner.md",
+          "resolved": true
+        }
+      ],
+      "path": "Projects/REL/Issues/REL-3 Parent commands.md",
+      "rev": "920a96134cee",
+      "author": "talvor",
+      "body": "",
+      "created": "2026-01-01T10:00:00Z",
+      "updated": "2026-01-01T10:00:00Z",
+      "comments": [],
+      "children": [],
+      "blocks": [
+        {
+          "id": "REL-4",
+          "path": "Projects/REL/Issues/REL-4 Block commands.md",
+          "resolved": true
+        },
+        {
+          "id": "REL-7",
+          "path": "Projects/REL/Issues/REL-7 Relation goldens.md",
+          "resolved": true
+        }
+      ]
+    }
+  },
+  "warnings": []
+}
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "REL"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTH/
+vault/Projects/OTH/Issues/
+-- vault/Projects/OTH/Issues/OTH-1 Elsewhere.md --
+---
+id: OTH-1
+title: Elsewhere
+aliases:
+  - Elsewhere
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTH/OTH.md --
+---
+name: Other
+kind: project
+---
+vault/Projects/REL/
+vault/Projects/REL/Issues/
+-- vault/Projects/REL/Issues/REL-2 Wikilink scanner.md --
+---
+id: REL-2
+title: Wikilink scanner
+aliases:
+  - Wikilink scanner
+kind: issue
+status: open
+author: talvor
+parent: "[[REL-1 Relations spec]]"
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-3 Parent commands.md --
+---
+id: REL-3
+title: Parent commands
+aliases:
+  - Parent commands
+kind: issue
+status: open
+author: talvor
+parent: "[[REL-1 Relations spec]]"
+blocked_by:
+  - "[[REL-2 Wikilink scanner]]"
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-4 Block commands.md --
+---
+id: REL-4
+title: Block commands
+aliases:
+  - Block commands
+kind: issue
+status: open
+author: talvor
+parent: "[[REL-1 Relations spec]]"
+blocked_by:
+  - "[[REL-3 Parent commands]]"
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-5 Old groundwork.md --
+---
+id: REL-5
+title: Old groundwork
+aliases:
+  - Old groundwork
+kind: issue
+status: closed
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-6 Loose end.md --
+---
+id: REL-6
+title: Loose end
+aliases:
+  - Loose end
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-7 Relation goldens.md --
+---
+id: REL-7
+title: Relation goldens
+aliases:
+  - Relation goldens
+kind: issue
+status: open
+author: null
+parent: "[[REL-1 Relations spec]]"
+blocked_by:
+  - "[[REL-3 Parent commands]]"
+  - "[[REL-4 Block commands]]"
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+## Summary
+
+<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->
+
+## Acceptance criteria
+
+<!-- A checklist that tells anyone, human or agent, when this is done. -->
+- [ ] 
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-8 Blocked by a closed Item.md --
+---
+id: REL-8
+title: Blocked by a closed Item
+aliases:
+  - Blocked by a closed Item
+kind: issue
+status: open
+author: null
+parent: "[[REL-5 Old groundwork]]"
+blocked_by:
+  - "[[REL-5 Old groundwork]]"
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+## Summary
+
+<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->
+
+## Acceptance criteria
+
+<!-- A checklist that tells anyone, human or agent, when this is done. -->
+- [ ] 
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-9 Plain.md --
+---
+id: REL-9
+title: Plain
+aliases:
+  - Plain
+kind: issue
+status: open
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+## Summary
+
+<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->
+
+## Acceptance criteria
+
+<!-- A checklist that tells anyone, human or agent, when this is done. -->
+- [ ] 
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/REL.md --
+---
+name: Relations
+kind: project
+---
+vault/Projects/REL/Specs/
+-- vault/Projects/REL/Specs/REL-1 Relations spec.md --
+---
+id: REL-1
+title: Relations spec
+aliases:
+  - Relations spec
+kind: spec
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments

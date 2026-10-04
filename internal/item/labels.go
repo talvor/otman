@@ -48,21 +48,7 @@ func HasLabel(labels []string, label string) bool {
 // is false for a list holding null or nested entries, and for a missing
 // key or any other value.
 func storedLabels(file []byte) (labels []string, lossless bool) {
-	fm, _, found := frontmatter.Split(file)
-	if !found {
-		return nil, false
-	}
-	var doc yaml.Node
-	if yaml.Unmarshal(fm, &doc) != nil || len(doc.Content) == 0 || doc.Content[0].Kind != yaml.MappingNode {
-		return nil, false
-	}
-	m := doc.Content[0]
-	var value *yaml.Node
-	for i := 0; i+1 < len(m.Content); i += 2 {
-		if m.Content[i].Value == "labels" {
-			value = m.Content[i+1]
-		}
-	}
+	value := frontmatterValue(file, "labels")
 	if value == nil || value.Kind != yaml.SequenceNode {
 		return nil, false
 	}

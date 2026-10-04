@@ -123,6 +123,10 @@ func (a *app) newRoot() *cobra.Command {
 	root.AddCommand(a.newEditCmd())
 	root.AddCommand(a.newCommentCmd())
 	root.AddCommand(a.newLabelCmd())
+	root.AddCommand(a.newParentCmd())
+	for _, c := range blockCommands {
+		root.AddCommand(a.newBlockCmd(c))
+	}
 	for _, c := range statusCommands {
 		root.AddCommand(a.newStatusCmd(c))
 	}

@@ -61,11 +61,11 @@ func (a *app) comment(cmd *cobra.Command, ref, body, bodyFile string) error {
 		if err := v.WriteItemFile(f, data); err != nil {
 			return ioError(err)
 		}
-		files, err := v.ItemFiles(f.Key)
+		summary, ws, err := summarize(v, f, data)
 		if err != nil {
-			return ioError(err)
+			return err
 		}
-		summary := newItemSummary(f, item.Parse(data), data, newItemLinks(files))
+		warnings = append(warnings, ws...)
 		human := fmt.Sprintf("Commented on %s · %s\n", summary.ID, summary.Title)
 		return a.emit(mutationResult{summary, true, human}, warnings)
 	})

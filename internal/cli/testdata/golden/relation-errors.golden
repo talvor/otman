@@ -1,0 +1,418 @@
+$ otman parent set REL-2 REL-2 --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "self_edge",
+    "message": "REL-2 cannot be its own parent",
+    "details": {
+      "id": "REL-2",
+      "path": "Projects/REL/Issues/REL-2 Wikilink scanner.md",
+      "relation": "parent"
+    },
+    "hint": "name another Item"
+  }
+}
+
+$ otman block REL-2 --by 2
+tty: true
+exit: 4
+-- stdout --
+-- stderr --
+error[self_edge]: REL-2 cannot be its own blocker
+hint: name another Item
+
+$ otman parent set REL-1 REL-2 --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "parent_cycle",
+    "message": "setting the parent of REL-1 to REL-2 would make a cycle: REL-1 → REL-2 → REL-1, each the child of the next",
+    "details": {
+      "cycle": [
+        "REL-1",
+        "REL-2",
+        "REL-1"
+      ],
+      "id": "REL-1",
+      "parent": "REL-2"
+    },
+    "hint": "REL-1 is an ancestor of REL-2; pick a parent outside its descendants"
+  }
+}
+
+$ otman parent set REL-1 REL-4
+tty: true
+exit: 4
+-- stdout --
+-- stderr --
+error[parent_cycle]: setting the parent of REL-1 to REL-4 would make a cycle: REL-1 → REL-4 → REL-1, each the child of the next
+hint: REL-1 is an ancestor of REL-4; pick a parent outside its descendants
+
+$ otman block REL-2 --by REL-4 --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "blocking_cycle",
+    "message": "blocking REL-2 by REL-4 would make a cycle: REL-2 ← REL-4 ← REL-3 ← REL-2, each blocked by the next",
+    "details": {
+      "blocker": "REL-4",
+      "cycle": [
+        "REL-2",
+        "REL-4",
+        "REL-3",
+        "REL-2"
+      ],
+      "id": "REL-2"
+    },
+    "hint": "REL-4 already waits on REL-2; remove that dependency first"
+  }
+}
+
+$ otman block REL-3 --by REL-4
+tty: true
+exit: 4
+-- stdout --
+-- stderr --
+error[blocking_cycle]: blocking REL-3 by REL-4 would make a cycle: REL-3 ← REL-4 ← REL-3, each blocked by the next
+hint: REL-4 already waits on REL-3; remove that dependency first
+
+$ otman parent set REL-6 OTH-1 --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "cross_project",
+    "message": "the parent OTH-1 is in Project OTH, not REL; relations stay within one Project",
+    "details": {
+      "project": "REL",
+      "ref": "OTH-1",
+      "role": "parent",
+      "target_project": "OTH"
+    },
+    "hint": "name an Item of Project REL"
+  }
+}
+
+$ otman block REL-6 --by Projects/OTH/Issues/OTH-1 Elsewhere.md
+tty: true
+exit: 4
+-- stdout --
+-- stderr --
+error[cross_project]: the blocker Projects/OTH/Issues/OTH-1 Elsewhere.md is in Project OTH, not REL; relations stay within one Project
+hint: name an Item of Project REL
+
+$ otman unblock REL-6 --by OTH-1
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: cross_project
+  message: "the blocker OTH-1 is in Project OTH, not REL; relations stay within one Project"
+  details:
+    project: REL
+    ref: OTH-1
+    role: blocker
+    target_project: OTH
+  hint: name an Item of Project REL
+
+$ otman parent set REL-6 REL-99 --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "missing_target",
+    "message": "the parent \"REL-99\" matches no Item in Project REL",
+    "details": {
+      "project": "REL",
+      "ref": "REL-99",
+      "role": "parent"
+    },
+    "hint": "name an existing Item of Project REL by its ID, its number, its full filename or its Vault-relative path"
+  }
+}
+
+$ otman block REL-6 --by 99
+tty: true
+exit: 4
+-- stdout --
+-- stderr --
+error[missing_target]: the blocker "99" matches no Item in Project REL
+hint: name an existing Item of Project REL by its ID, its number, its full filename or its Vault-relative path
+
+$ otman unblock REL-6 --by REL-6 Missing.md --json
+exit: 4
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "missing_target",
+    "message": "the blocker \"REL-6 Missing.md\" matches no Item in Project REL",
+    "details": {
+      "project": "REL",
+      "ref": "REL-6 Missing.md",
+      "role": "blocker"
+    },
+    "hint": "name an existing Item of Project REL by its ID, its number, its full filename or its Vault-relative path"
+  }
+}
+
+$ otman block REL-6 --by Handle sync
+exit: 4
+-- stdout --
+-- stderr --
+error:
+  code: missing_target
+  message: "the blocker \"Handle sync\" matches no Item in Project REL"
+  details:
+    project: REL
+    ref: Handle sync
+    role: blocker
+  hint: "name an existing Item of Project REL by its ID, its number, its full filename or its Vault-relative path"
+
+$ otman parent set REL-99 REL-1 --json
+exit: 3
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "item_not_found",
+    "message": "no Item matches \"REL-99\" in Project REL",
+    "details": {
+      "project": "REL",
+      "ref": "REL-99"
+    },
+    "hint": "name an Item by its ID (OTM-12), its number, its full filename or its Vault-relative path; titles do not match"
+  }
+}
+
+$ otman parent set OTH-1 REL-1 --project REL --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "project_mismatch",
+    "message": "OTH-1 is in Project OTH, but --project is REL",
+    "details": {
+      "flag": "REL",
+      "project": "OTH",
+      "ref": "OTH-1"
+    },
+    "hint": "drop --project, or pass --project OTH"
+  }
+}
+
+$ otman block REL-6 --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "invalid_arguments",
+    "message": "block needs --by BLOCKER",
+    "details": {
+      "flag": "--by"
+    },
+    "hint": "pass the blocking Item with --by, such as --by OTM-3"
+  }
+}
+
+$ otman block REL-6 --by ""
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[invalid_arguments]: block needs --by BLOCKER
+hint: pass the blocking Item with --by, such as --by OTM-3
+
+$ otman parent set REL-6
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[invalid_arguments]: accepts 2 arg(s), received 1
+hint: run 'otman --help' for usage
+
+$ otman parent clear
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[invalid_arguments]: accepts 1 arg(s), received 0
+hint: run 'otman --help' for usage
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "REL"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTH/
+vault/Projects/OTH/Issues/
+-- vault/Projects/OTH/Issues/OTH-1 Elsewhere.md --
+---
+id: OTH-1
+title: Elsewhere
+aliases:
+  - Elsewhere
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTH/OTH.md --
+---
+name: Other
+kind: project
+---
+vault/Projects/REL/
+vault/Projects/REL/Issues/
+-- vault/Projects/REL/Issues/REL-2 Wikilink scanner.md --
+---
+id: REL-2
+title: Wikilink scanner
+aliases:
+  - Wikilink scanner
+kind: issue
+status: open
+author: talvor
+parent: "[[REL-1 Relations spec]]"
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-3 Parent commands.md --
+---
+id: REL-3
+title: Parent commands
+aliases:
+  - Parent commands
+kind: issue
+status: open
+author: talvor
+parent: "[[REL-1 Relations spec]]"
+blocked_by:
+  - "[[REL-2 Wikilink scanner]]"
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-4 Block commands.md --
+---
+id: REL-4
+title: Block commands
+aliases:
+  - Block commands
+kind: issue
+status: open
+author: talvor
+parent: "[[REL-1 Relations spec]]"
+blocked_by:
+  - "[[REL-3 Parent commands]]"
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-5 Old groundwork.md --
+---
+id: REL-5
+title: Old groundwork
+aliases:
+  - Old groundwork
+kind: issue
+status: closed
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/Issues/REL-6 Loose end.md --
+---
+id: REL-6
+title: Loose end
+aliases:
+  - Loose end
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/REL/REL.md --
+---
+name: Relations
+kind: project
+---
+vault/Projects/REL/Specs/
+-- vault/Projects/REL/Specs/REL-1 Relations spec.md --
+---
+id: REL-1
+title: Relations spec
+aliases:
+  - Relations spec
+kind: spec
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T10:00:00Z
+---
+<!-- otman:comments -->
+## Comments
