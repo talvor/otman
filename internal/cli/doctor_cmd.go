@@ -236,6 +236,10 @@ type doctorPlan struct {
 	// unrepaired, so that its side of the snapshot keeps what otman last
 	// wrote, and a later run can still tell which side changed.
 	keepTitle, keepKind bool
+	// settleTitle and settleKind are set when title or Kind Drift is
+	// repaired, so that both its sides of the snapshot take what the
+	// repair leaves, and the next hand edit to one side shows as that side.
+	settleTitle, settleKind bool
 }
 
 // planned is a finding and the change --fix makes to repair it.
@@ -413,14 +417,11 @@ func planDoctor(v *vault.Vault, f vault.ItemFile, data []byte, all []vault.ItemF
 	}
 
 	for _, fd := range pl.findings {
-		if fd.applied {
-			continue
-		}
 		switch fd.Code {
 		case "title_drift":
-			pl.keepTitle = true
+			pl.keepTitle, pl.settleTitle = !fd.applied, fd.applied
 		case "kind_drift":
-			pl.keepKind = true
+			pl.keepKind, pl.settleKind = !fd.applied, fd.applied
 		}
 	}
 	return pl
@@ -444,8 +445,8 @@ func sideOf(hasSnap, fmChanged, fileChanged bool, prefer string) (winner, fix st
 // and reports the file's Vault-relative path after them and whether the
 // vault was written, even when a repair then fails. A repair that moves the
 // file goes through a journal (see RenameItem), and a write records the
-// Item's snapshot, which keepBaseline then keeps for the folder of any Kind
-// Drift left unrepaired.
+// Item's snapshot, which keepBaseline then keeps for any Drift left
+// unrepaired and settles for any Drift repaired.
 func (a *app) applyDoctor(v *vault.Vault, f vault.ItemFile, data []byte, pl doctorPlan) (vault.ItemFile, bool, error) {
 	if pl.to == "" && !pl.repairs.Any() {
 		// Nothing to write, so the file is not spliced at all: a file that
@@ -484,8 +485,8 @@ func (a *app) applyDoctor(v *vault.Vault, f vault.ItemFile, data []byte, pl doct
 	default:
 		return f, false, nil
 	}
-	if written && (pl.keepTitle || pl.keepKind) {
-		if kerr := keepBaseline(v, f, prev, hadPrev, pl); kerr != nil {
+	if written && (pl.keepTitle || pl.keepKind || err == nil && (pl.settleTitle || pl.settleKind)) {
+		if kerr := keepBaseline(v, moved, out, prev, hadPrev, pl, err == nil); kerr != nil {
 			err = ioError(kerr)
 		}
 	}
@@ -513,13 +514,20 @@ func writtenBytes(v *vault.Vault, f vault.ItemFile, out []byte) bool {
 	return err == nil && bytes.Equal(b, out)
 }
 
-// keepBaseline rewrites the snapshot of Item file f, just written, so that
-// the filename and title of a title pl leaves unrepaired, and the folder of
-// a Kind pl leaves unrepaired, keep what otman last wrote there. It has none
-// to keep when it had no snapshot before, so the snapshot is removed.
-func keepBaseline(v *vault.Vault, f vault.ItemFile, prev vault.Snapshot, hadPrev bool, pl doctorPlan) error {
+// keepBaseline rewrites the snapshot of Item file f, just written with the
+// bytes out, so that the filename and title of a title pl leaves
+// unrepaired, and the folder of a Kind pl leaves unrepaired, keep what otman
+// last wrote there. It has none to keep when it had no snapshot before, so
+// the snapshot is removed. When every repair landed, settled, the title and
+// filename of a title pl repairs, and the Kind and folder of a Kind pl
+// repairs, take what f now holds.
+func keepBaseline(v *vault.Vault, f vault.ItemFile, out []byte, prev vault.Snapshot, hadPrev bool, pl doctorPlan, settled bool) error {
 	if !hadPrev {
-		return v.SetSnapshot(f.Key, f.Number, nil)
+		if pl.keepTitle || pl.keepKind {
+			return v.SetSnapshot(f.Key, f.Number, nil)
+		}
+		// A write without an earlier snapshot records what it leaves.
+		return nil
 	}
 	cur, _, err := v.Snapshot(f.Key, f.Number)
 	if err != nil {
@@ -530,6 +538,15 @@ func keepBaseline(v *vault.Vault, f vault.ItemFile, prev vault.Snapshot, hadPrev
 	}
 	if pl.keepKind {
 		cur.Folder = prev.Folder
+	}
+	if settled {
+		p := item.Parse(out)
+		if pl.settleTitle {
+			cur.Filename, cur.Title = f.Name(), p.Title
+		}
+		if pl.settleKind {
+			cur.Folder, cur.Kind = path.Dir(f.Path), p.Kind
+		}
 	}
 	return v.SetSnapshot(f.Key, f.Number, &cur)
 }

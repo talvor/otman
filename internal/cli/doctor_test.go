@@ -187,6 +187,48 @@ func TestDoctorHandRenameStaysChoice(t *testing.T) {
 	})
 }
 
+// Once --fix settles title or Kind Drift, both sides agree, so the snapshot
+// holds them both, and the next hand edit to one side is auto. The title
+// edited by hand renames the file, and then the file renamed by hand alone
+// retitles the Item. The file renamed by hand retitles the Item, and then the
+// title edited by hand alone renames the file. The Kind edited by hand moves
+// the file, and then the file moved by hand alone changes the Kind.
+func TestDoctorSettledDriftRebaselines(t *testing.T) {
+	kindText := func(id, title, kind string) string {
+		return "---\nid: " + id + "\ntitle: " + title + "\nkind: " + kind + "\nstatus: open\nassignee: null\n" +
+			"created: 2026-01-02T03:04:05Z\nupdated: 2026-01-02T03:04:05Z\n---\n\n<!-- otman:comments -->\n## Comments\n"
+	}
+	runGolden(t, goldenCase{
+		name: "doctor-settled-drift-rebaselines", fixture: "doctor", files: doctorConfig,
+		steps: []step{
+			{args: []string{"create", "--title", "Alpha", "--kind", "issue"}},
+			{write: map[string]string{
+				"vault/Projects/DOC/Issues/DOC-17 Alpha.md": doctorItemText("DOC-17", "Alpha renamed", ""),
+			}, args: []string{"doctor", "DOC-17", "--fix", "--json"}},
+			{rm: []string{"vault/Projects/DOC/Issues/DOC-17 Alpha renamed.md"},
+				write: map[string]string{
+					"vault/Projects/DOC/Issues/DOC-17 Delta.md": doctorItemText("DOC-17", "Alpha renamed", ""),
+				}, args: []string{"doctor", "DOC-17", "--fix", "--json"}},
+			{args: []string{"create", "--title", "Beta", "--kind", "issue"}},
+			{rm: []string{"vault/Projects/DOC/Issues/DOC-18 Beta.md"},
+				write: map[string]string{
+					"vault/Projects/DOC/Issues/DOC-18 Delta.md": doctorItemText("DOC-18", "Beta", ""),
+				}, args: []string{"doctor", "DOC-18", "--fix", "--json"}},
+			{write: map[string]string{
+				"vault/Projects/DOC/Issues/DOC-18 Delta.md": doctorItemText("DOC-18", "Epsilon", ""),
+			}, args: []string{"doctor", "DOC-18", "--fix", "--json"}},
+			{args: []string{"create", "--title", "Gamma", "--kind", "issue"}},
+			{write: map[string]string{
+				"vault/Projects/DOC/Issues/DOC-19 Gamma.md": kindText("DOC-19", "Gamma", "spec"),
+			}, args: []string{"doctor", "DOC-19", "--fix", "--json"}},
+			{rm: []string{"vault/Projects/DOC/Specs/DOC-19 Gamma.md"},
+				write: map[string]string{
+					"vault/Projects/DOC/PRDs/DOC-19 Gamma.md": kindText("DOC-19", "Gamma", "spec"),
+				}, args: []string{"doctor", "DOC-19", "--fix", "--json"}},
+		},
+	})
+}
+
 // A journal that cannot be finished stops every command, so doctor reports
 // it as its one finding, exits 4 and leaves the journal in place.
 func TestDoctorUnfinishedJournal(t *testing.T) {
