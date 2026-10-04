@@ -1,0 +1,48 @@
+$ otman tracker-template
+tty: true
+exit: 2
+-- stdout --
+-- stderr --
+error[no_project]: no Project selected
+hint: pass --project, set OTM_PROJECT, run 'otman project link KEY', or 'otman config set project KEY'
+
+$ otman tracker-template --json
+exit: 2
+-- stdout --
+-- stderr --
+{
+  "schema_version": 1,
+  "error": {
+    "code": "no_project",
+    "message": "no Project selected",
+    "details": null,
+    "hint": "pass --project, set OTM_PROJECT, run 'otman project link KEY', or 'otman config set project KEY'"
+  }
+}
+
+$ otman tracker-template --project web
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_project_key
+  message: "invalid Project key \"web\""
+  details:
+    key: web
+    source: flag
+  hint: "use an uppercase letter followed by up to 15 uppercase letters or digits, such as OTM"
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+home/
+vault/
+vault/Projects/
+vault/Projects/OTM/
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---

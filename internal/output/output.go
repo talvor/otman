@@ -1,6 +1,7 @@
 // Package output renders otman's typed results and failures in the three
 // output formats: JSON (the stable, versioned contract), AXI (compact TOON for
-// agents and pipes) and human (tabwriter tables for terminals).
+// agents and pipes; a Document prints as it is) and human (tabwriter tables
+// for terminals).
 package output
 
 import (
@@ -62,6 +63,14 @@ type HumanRenderer interface {
 	RenderHuman(w io.Writer) error
 }
 
+// Document is implemented by a result that is the text of a file, such as
+// the Tracker template. AXI prints it as human output does, so that piping
+// it to a file saves the file as it is.
+type Document interface {
+	HumanRenderer
+	Document()
+}
+
 type successEnvelope struct {
 	SchemaVersion int       `json:"schema_version"`
 	Data          any       `json:"data"`
@@ -83,7 +92,11 @@ func Success(f Format, stdout, stderr io.Writer, data HumanRenderer, warnings []
 	case JSON:
 		return writeJSON(stdout, successEnvelope{SchemaVersion, data, warnings})
 	case AXI:
-		if err := EncodeTOON(stdout, data); err != nil {
+		if _, ok := data.(Document); ok {
+			if err := data.RenderHuman(stdout); err != nil {
+				return err
+			}
+		} else if err := EncodeTOON(stdout, data); err != nil {
 			return err
 		}
 	default:
