@@ -234,18 +234,23 @@ func (a *app) list(cmd *cobra.Command, f listFlags) error {
 			return err
 		}
 		all := []itemSummary{}
+		drift := map[string][]output.Problem{}
 		inUse := labelSet{}
 		for _, key := range keys {
-			found, pws, err := listProject(v, key, q, inUse)
+			found, pws, err := listProject(v, key, q, inUse, drift)
 			if err != nil {
 				return err
 			}
 			all = append(all, found...)
 			ws = append(ws, pws...)
 		}
+		shown := page(f.paging, all)
+		for _, s := range shown.Items {
+			ws = append(ws, drift[s.Path]...)
+		}
 		ws = append(ws, unknownLabelWarnings("--label", q.labels, inUse)...)
 		ws = append(ws, unknownLabelWarnings("--without-label", q.withoutLabels, inUse)...)
-		return a.emit(listResult{page(f.paging, all)}, append(warnings, ws...))
+		return a.emit(listResult{shown}, append(warnings, ws...))
 	})
 }
 
@@ -345,12 +350,14 @@ func listScope(v *vault.Vault, sel config.Value) ([]string, []output.Problem, er
 // listProject is the summaries of the Items of Project key that q keeps,
 // sorted by number, then path, and a warning for each Item left out
 // because it drifted: its frontmatter cannot be read, or its status is
-// missing or neither open nor closed, whatever --state says. It adds the
-// Labels of every Item it reads, kept or not, to inUse. It checks the
+// missing or neither open nor closed, whatever --state says. It records
+// the drift warnings of each Item it keeps in drift, by path, so that only
+// those of the Items shown are reported. It adds the Labels of every Item
+// it reads, kept or not, to inUse. It checks the
 // blockers of an Item, under q.unblocked, only once every other filter
 // keeps it, so broken blocker links of Items left out anyway do not
 // matter.
-func listProject(v *vault.Vault, key string, q itemQuery, inUse labelSet) ([]itemSummary, []output.Problem, error) {
+func listProject(v *vault.Vault, key string, q itemQuery, inUse labelSet, drift map[string][]output.Problem) ([]itemSummary, []output.Problem, error) {
 	files, err := v.ItemFiles(key)
 	if err != nil {
 		return nil, nil, ioError(err)
@@ -390,7 +397,7 @@ func listProject(v *vault.Vault, key string, q itemQuery, inUse labelSet) ([]ite
 			return nil, nil, err
 		} else if ok {
 			found = append(found, s)
-			warnings = append(warnings, driftProblems(f, p)...)
+			drift[f.Path] = driftProblems(f, p)
 		}
 	}
 	return found, warnings, nil

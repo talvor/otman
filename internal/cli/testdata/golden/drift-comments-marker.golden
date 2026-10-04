@@ -378,18 +378,18 @@ exit: 0
   "warnings": [
     {
       "code": "missing_comments_marker",
-      "message": "DRF-17 has no <!-- otman:comments --> line, so its comments are read from the last ## Comments heading, where text before the first comment is not shown",
+      "message": "DRF-17 has no <!-- otman:comments --> line, so its comments are read from the last ## Comments heading",
       "details": {
         "id": "DRF-17",
         "path": "Projects/DRF/Issues/DRF-17 Prose after the heading.md"
       },
-      "hint": "put the line <!-- otman:comments --> back just before the ## Comments heading where the comments start; until then body edits and comments are refused"
+      "hint": "'otman comment DRF-17' restores the marker; until then body edits are refused"
     }
   ]
 }
 -- stderr --
 
-$ otman comment DRF-17 --body Refused. --json
+$ otman edit DRF-17 --body Refused. --json
 exit: 4
 -- stdout --
 -- stderr --
@@ -397,39 +397,62 @@ exit: 4
   "schema_version": 1,
   "error": {
     "code": "unsafe_write",
-    "message": "refusing to rewrite Projects/DRF/Issues/DRF-17 Prose after the heading.md: the Item has no <!-- otman:comments --> line, and text after its last ## Comments heading is not a comment",
+    "message": "refusing to rewrite Projects/DRF/Issues/DRF-17 Prose after the heading.md: the Item has no <!-- otman:comments --> line",
     "details": {
       "path": "Projects/DRF/Issues/DRF-17 Prose after the heading.md",
-      "reason": "the Item has no <!-- otman:comments --> line, and text after its last ## Comments heading is not a comment"
+      "reason": "the Item has no <!-- otman:comments --> line"
     },
-    "hint": "put the line <!-- otman:comments --> back just before the ## Comments heading where the comments start, then retry"
+    "hint": "put the line <!-- otman:comments --> back just before ## Comments, or run 'otman comment DRF-17', which restores it, then retry"
   }
 }
 
-$ otman close DRF-17 --comment Refused too.
+$ otman close DRF-17 --comment The marker is back before the heading.
 tty: true
-exit: 4
+exit: 0
 -- stdout --
+Closed DRF-17 · Prose after the heading, with a comment
 -- stderr --
-error[unsafe_write]: refusing to rewrite Projects/DRF/Issues/DRF-17 Prose after the heading.md: the Item has no <!-- otman:comments --> line, and text after its last ## Comments heading is not a comment
-hint: put the line <!-- otman:comments --> back just before the ## Comments heading where the comments start, then retry
 
-$ otman edit DRF-17 --body Refused as well. --json
-exit: 4
+$ otman view DRF-17 --json
+exit: 0
 -- stdout --
--- stderr --
 {
   "schema_version": 1,
-  "error": {
-    "code": "unsafe_write",
-    "message": "refusing to rewrite Projects/DRF/Issues/DRF-17 Prose after the heading.md: the Item has no <!-- otman:comments --> line, and text after its last ## Comments heading is not a comment",
-    "details": {
+  "data": {
+    "item": {
+      "id": "DRF-17",
+      "title": "Prose after the heading",
+      "kind": "issue",
+      "status": "closed",
+      "labels": [],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
       "path": "Projects/DRF/Issues/DRF-17 Prose after the heading.md",
-      "reason": "the Item has no <!-- otman:comments --> line, and text after its last ## Comments heading is not a comment"
-    },
-    "hint": "put the line <!-- otman:comments --> back just before the ## Comments heading where the comments start, then retry"
-  }
+      "rev": "5c37513f9c70",
+      "author": null,
+      "body": "The body.",
+      "created": null,
+      "updated": "2026-01-02T03:04:05Z",
+      "comments": [
+        {
+          "author": "talvor",
+          "created": "2026-01-01T10:30:00Z",
+          "body": "A comment."
+        },
+        {
+          "author": "talvor",
+          "created": "2026-01-02T03:04:05Z",
+          "body": "The marker is back before the heading."
+        }
+      ],
+      "children": [],
+      "blocks": []
+    }
+  },
+  "warnings": []
 }
+-- stderr --
 
 $ otman comment DRF-18 --body The marker is back before the heading. --json
 exit: 0
@@ -600,17 +623,22 @@ updated: 2026-01-01T11:00:00Z
 id: DRF-17
 title: Prose after the heading
 kind: issue
-status: open
+status: closed
 labels: []
+updated: 2026-01-02T03:04:05Z
 ---
 The body.
 
+<!-- otman:comments -->
 ## Comments
 
 Prose under the heading, not a comment.
 
 ### 2026-01-01T10:30:00Z · talvor
 A comment.
+
+### 2026-01-02T03:04:05Z · talvor
+The marker is back before the heading.
 -- vault/Projects/DRF/Issues/DRF-18 Only the heading.md --
 ---
 id: DRF-18

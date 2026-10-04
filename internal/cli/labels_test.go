@@ -6,14 +6,10 @@ import (
 )
 
 // labelItem is an Item file of Kind issue with status and labels, given as
-// the YAML of the labels value; "" leaves the key out. A block list,
-// starting with a line break, is written as otman writes one.
+// the YAML of the labels value; "" leaves the key out.
 func labelItem(id, title, status, labels string) string {
 	fm := "---\nid: " + id + "\ntitle: " + title + "\nkind: issue\nstatus: " + status + "\n"
-	switch {
-	case strings.HasPrefix(labels, "\n"):
-		fm += "labels:" + labels + "\n"
-	case labels != "":
+	if labels != "" {
 		fm += "labels: " + labels + "\n"
 	}
 	return fm + "assignee: null\n---\n<!-- otman:comments -->\n## Comments\n"
@@ -149,8 +145,9 @@ func TestLabelList(t *testing.T) {
 
 // Hand-edited Labels differing only by case read as written and match in
 // lowercase. The next otman write to that Item, whatever it changes,
-// lowercases and dedupes them, keeping any still invalid; a write that
-// changes nothing heals nothing. A labels value that is not a list, or a
+// lowercases and dedupes them, keeping any still invalid, whatever the
+// layout of the list (unindented or quoted entries); a write that changes
+// nothing heals nothing. A labels value that is not a list, or a
 // list with null entries, is left alone until a Label edit replaces it;
 // Label edits see the Labels a read shows.
 func TestLabelHealing(t *testing.T) {
@@ -161,6 +158,8 @@ func TestLabelHealing(t *testing.T) {
 			"vault/Projects/OTM/Issues/OTM-7 Still invalid.md": labelItem("OTM-7", "Still invalid", "open", "\n  - Needs-Triage\n  - needs-triage\n  - Not Valid!"),
 			"vault/Projects/OTM/Issues/OTM-8 Not a list.md":    labelItem("OTM-8", "Not a list", "open", "Bug"),
 			"vault/Projects/OTM/Issues/OTM-9 Null entry.md":    labelItem("OTM-9", "Null entry", "open", "[Bug, ~]"),
+			"vault/Projects/OTM/Issues/OTM-10 Unindented.md":   labelItem("OTM-10", "Unindented", "open", "\n- Bug\n- BUG\n- docs"),
+			"vault/Projects/OTM/Issues/OTM-11 Quoted.md":       labelItem("OTM-11", "Quoted", "open", "\n  - \"Bug\"\n  - 'BUG'\n  - \"Docs\""),
 		})),
 		steps: []step{
 			{args: []string{"view", "OTM-5", "--json"}},
@@ -172,6 +171,8 @@ func TestLabelHealing(t *testing.T) {
 			{args: []string{"close", "OTM-9", "--json"}},
 			{args: []string{"edit", "OTM-9", "--add-label", "bug", "--json"}},
 			{args: []string{"edit", "OTM-9", "--remove-label", "bug", "--json"}},
+			{args: []string{"close", "OTM-10", "--json"}},
+			{args: []string{"close", "OTM-11", "--json"}},
 		},
 	})
 }

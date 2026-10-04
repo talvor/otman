@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/talvor/otman/internal/frontmatter"
+	"go.yaml.in/yaml/v3"
 )
 
 // LabelLimit is the most characters a Label can have.
@@ -42,12 +43,17 @@ func HasLabel(labels []string, label string) bool {
 }
 
 // storedLabels is the labels key of file's frontmatter as Parse reads it:
-// the plain values of a list, or none for any other value.
-func storedLabels(file []byte) []string {
-	if value := frontmatterValue(file, "labels"); value != nil {
-		return scalars(value)
+// the plain values of a list, or none for any other value. lossless is
+// true when that list is all there is, so rewriting it loses nothing; it
+// is false for a list holding null or nested entries or YAML comments, and
+// for a missing key or any other value.
+func storedLabels(file []byte) (labels []string, lossless bool) {
+	value := frontmatterValue(file, "labels")
+	if value == nil || value.Kind != yaml.SequenceNode {
+		return nil, false
 	}
-	return nil
+	labels = scalars(value)
+	return labels, len(labels) == len(value.Content) && !frontmatter.Commented(file, "labels")
 }
 
 // labelEdits are the edits an Update makes to the labels of file: none
@@ -58,7 +64,8 @@ func labelEdits(file []byte, add, remove []string) []frontmatter.Edit {
 	}
 	// Setting the Labels replaces a value that is not a list, which reads
 	// as no Labels, and drops entries of a list that are not plain values.
-	before := NormalizeLabels(storedLabels(file))
+	stored, _ := storedLabels(file)
+	before := NormalizeLabels(stored)
 	after := slices.DeleteFunc(slices.Clone(before), func(l string) bool { return HasLabel(remove, l) })
 	after = NormalizeLabels(append(after, add...))
 	if slices.Equal(before, after) {
@@ -68,14 +75,11 @@ func labelEdits(file []byte, add, remove []string) []frontmatter.Edit {
 }
 
 // healLabels is the edit that lowercases and dedupes the stored labels of
-// file, or nil when they need no healing or healing would change more
-// than that. Only labels written exactly as otman writes them are healed:
-// a YAML comment among them, null or nested entries, quoting or any
-// other layout of their own would be lost, so such labels are kept as
-// they are. Labels still invalid once lowercased are kept.
+// file, or nil when they need no healing or cannot be rewritten without
+// loss. Labels still invalid once lowercased are kept.
 func healLabels(file []byte) *frontmatter.Edit {
-	stored := storedLabels(file)
-	if !frontmatter.WrittenAs(file, "labels", list(stored)) {
+	stored, lossless := storedLabels(file)
+	if !lossless {
 		return nil
 	}
 	if healed := NormalizeLabels(stored); !slices.Equal(stored, healed) {

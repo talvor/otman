@@ -274,7 +274,7 @@ id: OTM-2
 title: Map the way
 kind: issue
 status: open
-labels:
+labels: 
   - bug
   - wayfinder:map
 assignee: null
@@ -309,7 +309,7 @@ id: OTM-5
 title: Hand edited case
 kind: issue
 status: open
-labels:
+labels: 
   - Bug
   - BUG
   - Enhancement

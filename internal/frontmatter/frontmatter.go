@@ -164,11 +164,10 @@ func Splice(file []byte, edits []Edit) ([]byte, error) {
 	return append(result, file[end:]...), nil
 }
 
-// WrittenAs reports whether the top-level key name of file's frontmatter
-// is written byte for byte as Splice would write it holding value: no
-// comments, quoting or layout of its own. Splicing another value over such
-// a key loses nothing but the value it replaces.
-func WrittenAs(file []byte, name string, value *yaml.Node) bool {
+// Commented reports whether the span of the top-level key name of file's
+// frontmatter holds a YAML comment, which splicing another value over the
+// key would lose.
+func Commented(file []byte, name string) bool {
 	start, end, ok := fences(file)
 	if !ok {
 		return false
@@ -179,9 +178,19 @@ func WrittenAs(file []byte, name string, value *yaml.Node) bool {
 	if err != nil || i < 0 {
 		return false
 	}
-	span := fm[p.keys[i].offset:p.spanEnd(fm, i)]
-	text, _, err := render(name, value, lineEnding(span))
-	return err == nil && bytes.Equal(span, text)
+	var doc yaml.Node
+	if err := yaml.Unmarshal(fm[p.keys[i].offset:p.spanEnd(fm, i)], &doc); err != nil {
+		return true
+	}
+	return hasComment(&doc)
+}
+
+// hasComment reports whether n or any node under it carries a comment.
+func hasComment(n *yaml.Node) bool {
+	if n.HeadComment != "" || n.LineComment != "" || n.FootComment != "" {
+		return true
+	}
+	return slices.ContainsFunc(n.Content, hasComment)
 }
 
 // Check reports why the frontmatter fm, the YAML between the --- lines,

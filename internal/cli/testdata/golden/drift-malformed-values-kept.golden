@@ -58,16 +58,16 @@ exit: 0
 ID     KIND   STATUS  ASSIGNEE  TITLE
 DRF-8  issue  open    -         Malformed values
 -- stderr --
-warning[malformed_value]: the labels value of DRF-8 is "needs-triage", not a list of Labels, so it reads as absent
-hint: fix labels in Projects/DRF/Issues/DRF-8 Malformed values.md; otman keeps it as written until a command sets labels
-warning[malformed_value]: the assignee value of DRF-8 is a list or mapping, not a name, so it reads as absent
-hint: fix assignee in Projects/DRF/Issues/DRF-8 Malformed values.md; otman keeps it as written until a command sets assignee
 warning[malformed_frontmatter]: cannot read the frontmatter of Projects/DRF/Issues/DRF-9 Flow style.md: the frontmatter is flow-style YAML
 hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-9 Flow style.md
 warning[malformed_frontmatter]: cannot read the frontmatter of Projects/DRF/Issues/DRF-10 Unparseable.md: the frontmatter is not valid YAML: yaml: line 2: did not find expected ',' or ']'
 hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-10 Unparseable.md
 warning[malformed_frontmatter]: cannot read the frontmatter of Projects/DRF/Issues/DRF-11 Repeated key.md: the frontmatter repeats the key "status"
 hint: fix the YAML between the --- lines in Projects/DRF/Issues/DRF-11 Repeated key.md
+warning[malformed_value]: the labels value of DRF-8 is "needs-triage", not a list of Labels, so it reads as absent
+hint: fix labels in Projects/DRF/Issues/DRF-8 Malformed values.md; otman keeps it as written until a command sets labels
+warning[malformed_value]: the assignee value of DRF-8 is a list or mapping, not a name, so it reads as absent
+hint: fix assignee in Projects/DRF/Issues/DRF-8 Malformed values.md; otman keeps it as written until a command sets assignee
 
 $ otman comment DRF-8 --body Both values are kept. --json
 exit: 0

@@ -126,9 +126,6 @@ func writeError(f vault.ItemFile, err error) error {
 	case errors.Is(err, item.ErrNoMarker):
 		return unsafeWrite(f.Path, err.Error(), "put the line "+item.CommentsMarker+
 			" back just before "+item.CommentsHeading+", or run 'otman comment "+f.ID()+"', which restores it, then retry")
-	case errors.Is(err, item.ErrStrayText):
-		return unsafeWrite(f.Path, err.Error(), "put the line "+item.CommentsMarker+
-			" back just before the "+item.CommentsHeading+" heading where the comments start, then retry")
 	case errors.Is(err, item.ErrDuplicateMarkers):
 		return unsafeWrite(f.Path, err.Error(), "keep only the "+item.CommentsMarker+
 			" line just before the comments' "+item.CommentsHeading+" heading, then retry")

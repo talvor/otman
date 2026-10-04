@@ -117,11 +117,6 @@ func markerProblem(f vault.ItemFile, p item.Parsed) (output.Problem, bool) {
 		return output.Problem{}, false
 	case !p.HasFrontmatter:
 		return output.Warning("missing_comments_marker", msg, details, noFrontmatterHint(f)), true
-	case p.StrayText:
-		return output.Warning("missing_comments_marker",
-			msg+", where text before the first comment is not shown",
-			details, "put the line "+item.CommentsMarker+" back just before the "+item.CommentsHeading+
-				" heading where the comments start; until then body edits and comments are refused"), true
 	}
 	return output.Warning("missing_comments_marker", msg,
 		details, "'otman comment "+f.ID()+"' restores the marker; until then body edits are refused"), true

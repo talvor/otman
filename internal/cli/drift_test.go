@@ -43,6 +43,18 @@ func TestDriftMalformedFrontmatter(t *testing.T) {
 	runGolden(t, goldenCase{name: "drift-malformed-frontmatter", fixture: "drift", files: driftConfig, steps: steps})
 }
 
+// list and frontier warn about the drift of only the Items on the page
+// they show; Items they leave out warn on every page.
+func TestDriftListPaging(t *testing.T) {
+	runGolden(t, goldenCase{
+		name: "drift-list-paging", fixture: "drift", files: driftConfig,
+		steps: []step{
+			{args: []string{"list", "--limit", "1", "--json"}},
+			{args: []string{"frontier", "--limit", "1", "--offset", "1"}, tty: true},
+		},
+	})
+}
+
 // An Item's identity is its filename prefix. A frontmatter id that
 // differs warns id_mismatch on read, and any write resets it from the
 // filename, keeping the rest of the hand-edited frontmatter byte for
@@ -149,10 +161,8 @@ func TestDriftMalformedValues(t *testing.T) {
 // "## Comments" heading and warn missing_comments_marker. comment and
 // close --comment append and restore the marker, just before that heading
 // or, with no heading either, in a new comments section at the end; a body
-// edit refuses with unsafe_write. When the text after that heading is not
-// all comments, restoring the marker would turn it into comments, so
-// comments refuse with unsafe_write too, and the warning says so.
-// Duplicate markers warn; body edits and comments refuse with
+// edit refuses with unsafe_write. That holds whatever text follows the
+// heading. Duplicate markers warn; body edits and comments refuse with
 // unsafe_write, while writes that touch only the frontmatter go ahead.
 func TestDriftCommentsMarker(t *testing.T) {
 	files := map[string]string{
@@ -183,9 +193,9 @@ func TestDriftCommentsMarker(t *testing.T) {
 			{args: []string{"edit", "DRF-14", "--body", "Refused as well.", "--json"}},
 			{args: []string{"edit", "DRF-14", "--assignee", "alice", "--json"}},
 			{args: []string{"view", "DRF-17", "--json"}},
-			{args: []string{"comment", "DRF-17", "--body", "Refused.", "--json"}},
-			{args: []string{"close", "DRF-17", "--comment", "Refused too."}, tty: true},
-			{args: []string{"edit", "DRF-17", "--body", "Refused as well.", "--json"}},
+			{args: []string{"edit", "DRF-17", "--body", "Refused.", "--json"}},
+			{args: []string{"close", "DRF-17", "--comment", "The marker is back before the heading."}, tty: true},
+			{args: []string{"view", "DRF-17", "--json"}},
 			{args: []string{"comment", "DRF-18", "--body", "The marker is back before the heading.", "--json"}},
 		},
 	})

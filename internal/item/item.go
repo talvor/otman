@@ -360,11 +360,6 @@ type Parsed struct {
 	// section starts at the last "## Comments" heading; with several, at
 	// the first marker.
 	MarkerLines int
-	// StrayText is true when, with no marker line, the last "## Comments"
-	// heading is followed by text that is not a comment, before the first
-	// comment. A read does not show it, and a comment is refused, since
-	// restoring the marker would make it part of the comments.
-	StrayText bool
 
 	// HasFrontmatter is true when the file has frontmatter between ---
 	// lines. Every write to a file without it is refused.
@@ -403,7 +398,7 @@ func Parse(b []byte) Parsed {
 		p.readFrontmatter(fm)
 	}
 	section := locateComments(string(rest))
-	p.MarkerLines, p.StrayText = section.markers, section.strayText
+	p.MarkerLines = section.markers
 	body, comments := section.split(string(rest))
 	p.Body = strings.TrimRight(body, "\r\n")
 	p.Comments = parseComments(comments)
@@ -554,10 +549,9 @@ func SetStatus(file []byte, d Derived, status string, comment *Comment, now time
 // AppendComment appends c at the end of an Item file's comments section
 // and sets its updated time to now. Everything already in the file is
 // kept byte for byte, and the comment uses the file's line endings. A
-// missing comments marker line is restored, unless text that is not a
-// comment follows the last "## Comments" heading (ErrStrayText); a file
-// with several fails with ErrDuplicateMarkers, and one otman could not
-// rewrite with a *frontmatter.UnsafeError.
+// missing comments marker line is restored; a file with several fails
+// with ErrDuplicateMarkers, and one otman could not rewrite with a
+// *frontmatter.UnsafeError.
 func AppendComment(file []byte, d Derived, c Comment, now time.Time) ([]byte, error) {
 	out, _, err := rewrite(file, d, nil, func(b []byte) ([]byte, error) { return appendComment(b, c) }, now)
 	return out, err
@@ -591,13 +585,6 @@ type Update struct {
 // marker line, whose body/comments boundary otman will not guess at.
 var ErrNoMarker = errors.New("the Item has no " + CommentsMarker + " line")
 
-// ErrStrayText refuses a comment on, or a body rewrite of, an Item file
-// with no comments marker line whose last "## Comments" heading is
-// followed by text that is not a comment: restoring the marker there
-// would make that text part of the comments (ADR 0005).
-var ErrStrayText = errors.New("the Item has no " + CommentsMarker + " line, and text after its last " +
-	CommentsHeading + " heading is not a comment")
-
 // ErrDuplicateMarkers refuses a body rewrite of, or a comment on, an Item
 // file with more than one comments marker line, whose body/comments
 // boundary otman will not guess at.
@@ -608,7 +595,7 @@ var ErrDuplicateMarkers = errors.New("the Item has more than one " + CommentsMar
 // rewrite replaces only the text between the frontmatter and the comments
 // marker, keeping the comments section byte for byte, and uses the file's
 // line endings. As with SetStatus, a file otman could not rewrite fails
-// with a *frontmatter.UnsafeError, or ErrNoMarker, ErrStrayText or
+// with a *frontmatter.UnsafeError, or ErrNoMarker or
 // ErrDuplicateMarkers for a body rewrite, even when update would change
 // nothing.
 func Apply(file []byte, d Derived, update Update, now time.Time) (out []byte, changed bool, err error) {
@@ -849,9 +836,8 @@ func replaceBody(file []byte, body string) ([]byte, error) {
 // Leading and trailing line breaks of the text are not kept. A file with
 // no comments marker line gets it back where a read found the comments
 // section: just before the last "## Comments" heading or, with none, in a
-// new section at the end. When text that is not a comment follows that
-// heading, it fails with ErrStrayText rather than make the text part of
-// the comments; with several marker lines, with ErrDuplicateMarkers.
+// new section at the end. With several marker lines, it fails with
+// ErrDuplicateMarkers.
 func appendComment(file []byte, c Comment) ([]byte, error) {
 	_, rest, _ := frontmatter.Split(file)
 	eol := lineEnding(file)
@@ -921,9 +907,6 @@ type commentsSection struct {
 	// start is the offset of the first marker line or, with none, of the
 	// last "## Comments" heading; -1 when text has neither.
 	start int
-	// strayText is true when, with no marker line, a line after the last
-	// "## Comments" heading and before the first comment is not blank.
-	strayText bool
 }
 
 // locateComments finds the comments section of text, an Item file after
@@ -943,33 +926,20 @@ func locateComments(text string) commentsSection {
 		}
 		offset += len(line)
 	}
-	if s.markers == 0 && heading >= 0 {
+	if s.markers == 0 {
 		s.start = heading
-		_, after, _ := strings.Cut(text[heading:], "\n")
-		for line := range strings.Lines(after) {
-			if _, ok := commentHeadingOf(line); ok {
-				break
-			}
-			if strings.TrimSpace(line) != "" {
-				s.strayText = true
-				break
-			}
-		}
 	}
 	return s
 }
 
 // marker is the offset of the one comments marker line, or fails with
-// ErrNoMarker (ErrStrayText when text that is not a comment follows the
-// last "## Comments" heading) or ErrDuplicateMarkers.
+// ErrNoMarker or ErrDuplicateMarkers.
 func (s commentsSection) marker() (int, error) {
 	switch {
 	case s.markers == 1:
 		return s.start, nil
 	case s.markers > 1:
 		return -1, ErrDuplicateMarkers
-	case s.strayText:
-		return -1, ErrStrayText
 	}
 	return -1, ErrNoMarker
 }

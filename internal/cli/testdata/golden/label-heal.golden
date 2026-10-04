@@ -18,7 +18,7 @@ exit: 0
       "parent": null,
       "blocked_by": [],
       "path": "Projects/OTM/Issues/OTM-5 Hand edited case.md",
-      "rev": "bf7ec84db193",
+      "rev": "8e9a4aa16cbb",
       "author": null,
       "body": "",
       "created": null,
@@ -52,7 +52,7 @@ exit: 0
       "parent": null,
       "blocked_by": [],
       "path": "Projects/OTM/Issues/OTM-5 Hand edited case.md",
-      "rev": "bf7ec84db193"
+      "rev": "8e9a4aa16cbb"
     },
     "changed": false
   },
@@ -266,6 +266,60 @@ exit: 0
 }
 -- stderr --
 
+$ otman close OTM-10 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-10",
+      "title": "Unindented",
+      "kind": "issue",
+      "status": "closed",
+      "labels": [
+        "bug",
+        "docs"
+      ],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-10 Unindented.md",
+      "rev": "41736238e62f"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman close OTM-11 --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-11",
+      "title": "Quoted",
+      "kind": "issue",
+      "status": "closed",
+      "labels": [
+        "bug",
+        "docs"
+      ],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Issues/OTM-11 Quoted.md",
+      "rev": "0512fbb2191a"
+    },
+    "changed": true
+  },
+  "warnings": []
+}
+-- stderr --
+
 == tree ==
 config/
 config/otman/
@@ -300,13 +354,41 @@ assignee: null
 ---
 <!-- otman:comments -->
 ## Comments
+-- vault/Projects/OTM/Issues/OTM-10 Unindented.md --
+---
+id: OTM-10
+title: Unindented
+kind: issue
+status: closed
+labels:
+  - bug
+  - docs
+assignee: null
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/Issues/OTM-11 Quoted.md --
+---
+id: OTM-11
+title: Quoted
+kind: issue
+status: closed
+labels:
+  - bug
+  - docs
+assignee: null
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
 -- vault/Projects/OTM/Issues/OTM-2 Map the way.md --
 ---
 id: OTM-2
 title: Map the way
 kind: issue
 status: open
-labels:
+labels: 
   - bug
   - wayfinder:map
 assignee: null
