@@ -235,6 +235,24 @@ func TestDoctorRepointRefusesCycles(t *testing.T) {
 	})
 }
 
+// A dangling blocked_by link is repointed when the Item it names does not
+// make a blocking cycle: DOC-41 is blocked by DOC-42, whose parent is DOC-41,
+// which is allowed. It is refused when the Item would block its own blocker,
+// as DOC-44 would by DOC-45, which DOC-44 already blocks.
+func TestDoctorRepointBlockedBy(t *testing.T) {
+	runGolden(t, goldenCase{
+		name: "doctor-repoint-blocked-by", fixture: "doctor", files: doctorConfig,
+		steps: []step{
+			{write: map[string]string{
+				"vault/Projects/DOC/Issues/DOC-41 Blocked.md":       doctorItemText("DOC-41", "Blocked", "blocked_by: [\"[[DOC-42 Gone]]\"]\n"),
+				"vault/Projects/DOC/Issues/DOC-42 Holder parent.md": doctorItemText("DOC-42", "Holder parent", "parent: \"[[DOC-41 Blocked]]\"\n"),
+				"vault/Projects/DOC/Issues/DOC-44 Waits.md":         doctorItemText("DOC-44", "Waits", "blocked_by: [\"[[DOC-45 Gone]]\"]\n"),
+				"vault/Projects/DOC/Issues/DOC-45 Cycle.md":         doctorItemText("DOC-45", "Cycle", "blocked_by: [\"[[DOC-44 Waits]]\"]\n"),
+			}, args: []string{"doctor", "--fix", "--json"}},
+		},
+	})
+}
+
 // A repair the vault refuses stays a finding, and the run goes on. The
 // repair of DOC-33 that came first is still reported as fixed, and the
 // rename of DOC-34 is blocked by the flow-style link in DOC-35, which the

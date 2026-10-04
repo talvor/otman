@@ -133,7 +133,7 @@ exit: 4
         "code": "duplicate_label",
         "path": "Projects/DOC/Issues/DOC-6 Labels.md",
         "old": "\"BUG\", \"bug\"",
-        "new": "\"bug\""
+        "new": "\"BUG\""
       },
       {
         "code": "missing_comments_marker",
@@ -329,7 +329,7 @@ kind: issue
 status: open
 labels:
   - needs-triage
-  - bug
+  - BUG
 assignee: null
 created: 2026-01-01T10:00:00Z
 updated: 2026-01-02T03:04:05Z

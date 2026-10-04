@@ -144,6 +144,43 @@ func TestSnapshotsResumeAppliedSteps(t *testing.T) {
 	checkSnapshot(t, snapshotOf(t, dir, "RET", 2), "RET-2 Every link form.md", "Every link form", "issue", "Projects/RET/Issues")
 }
 
+// A write the journal applied before a crash, whose snapshot never reached
+// the db, is recorded when the next command resumes the journal. The title
+// the write left alone keeps the title otman last wrote, so the hand edit
+// made before the write stays Drift.
+func TestSnapshotsResumeKeepsHandEdit(t *testing.T) {
+	dir := retitleVault(t)
+	if code, _, stderr := runFault(dir, nil, "create", "--title", "Hand kept", "--actor", "agent-a"); code != 0 {
+		t.Fatalf("create: exit %d: %s", code, stderr)
+	}
+	file := filepath.Join(dir, "Projects", "RET", "Issues", "RET-5 Hand kept.md")
+	b, err := os.ReadFile(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(file, titleLine.ReplaceAll(b, []byte("title: Hand edit")), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	// The kind move journals a rename and a write, and the crash comes after both.
+	if code, _, stderr := runFault(dir, crashAt(2, nil), "edit", "RET-5", "--kind", "spec", "--actor", "agent-a"); code != 1 {
+		t.Fatalf("interrupted edit: exit %d: %s", code, stderr)
+	}
+	// The write's snapshot never reached the db: the kind is still the one the rename left.
+	db, err := sql.Open("sqlite", filepath.Join(dir, ".otman", "otman.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`UPDATE snapshots SET kind = 'issue' WHERE key = 'RET' AND number = 5`); err != nil {
+		t.Fatal(err)
+	}
+	db.Close()
+
+	if code, stdout, stderr := runFault(dir, nil, "list", "--json"); code != 0 || !strings.Contains(stdout, "resumed_operation") {
+		t.Fatalf("list after the crash: exit %d, stdout %s, stderr %s", code, stdout, stderr)
+	}
+	checkSnapshot(t, snapshotOf(t, dir, "RET", 5), "RET-5 Hand kept.md", "Hand kept", "spec", "Projects/RET/Specs")
+}
+
 // A db from before snapshots (schema version 1) is migrated, not rebuilt:
 // it keeps its high-water mark, so a deleted Item's number is still never
 // reused, and snapshots are recorded from then on.

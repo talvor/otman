@@ -10,7 +10,7 @@ fixed missing_key Projects/DOC/Issues/DOC-5 Missing keys.md: (missing) → "DOC-
 fixed missing_key Projects/DOC/Issues/DOC-5 Missing keys.md: (missing) → "Missing keys"
 fixed missing_key Projects/DOC/Issues/DOC-5 Missing keys.md: (missing) → "issue"
 fixed invalid_label Projects/DOC/Issues/DOC-6 Labels.md: "Needs Triage!" → "needs-triage"
-fixed duplicate_label Projects/DOC/Issues/DOC-6 Labels.md: "BUG", "bug" → "bug"
+fixed duplicate_label Projects/DOC/Issues/DOC-6 Labels.md: "BUG", "bug" → "BUG"
 fixed missing_comments_marker Projects/DOC/Issues/DOC-7 Marker gone.md: (no marker) → restored before ## Comments
 fixed dangling_link Projects/DOC/Issues/DOC-12 Dangling links.md: "[[DOC-3 Moved elsewhere]]" → "[[DOC-3 Outside a Kind folder]]"
 missing_comments_marker Projects/DOC/Issues/DOC-8 Stray text.md: DOC-8 has no <!-- otman:comments --> line, so its comments are read from the last ## Comments heading (fix: none)
@@ -208,7 +208,7 @@ kind: issue
 status: open
 labels:
   - needs-triage
-  - bug
+  - BUG
 assignee: null
 created: 2026-01-01T10:00:00Z
 updated: 2026-01-02T03:04:05Z

@@ -21,9 +21,10 @@ type Repairs struct {
 	Kind *Kind
 	// Labels replaces the labels with exactly these.
 	Labels *[]string
-	// Relink retargets each parent and blocked_by link it accepts, and
-	// leaves every other link alone, the body included.
-	Relink func(target string) (string, bool)
+	// Relink retargets each parent and blocked_by link it accepts, given the
+	// relation key it is in, and leaves every other link alone, the body
+	// included.
+	Relink func(key, target string) (string, bool)
 	// Marker restores the comments marker line, as RestoreMarker does.
 	Marker bool
 }
@@ -60,11 +61,11 @@ func Repair(file []byte, d Derived, r Repairs, now time.Time) ([]byte, bool, err
 		edits = append(edits, frontmatter.Edit{Key: "labels", Value: list(*r.Labels)})
 	}
 	if r.Relink != nil {
-		edits = append(edits, retargetRelations(file, func(l wikilink.Link) (string, bool) {
+		edits = append(edits, retargetRelations(file, func(key string, l wikilink.Link) (string, bool) {
 			if l.Target == "" {
 				return "", false
 			}
-			return r.Relink(l.Target)
+			return r.Relink(key, l.Target)
 		})...)
 	}
 	var transform func([]byte) ([]byte, error)

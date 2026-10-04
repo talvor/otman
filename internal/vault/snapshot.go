@@ -83,10 +83,10 @@ func (v *Vault) recordSnapshot(from, to string, prev, data []byte) error {
 	}
 	if hasLast && prev != nil {
 		before := item.Parse(prev)
-		if same(before.Title, parsed.Title) {
+		if item.Same(before.Title, parsed.Title) {
 			s.Title = last.Title
 		}
-		if same(before.Kind, parsed.Kind) {
+		if item.Same(before.Kind, parsed.Kind) {
 			s.Kind = last.Kind
 		}
 		if from == to {
@@ -103,14 +103,6 @@ func (v *Vault) recordSnapshot(from, to string, prev, data []byte) error {
 			VALUES (?, ?, ?, ?, ?, ?)`, key, n, s.Filename, s.Title, kind, s.Folder)
 		return err
 	})
-}
-
-// same reports whether a and b are both nil or both hold the same value.
-func same[T comparable](a, b *T) bool {
-	if a == nil || b == nil {
-		return a == b
-	}
-	return *a == *b
 }
 
 // itemPath reads the Vault-relative path p as an Item file's: under

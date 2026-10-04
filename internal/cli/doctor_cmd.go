@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -197,9 +198,6 @@ func (a *app) runDoctor(v *vault.Vault, s resolved, ref string, sel config.Value
 				continue
 			}
 			moved, changed, err := a.applyDoctor(v, file, data, pl)
-			if err != nil && changed {
-				return res, ws, err
-			}
 			if err != nil {
 				ws = append(ws, repairBlocked(file, err))
 			}
@@ -265,6 +263,7 @@ func planDoctor(v *vault.Vault, f vault.ItemFile, data []byte, all []vault.ItemF
 	d := f.Derived()
 	links := newItemLinks(all)
 	labels, lossless := item.StoredLabels(data)
+	healed := item.RepairLabels(labels)
 	// Nothing can be spliced without frontmatter that reads, so only the
 	// findings are made.
 	spliceable := p.HasFrontmatter && p.FrontmatterErr == nil
@@ -273,9 +272,9 @@ func planDoctor(v *vault.Vault, f vault.ItemFile, data []byte, all []vault.ItemF
 	// changed since otman last wrote the Item (ADR 0005).
 	var titleFM, titleFile, kindFM, folderMoved bool
 	if snap != nil {
-		titleFM = !sameText(p.Title, snap.Title)
+		titleFM = !item.Same(p.Title, snap.Title)
 		titleFile = f.Name() != snap.Filename
-		kindFM = !sameKind(p.Kind, snap.Kind)
+		kindFM = !item.Same(p.Kind, snap.Kind)
 		folderMoved = path.Dir(f.Path) != snap.Folder
 	}
 	titleWinner, titleFix := sideOf(snap != nil, titleFM, titleFile, prefer)
@@ -354,13 +353,14 @@ func planDoctor(v *vault.Vault, f vault.ItemFile, data []byte, all []vault.ItemF
 		case "invalid_label":
 			label, _ := pr.Details["label"].(string)
 			if slug, ok := item.SlugLabel(label); ok && lossless {
-				fd.set("auto", quoteArg(label), quoteArg(slug))
+				fd.set("auto", quoteArg(label), quoteArg(keptLabel(healed, slug)))
 				fixLabels = true
 			}
 		case "dangling_link":
 			link, _ := pr.Details["link"].(string)
+			key, _ := pr.Details["key"].(string)
 			if wl, ok := wikilink.Parse(link); ok {
-				if target, ok := repointTarget(v, all, links, f, wl.Target); ok {
+				if target, ok := repointTarget(v, all, links, f, key, wl.Target); ok {
 					fd.set("auto", quoteArg(link), quoteArg("[["+target+"]]"))
 					relink = true
 				}
@@ -377,7 +377,7 @@ func planDoctor(v *vault.Vault, f vault.ItemFile, data []byte, all []vault.ItemF
 				for i, s := range dup.spellings {
 					spellings[i] = quoteArg(s)
 				}
-				fd.set("auto", strings.Join(spellings, ", "), quoteArg(dup.label))
+				fd.set("auto", strings.Join(spellings, ", "), quoteArg(keptLabel(healed, dup.label)))
 				fixLabels = true
 			}
 			pl.findings = append(pl.findings, fd)
@@ -385,11 +385,10 @@ func planDoctor(v *vault.Vault, f vault.ItemFile, data []byte, all []vault.ItemF
 	}
 
 	if fixLabels {
-		healed := item.RepairLabels(labels)
 		pl.repairs.Labels = &healed
 	}
 	if relink {
-		pl.repairs.Relink = func(target string) (string, bool) { return repointTarget(v, all, links, f, target) }
+		pl.repairs.Relink = func(key, target string) (string, bool) { return repointTarget(v, all, links, f, key, target) }
 	}
 
 	// A rename or move goes to one path: the Kind folder the file belongs
@@ -442,10 +441,11 @@ func sideOf(hasSnap, fmChanged, fileChanged bool, prefer string) (winner, fix st
 }
 
 // applyDoctor makes the repairs of pl to Item file f, whose bytes are data,
-// and reports the file's Vault-relative path after them and whether
-// anything changed. A repair that moves the file goes through a journal (see
-// RenameItem), and a write records the Item's snapshot, which keepBaseline
-// then keeps for any Drift left unrepaired.
+// and reports the file's Vault-relative path after them and whether the
+// vault was written, even when a repair then fails. A repair that moves the
+// file goes through a journal (see RenameItem), and a write records the
+// Item's snapshot, which keepBaseline then keeps for the folder of any Kind
+// Drift left unrepaired.
 func (a *app) applyDoctor(v *vault.Vault, f vault.ItemFile, data []byte, pl doctorPlan) (vault.ItemFile, bool, error) {
 	if pl.to == "" && !pl.repairs.Any() {
 		// Nothing to write, so the file is not spliced at all: a file that
@@ -460,34 +460,63 @@ func (a *app) applyDoctor(v *vault.Vault, f vault.ItemFile, data []byte, pl doct
 	if err != nil {
 		return f, false, writeError(f, err)
 	}
-	moved := f
+	moved, written := f, false
 	switch {
 	case pl.to != "":
 		op := vault.MoveOperation
 		if path.Base(pl.to) != f.Name() {
 			op = vault.RetitleOperation
 		}
-		if moved, _, err = v.RenameItem(f, pl.to, out, op); err != nil {
-			return f, false, renameError(f, err)
+		var rerr error
+		if moved, _, rerr = v.RenameItem(f, pl.to, out, op); rerr != nil {
+			err = renameError(f, rerr)
+			moved, written = landedAt(v, f, pl.to)
+		} else {
+			written = true
 		}
 	case changed:
-		if err := v.WriteItemFile(f, out); err != nil {
-			return f, false, writeError(f, err)
+		if werr := v.WriteItemFile(f, out); werr != nil {
+			err = writeError(f, werr)
+			written = writtenBytes(v, f, out)
+		} else {
+			written = true
 		}
 	default:
 		return f, false, nil
 	}
-	if pl.keepTitle || pl.keepKind {
-		if err := keepBaseline(v, f, prev, hadPrev, pl); err != nil {
-			return moved, true, ioError(err)
+	if written && (pl.keepTitle || pl.keepKind) {
+		if kerr := keepBaseline(v, f, prev, hadPrev, pl); kerr != nil {
+			err = ioError(kerr)
 		}
 	}
-	return moved, true, nil
+	return moved, written, err
+}
+
+// landedAt is where Item file f is after a rename to the Vault-relative
+// path to failed: to, with true, when the rename moved it there before it
+// stopped, and f, with false, otherwise.
+func landedAt(v *vault.Vault, f vault.ItemFile, to string) (vault.ItemFile, bool) {
+	at, ok, err := v.ItemAt(to)
+	if err != nil || !ok {
+		return f, false
+	}
+	if _, here, err := v.ItemAt(f.Path); err != nil || here {
+		return f, false
+	}
+	return at, true
+}
+
+// writtenBytes reports whether Item file f holds the bytes out, which a
+// write that failed after it landed leaves there.
+func writtenBytes(v *vault.Vault, f vault.ItemFile, out []byte) bool {
+	b, err := v.ReadItemFile(f)
+	return err == nil && bytes.Equal(b, out)
 }
 
 // keepBaseline rewrites the snapshot of Item file f, just written, so that
-// each side pl leaves unrepaired keeps what otman last wrote there. It has
-// none to keep when it had no snapshot before, so the snapshot is removed.
+// the folder of a Kind pl leaves unrepaired keeps what otman last wrote
+// there. It has none to keep when it had no snapshot before, so the snapshot
+// is removed.
 func keepBaseline(v *vault.Vault, f vault.ItemFile, prev vault.Snapshot, hadPrev bool, pl doctorPlan) error {
 	if !hadPrev {
 		return v.SetSnapshot(f.Key, f.Number, nil)
@@ -496,11 +525,8 @@ func keepBaseline(v *vault.Vault, f vault.ItemFile, prev vault.Snapshot, hadPrev
 	if err != nil {
 		return err
 	}
-	if pl.keepTitle {
-		cur.Filename, cur.Title = prev.Filename, prev.Title
-	}
 	if pl.keepKind {
-		cur.Kind, cur.Folder = prev.Kind, prev.Folder
+		cur.Folder = prev.Folder
 	}
 	return v.SetSnapshot(f.Key, f.Number, &cur)
 }
@@ -509,8 +535,9 @@ func keepBaseline(v *vault.Vault, f vault.ItemFile, prev vault.Snapshot, hadPrev
 // target of holder to: the full filename, without ".md", of the one Item of
 // Project all whose <KEY>-n prefix target carries. It fails when target
 // resolves, has no such prefix, or its prefix matches no Item or several,
-// and when that Item cannot be holder's parent (see unusableParent).
-func repointTarget(v *vault.Vault, all []vault.ItemFile, links itemLinks, holder vault.ItemFile, target string) (string, bool) {
+// and when that Item cannot be holder's target for relation (see
+// repointable).
+func repointTarget(v *vault.Vault, all []vault.ItemFile, links itemLinks, holder vault.ItemFile, relation, target string) (string, bool) {
 	if len(links.index.Resolve(target)) != 0 {
 		return "", false
 	}
@@ -525,33 +552,23 @@ func repointTarget(v *vault.Vault, all []vault.ItemFile, links itemLinks, holder
 			found = append(found, f)
 		}
 	}
-	if len(found) != 1 || unusableParent(v, links, holder, found[0]) {
+	if len(found) != 1 || !repointable(v, links, holder, relation, found[0]) {
 		return "", false
 	}
 	return strings.TrimSuffix(found[0].Name(), ".md"), true
 }
 
-// unusableParent reports whether holder cannot take f as its parent: f is
-// holder itself, holder is among f's ancestors, or an ancestor link does not
-// resolve. Each would make a self-edge, a parent cycle or a chain the
-// relation commands refuse to follow.
-func unusableParent(v *vault.Vault, links itemLinks, holder, f vault.ItemFile) bool {
-	seen := map[string]bool{}
-	for cur := f; !seen[cur.Path]; {
-		if cur.Path == holder.Path {
-			return true
-		}
-		seen[cur.Path] = true
-		next, err := followLinks(v, links, cur, "parent")
-		if err != nil {
-			return true
-		}
-		if len(next) == 0 {
-			return false
-		}
-		cur = next[0]
+// repointable reports whether holder may take target for relation key
+// without a state the relation commands refuse: a self-edge, or a parent or
+// blocking cycle.
+func repointable(v *vault.Vault, links itemLinks, holder vault.ItemFile, key string, target vault.ItemFile) bool {
+	if target.Path == holder.Path {
+		return false
 	}
-	return false
+	if key == "parent" {
+		return checkParentCycle(v, links, holder, target) == nil
+	}
+	return checkBlockingCycle(v, links, holder, target) == nil
 }
 
 // duplicateLabel is a Label an Item carries more than once, ignoring case.
@@ -588,20 +605,15 @@ func duplicateLabels(labels []string) []duplicateLabel {
 	return dups
 }
 
-// sameText reports whether a and b are both nil or both hold the same text.
-func sameText(a, b *string) bool {
-	if a == nil || b == nil {
-		return a == b
+// keptLabel is the spelling of label that the repaired labels keep: the
+// first of them that matches it, ignoring case.
+func keptLabel(repaired []string, label string) string {
+	for _, l := range repaired {
+		if strings.EqualFold(l, label) {
+			return l
+		}
 	}
-	return *a == *b
-}
-
-// sameKind reports whether a and b are both nil or both hold the same Kind.
-func sameKind(a, b *item.Kind) bool {
-	if a == nil || b == nil {
-		return a == b
-	}
-	return *a == *b
+	return label
 }
 
 // idText is the frontmatter id of p as written, quoted, or a placeholder

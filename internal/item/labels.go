@@ -73,28 +73,17 @@ func StoredLabels(file []byte) (labels []string, lossless bool) {
 
 // RepairLabels are labels as doctor repairs them: each one still invalid
 // once lowercased is slugged (see SlugLabel), and a label that repeats,
-// ignoring case, is merged into its lowercased form. Any other label keeps
-// its spelling.
+// ignoring case, is merged into the first of its spellings. No label is
+// otherwise changed.
 func RepairLabels(labels []string) []string {
-	healed := make([]string, 0, len(labels))
+	out := make([]string, 0, len(labels))
 	for _, l := range labels {
 		if _, ok := ParseLabel(l); !ok {
 			if slug, ok := SlugLabel(l); ok {
 				l = slug
 			}
 		}
-		healed = append(healed, l)
-	}
-	count := map[string]int{}
-	for _, l := range healed {
-		count[strings.ToLower(l)]++
-	}
-	out := make([]string, 0, len(healed))
-	for _, l := range healed {
-		if count[strings.ToLower(l)] > 1 {
-			l = strings.ToLower(l)
-		}
-		if !slices.Contains(out, l) {
+		if !slices.ContainsFunc(out, func(o string) bool { return strings.EqualFold(o, l) }) {
 			out = append(out, l)
 		}
 	}

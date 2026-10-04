@@ -720,7 +720,7 @@ func RetargetLinks(file []byte, retarget func(target string) (string, bool)) ([]
 		}
 		return retarget(l.Target)
 	}
-	edits := retargetRelations(file, link)
+	edits := retargetRelations(file, func(_ string, l wikilink.Link) (string, bool) { return link(l) })
 	out := file
 	if len(edits) > 0 {
 		var err error
@@ -741,8 +741,8 @@ func RetargetLinks(file []byte, retarget func(target string) (string, bool)) ([]
 // file's frontmatter, parent and the entries of blocked_by, for which link
 // returns a new target. A value that is not a wikilink, or that link leaves
 // alone, is not edited.
-func retargetRelations(file []byte, link func(wikilink.Link) (string, bool)) []frontmatter.Edit {
-	relation := func(n *yaml.Node) (*yaml.Node, bool) {
+func retargetRelations(file []byte, link func(key string, l wikilink.Link) (string, bool)) []frontmatter.Edit {
+	relation := func(key string, n *yaml.Node) (*yaml.Node, bool) {
 		s := scalar(n)
 		if s == nil {
 			return nil, false
@@ -751,7 +751,7 @@ func retargetRelations(file []byte, link func(wikilink.Link) (string, bool)) []f
 		if !ok {
 			return nil, false
 		}
-		target, ok := link(l)
+		target, ok := link(key, l)
 		if !ok {
 			return nil, false
 		}
@@ -759,7 +759,7 @@ func retargetRelations(file []byte, link func(wikilink.Link) (string, bool)) []f
 	}
 	var edits []frontmatter.Edit
 	if v := frontmatterValue(file, "parent"); v != nil {
-		if n, ok := relation(v); ok {
+		if n, ok := relation("parent", v); ok {
 			edits = append(edits, frontmatter.Edit{Key: "parent", Value: n})
 		}
 	}
@@ -768,7 +768,7 @@ func retargetRelations(file []byte, link func(wikilink.Link) (string, bool)) []f
 		out.Content = make([]*yaml.Node, len(v.Content))
 		for i, c := range v.Content {
 			out.Content[i] = c
-			if n, ok := relation(c); ok {
+			if n, ok := relation("blocked_by", c); ok {
 				out.Content[i], changed = n, true
 			}
 		}
@@ -1071,6 +1071,14 @@ func frontmatterValue(file []byte, key string) *yaml.Node {
 		}
 	}
 	return nil
+}
+
+// Same reports whether a and b are both nil or both hold the same value.
+func Same[T comparable](a, b *T) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	return *a == *b
 }
 
 // TruncateText cuts s to at most limit Unicode characters, reporting

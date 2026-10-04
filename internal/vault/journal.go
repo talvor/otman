@@ -59,6 +59,9 @@ type Step struct {
 	// PostRev and Content are a write's rev and bytes after the step.
 	PostRev string `json:"post_rev,omitempty"`
 	Content []byte `json:"content,omitempty"`
+	// PreContent is a write's bytes before the step, which a resume that
+	// finds the step applied needs to tell the sides the write changed.
+	PreContent []byte `json:"pre_content,omitempty"`
 }
 
 // The step actions.
@@ -168,7 +171,7 @@ func (v *Vault) RenameItem(f ItemFile, to string, data []byte, operation string)
 		Steps: []Step{{Action: renameStep, Path: f.Path, To: to, PreRev: item.Rev(current)}}}
 	if item.Rev(data) != item.Rev(current) {
 		j.Steps = append(j.Steps, Step{Action: writeStep, Path: to,
-			PreRev: item.Rev(current), PostRev: item.Rev(data), Content: data})
+			PreRev: item.Rev(current), PostRev: item.Rev(data), Content: data, PreContent: current})
 	}
 	for _, p := range notes {
 		if p == f.Path {
@@ -187,7 +190,7 @@ func (v *Vault) RenameItem(f ItemFile, to string, data []byte, operation string)
 		}
 		if item.Rev(after) != item.Rev(before) {
 			j.Steps = append(j.Steps, Step{Action: writeStep, Path: p,
-				PreRev: item.Rev(before), PostRev: item.Rev(after), Content: after})
+				PreRev: item.Rev(before), PostRev: item.Rev(after), Content: after, PreContent: before})
 		}
 	}
 	if err := v.run(j); err != nil {
@@ -327,7 +330,7 @@ func (v *Vault) applyStep(s Step) error {
 		case s.PostRev:
 			// Written already, but a crash may have come before the
 			// snapshot was recorded.
-			return v.recordSnapshot(s.Path, s.Path, nil, s.Content)
+			return v.recordSnapshot(s.Path, s.Path, s.PreContent, s.Content)
 		case s.PreRev:
 			return v.writeFile(s.Path, s.Content)
 		default:
