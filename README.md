@@ -59,6 +59,12 @@ You can also build it from a clone with `make build`, which writes `dist/otman`,
 otman tracker-template > docs/agents/issue-tracker.md
 ```
 
+Or let otman save it. `--write` writes the same template to `docs/agents/issue-tracker.md` at the git root (in the working directory outside git), creating `docs/agents/` if needed and replacing any existing file. It prints the path it wrote instead of the template:
+
+```sh
+otman tracker-template --write
+```
+
 The canonical template is [`docs/agents/issue-tracker-otman.md`](docs/agents/issue-tracker-otman.md), which is embedded in the binary. If no Project is selected, `tracker-template` fails with exit 2.
 
 ## Discovery and precedence
