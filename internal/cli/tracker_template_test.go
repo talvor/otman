@@ -36,3 +36,52 @@ func TestTrackerTemplateWithoutProject(t *testing.T) {
 		},
 	})
 }
+
+// tracker-template --write saves the template as the repo's
+// docs/agents/issue-tracker.md at the git root, from any subdirectory,
+// creating docs/agents and replacing an existing file. It reports the path
+// rather than echoing the template.
+func TestTrackerTemplateWrite(t *testing.T) {
+	runGolden(t, goldenCase{
+		name:    "tracker-template-write",
+		fixture: "basic",
+		files: withFiles(map[string]string{
+			"vault/Projects/WEB/WEB.md": webNote,
+			"repo/.git/HEAD":            "ref: refs/heads/main\n",
+			"repo/sub/.keep":            "",
+		}),
+		steps: []step{
+			{args: []string{"project", "link", "WEB"}, dir: "repo"},
+			{args: []string{"tracker-template", "--write"}, dir: "repo/sub", tty: true},
+			{args: []string{"tracker-template", "--write"}, dir: "repo/sub",
+				write: map[string]string{"repo/docs/agents/issue-tracker.md": "stale\n"}},
+			{args: []string{"tracker-template", "--write", "--json"}, dir: "repo"},
+		},
+	})
+}
+
+// Outside git, tracker-template --write saves the template under the
+// working directory.
+func TestTrackerTemplateWriteOutsideGit(t *testing.T) {
+	runGolden(t, goldenCase{
+		name:    "tracker-template-write-no-git",
+		fixture: "basic",
+		files:   withFiles(map[string]string{"vault/Projects/WEB/WEB.md": webNote, "dir/.keep": ""}),
+		steps: []step{
+			{args: []string{"tracker-template", "--write", "--project", "WEB"}, dir: "dir"},
+		},
+	})
+}
+
+// With no Project selected, tracker-template --write fails with exit 2 and
+// writes nothing.
+func TestTrackerTemplateWriteWithoutProject(t *testing.T) {
+	runGolden(t, goldenCase{
+		name:    "tracker-template-write-unselected",
+		fixture: "basic",
+		files:   vaultConfig,
+		steps: []step{
+			{args: []string{"tracker-template", "--write"}},
+		},
+	})
+}
