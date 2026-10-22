@@ -9,7 +9,7 @@ import (
 // trackerTemplate is the Tracker template, with {{KEY}} standing for the
 // linked Project's key.
 //
-//go:embed agents/issue-tracker-otman.md
+//go:embed issue-tracker-otman.md
 var trackerTemplate string
 
 // TrackerTemplate returns the Tracker template for the Project key.

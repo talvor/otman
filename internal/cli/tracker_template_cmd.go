@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"github.com/talvor/otman/docs"
+	"github.com/talvor/otman/internal/docs"
 	"github.com/talvor/otman/internal/config"
 	"github.com/talvor/otman/internal/fsutil"
 )

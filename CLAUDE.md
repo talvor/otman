@@ -4,7 +4,7 @@
 
 ### Issue tracker
 
-Issues are tracked in GitHub Issues on `talvor/otman` (via `gh`). See `docs/agents/issue-tracker.md`.
+Issues are tracked as Items in an Obsidian Vault via the `otman` CLI (Project `OTM`). See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
