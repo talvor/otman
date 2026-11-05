@@ -102,8 +102,19 @@ The leaf modules (`frontmatter`, `wikilink`, `fsutil`) are deep and tested at th
 
 Start with candidate 1, the Item-mutation module. It is the smallest change with the most repeated code removed (seven commands), it finally gives `item` + `vault` an interface that is tested directly, and it is the natural first step toward candidate 2, because both need a loaded, resolved view of a Project's Items. Take candidate 2 next; candidate 3 is best done once the Graph and Mutation interfaces exist, since the Drift module needs both a Project's files (context) and the write path (repairs).
 
+## Decisions on candidate 1 (grilling, decision request 5)
+
+The user chose candidate 1 to explore and settled its shape. The package name `tracker` is a working name; the answers did not fix one.
+
+- **Scope.** The module owns in-place writes and edit's rename/move (the journaled `v.RenameItem` path for a retitle or Kind change). `doctor`'s apply path (`applyDoctor`) stays separate.
+- **Home.** A new package above `vault` and `item`, taking an open `*vault.Vault`. `vault` stays about files, lock, db and journal.
+- **Change shape.** A command passes a callback over the parsed before-state that returns an `item.Update`, generalising the `changeRelations` plan callback already in `relation_cmd.go:85`. Preconditions (`claim_conflict`, `item_not_open`, `stale_item` for `--if-rev`) are checked inside the callback; the module does not grow a declarative precondition vocabulary.
+- **Tests.** Add direct tests at the module's interface against a temp Vault, with no cobra. Keep all existing golden transcripts.
+
+Still open for a later pass: the module's exact signature and result type, how `summarize` and the CLI's `itemSummary` JSON shapes stay in `cli`, and how the changed/unchanged decision (claim's "already unclaimed" no-op) is expressed through the callback's return.
+
 ## Method and limits
 
 - Explored by reading the directory structure, `GLOSSARY.md`, ADRs 0001 to 0006, the git history, and the code of `item`, `vault`, and the `cli` files named above. `doctor_cmd.go`, `edit_cmd.go`, `label_cmd.go`, `relation_cmd.go`, `create_cmd.go` and `journal.go` were skimmed by signature rather than read in full; their line counts and the shared helpers are verified, their step-by-step similarity to `setStatus` is inferred for edit, label and relation.
-- The skill's HTML report step was skipped: this is a headless planning worker whose deliverable is a notes file, so there is no browser to open. The interview step (grilling) on a chosen candidate goes to the user as a decision request.
+- The skill's HTML report step was skipped: this is a headless planning worker whose deliverable is a notes file, so there is no browser to open. The interview step (grilling) ran as decision requests 3 and 5; the `grilling` skill is not on this worker's list, so the questions were written directly.
 - Line counts are approximate and exclude tests.
