@@ -121,6 +121,18 @@ exit: 0
 }
 -- stderr --
 
+$ otman frontier --kind doc
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_for_doc
+  message: "--unassigned does not apply to a Doc: a Doc has no status, parent, blocked_by or assignee"
+  details:
+    flag: "--unassigned"
+    kind: doc
+  hint: "drop --unassigned, or list another Kind"
+
 $ otman edit OTM-3 --title Meeting minutes --body Done. --add-label minutes
 exit: 0
 -- stdout --

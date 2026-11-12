@@ -18,6 +18,7 @@ func TestDocKind(t *testing.T) {
 			{args: []string{"list"}},
 			{args: []string{"list", "--kind", "doc", "--state", "closed"}},
 			{args: []string{"frontier", "--json"}},
+			{args: []string{"frontier", "--kind", "doc"}},
 			{args: []string{"edit", "OTM-3", "--title", "Meeting minutes", "--body", "Done.", "--add-label", "minutes"}},
 			{args: []string{"comment", "OTM-3", "--body", "Noted."}, env: me},
 			{args: []string{"create", "--title", "Bad", "--kind", "doc", "--assignee", "x"}},
