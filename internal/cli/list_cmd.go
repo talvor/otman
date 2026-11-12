@@ -352,12 +352,12 @@ func listScope(v *vault.Vault, sel config.Value) ([]string, []output.Problem, er
 
 // listProject is the summaries of the Items of Project key that q keeps,
 // sorted by number, then path, and a warning for each Item left out
-// because it drifted: its frontmatter cannot be read, or its status is
-// missing or neither open nor closed, whatever --state says. It records
-// the drift warnings of each Item it keeps in drift, by path, so that only
-// those of the Items shown are reported. It adds the Labels of every Item
-// it reads, kept or not, to inUse. It checks the
-// blockers of an Item, under q.unblocked, only once every other filter
+// because it drifted: its frontmatter cannot be read, or a non-Doc Item's
+// status is missing or neither open nor closed, whatever --state says. It
+// records the drift warnings of each Item it keeps in drift, by path, so
+// that only those of the Items shown are reported. It adds the Labels of
+// every Item it reads, kept or not, to inUse. It checks the blockers of an
+// Item, under q.unblocked, only once every other filter
 // keeps it, so broken blocker links of Items left out anyway do not
 // matter.
 func listProject(v *vault.Vault, key string, q itemQuery, inUse labelSet, drift map[string][]output.Problem) ([]itemSummary, []output.Problem, error) {

@@ -25,11 +25,11 @@ A numbered record in a Project, such as `OTM-12`. Every Item has exactly one Kin
 _Avoid_: Ticket, issue (when the Kind isn't meant), task
 
 **Kind**:
-What sort of Item it is: issue, PRD, spec, or Doc. An Item of any Kind can be the parent of other Items. A **PRD** says why and what: the problem, who it's for, goals, non-goals and success measures. A **spec** says how: the solution and the decisions needed to build and test it, often as the child of a PRD. An **issue** is a single piece of work, such as a ticket or bug. A **Doc** is a note; see Doc.
+What sort of Item it is: issue, PRD, spec, or Doc. An Item of any Kind can be the parent of other Items. A **PRD** says why and what: the problem, who it's for, goals, non-goals and success measures. A **spec** says how: the solution and the decisions needed to build and test it, often as the child of a PRD. An **issue** is a single piece of work, such as a ticket or bug.
 _Avoid_: Type, category
 
 **Doc**:
-The Kind of Item that is a note rather than tracked work: a title, Labels, a body and comments, kept in the Project's `Docs/` folder. A Doc has no status, parent, blockers or assignee, so it is never open or closed and never on the Frontier. Other Items may have a Doc as their parent, but cannot add a Doc as a blocker. The default `list` omits Docs; `list --kind doc` and `list --state all` show them. With an explicit state, Docs match only `all`. A Doc's Kind cannot be changed to or from Doc, including by `doctor --fix`.
+The Kind of Item that is a note rather than tracked work, kept in the Project's `Docs/` folder. A Doc has no status, parent, blockers or assignee, so it is never open or closed and never on the Frontier. Other Items may have a Doc as their parent, but cannot add a Doc as a blocker. A Doc's Kind cannot be changed to or from Doc, including by `doctor --fix`.
 _Avoid_: Note (Obsidian notes in general), page, wiki
 
 **Template**:
@@ -37,7 +37,7 @@ The starting body a new Item of a given Kind receives when no body is supplied.
 _Avoid_: Scaffold, boilerplate, skeleton
 
 **Drift**:
-A disagreement, introduced outside otman, between parts of an Item that otman keeps consistent, such as filename vs title, folder vs Kind, or a missing comments marker. Drift is expected: reads warn about it, a write heals it only where nothing is lost, and `doctor` repairs the rest.
+A disagreement, introduced outside otman, between parts of an Item that otman keeps consistent, such as filename vs title, folder vs Kind, or a missing comments marker. Drift is expected: reads warn about it, a write heals it only where nothing is lost, and `doctor` repairs only eligible drift.
 _Avoid_: Corruption, inconsistency
 
 **Renumber**:

@@ -68,10 +68,10 @@ func KindOfFolder(name string) (Kind, bool) {
 	return "", false
 }
 
-// The statuses an Item can have.
+// The statuses an Item with workflow state can have.
 const (
-	// Open is the status of an Item whose work is not done; every new Item
-	// is open.
+	// Open is the status of an Item whose work is not done; every new
+	// non-Doc Item is open.
 	Open = "open"
 	// Closed is the status of an Item whose work is done or abandoned.
 	Closed = "closed"
@@ -216,7 +216,7 @@ type Fields struct {
 	Updated   time.Time
 }
 
-// Render writes a new Item file: flat frontmatter with every owned key,
+// Render writes a new Item file: flat frontmatter with its applicable owned keys,
 // then the body, then the comments marker and heading. A Doc has no status,
 // parent, blocked_by or assignee key. New files use LF.
 // Trailing line breaks of the body are not kept; a non-empty body is

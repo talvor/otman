@@ -74,10 +74,10 @@ func TestDriftIDMismatch(t *testing.T) {
 
 // A title that disagrees with the filename warns title_drift and a Kind
 // that disagrees with the folder warns kind_drift; reads show the
-// frontmatter value, and writes are allowed and keep it. An Item anywhere
+// frontmatter value, and permitted writes keep it. An Item anywhere
 // under its Project's folder but outside its Kind folder is still found,
 // by reference and by list, and warns unexpected_folder. A Kind that is
-// not one of issue, PRD or spec, or a title that is not text, reads as
+// not one of issue, PRD, spec or Doc, or a title that is not text, reads as
 // absent, derived from the folder or the filename, and is kept on write.
 func TestDriftTitleKindFolder(t *testing.T) {
 	runGolden(t, goldenCase{

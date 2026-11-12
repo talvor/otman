@@ -44,7 +44,7 @@ func TestListAllProjects(t *testing.T) {
 	})
 }
 
-// --state picks open (the default), closed or all Items. An Item whose
+// --state picks open (the default), closed or all Items. A non-Doc Item whose
 // status is neither is never listed, even by --state all, and is named in
 // a warning unless another filter left it out. An unreadable Item is
 // named in a warning in every state. --kind picks one Kind, read from the
