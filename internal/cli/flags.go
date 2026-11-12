@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/talvor/otman/internal/config"
 	"github.com/talvor/otman/internal/item"
+	"github.com/talvor/otman/internal/vault"
 )
 
 // parseKind reads the value of --kind.
@@ -18,9 +19,34 @@ func parseKind(s string) (item.Kind, error) {
 	kind, ok := item.ParseKind(s)
 	if !ok {
 		return "", invalid("invalid_kind", "unknown Kind "+quoteArg(s),
-			map[string]any{"kind": s, "allowed": item.Kinds}, "use --kind issue, prd or spec")
+			map[string]any{"kind": s, "allowed": item.Kinds}, "use --kind issue, prd, spec or doc")
 	}
 	return kind, nil
+}
+
+// kindOf is the Kind of Item file f, parsed as p: its frontmatter kind, or
+// else its folder's; nil when neither says.
+func kindOf(f vault.ItemFile, p item.Parsed) *item.Kind {
+	if p.Kind != nil {
+		return p.Kind
+	}
+	return f.Derived().Kind
+}
+
+// notForDoc refuses what, which only an Item with a workflow takes, on Doc
+// id: a Doc has no status, parent, blocked_by or assignee.
+func notForDoc(id, what string) *Error {
+	return invalid("invalid_for_doc", what+" does not apply to "+id+", a Doc: a Doc has no status, parent, blocked_by or assignee",
+		map[string]any{"item": id}, "a Doc carries a title, Labels and a body; use an issue, PRD or spec for tracked work")
+}
+
+// refuseDoc fails with invalid_for_doc when Item file f, parsed as p, is a
+// Doc.
+func refuseDoc(f vault.ItemFile, p item.Parsed, what string) error {
+	if k := kindOf(f, p); k != nil && k.IsDoc() {
+		return notForDoc(f.ID(), what)
+	}
+	return nil
 }
 
 // nameOrActor maps the value of a NAME|@me flag to the name to store: the

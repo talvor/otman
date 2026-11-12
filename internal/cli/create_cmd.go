@@ -29,13 +29,13 @@ type createFlags struct {
 func (a *app) newCreateCmd() *cobra.Command {
 	var f createFlags
 	cmd := &cobra.Command{
-		Use:   "create --title TEXT [--kind issue|prd|spec] [--body TEXT | --body-file PATH|- | --no-template] [--label L]... [--assignee NAME|@me] [--parent REF] [--blocked-by REF]...",
+		Use:   "create --title TEXT [--kind issue|prd|spec|doc] [--body TEXT | --body-file PATH|- | --no-template] [--label L]... [--assignee NAME|@me] [--parent REF] [--blocked-by REF]...",
 		Short: "Create an Item in the selected Project",
 		Args:  cobra.NoArgs,
 	}
 	fl := cmd.Flags()
 	fl.StringVar(&f.title, "title", "", "the Item's title (required)")
-	fl.StringVar(&f.kind, "kind", string(item.Issue), "issue, prd or spec")
+	fl.StringVar(&f.kind, "kind", string(item.Issue), "issue, prd, spec or doc")
 	fl.StringVar(&f.body, "body", "", "the Item's body, as Markdown")
 	fl.StringVar(&f.bodyFile, "body-file", "", "read the body from PATH, or from stdin with -")
 	fl.BoolVar(&f.noTemplate, "no-template", false, "start with an empty body instead of the Kind's Template")
@@ -76,6 +76,14 @@ func (a *app) create(cmd *cobra.Command, f createFlags) error {
 	kind, err := parseKind(f.kind)
 	if err != nil {
 		return err
+	}
+	if kind.IsDoc() {
+		for _, flag := range []string{"assignee", "parent", "blocked-by"} {
+			if cmd.Flags().Changed(flag) {
+				return invalid("invalid_for_doc", "--"+flag+" does not apply to a Doc: a Doc has no status, parent, blocked_by or assignee",
+					map[string]any{"flag": "--" + flag, "kind": kind}, "drop --"+flag+", or create an issue, PRD or spec")
+			}
+		}
 	}
 	// An explicit body, even an empty one, is stored as given; only an
 	// omitted body takes the Kind's Template.

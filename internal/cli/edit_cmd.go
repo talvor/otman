@@ -37,7 +37,7 @@ func (a *app) newEditCmd() *cobra.Command {
 	}
 	fl := cmd.Flags()
 	fl.StringVar(&f.title, "title", "", "retitle the Item, renaming its file and rewriting every link to it")
-	fl.StringVar(&f.kind, "kind", "", "change the Kind to issue, prd or spec, moving the file to its folder")
+	fl.StringVar(&f.kind, "kind", "", "change the Kind to issue, prd or spec (never to or from doc), moving the file to its folder")
 	fl.StringVar(&f.body, "body", "", "replace the body, keeping the comments")
 	fl.StringVar(&f.bodyFile, "body-file", "", "replace the body with PATH, or with stdin for -")
 	fl.BoolVar(&f.clearBody, "clear-body", false, "empty the body, keeping the comments")
@@ -146,6 +146,9 @@ func (a *app) edit(cmd *cobra.Command, ref string, f editFlags) error {
 				Hint:    "view the Item again, then retry with its current rev"}
 		}
 		before := item.Parse(data)
+		if err := checkDocEdit(file, before, update, fl.Changed); err != nil {
+			return err
+		}
 		data, changed, err := item.Apply(data, file.Derived(), update, a.opts.Now())
 		if err != nil {
 			return writeError(file, err)
@@ -240,6 +243,25 @@ func checkTitle(title string) error {
 	if !singleLine(title) {
 		return invalid("invalid_arguments", "--title must be a single line of UTF-8 text",
 			map[string]any{"flag": "--title"}, "")
+	}
+	return nil
+}
+
+// checkDocEdit refuses an edit of Item file f, parsed as before, that
+// would give a Doc an assignee or turn an Item into a Doc or a Doc into
+// another Kind: a Doc has none of the task properties an Item of another
+// Kind carries, and a Kind change would not add or drop them.
+func checkDocEdit(f vault.ItemFile, before item.Parsed, update item.Update, changed func(string) bool) error {
+	k := kindOf(f, before)
+	isDoc := k != nil && k.IsDoc()
+	switch {
+	case isDoc && changed("assignee"):
+		return notForDoc(f.ID(), "--assignee")
+	case isDoc && changed("clear-assignee"):
+		return notForDoc(f.ID(), "--clear-assignee")
+	case update.Kind != nil && update.Kind.IsDoc() != isDoc && (k != nil || update.Kind.IsDoc()):
+		return invalid("invalid_kind_change", "cannot change the Kind of "+f.ID()+" to or from doc",
+			map[string]any{"item": f.ID(), "kind": update.Kind}, "a Doc has no status, parent, blocked_by or assignee; create a new Item of the Kind you want")
 	}
 	return nil
 }

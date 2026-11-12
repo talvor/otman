@@ -796,7 +796,7 @@ exit: 0
     },
     {
       "code": "malformed_value",
-      "message": "the kind value of DRF-16 is \"bug\", not \"issue\", \"prd\" or \"spec\", so it reads as absent",
+      "message": "the kind value of DRF-16 is \"bug\", not \"issue\", \"prd\", \"spec\" or \"doc\", so it reads as absent",
       "details": {
         "id": "DRF-16",
         "key": "kind",
@@ -1083,7 +1083,7 @@ warning:
   hint: fix title in Projects/DRF/Specs/DRF-16 Malformed title and kind.md; otman keeps it as written until a command sets title
 warning:
   code: malformed_value
-  message: "the kind value of DRF-16 is \"bug\", not \"issue\", \"prd\" or \"spec\", so it reads as absent"
+  message: "the kind value of DRF-16 is \"bug\", not \"issue\", \"prd\", \"spec\" or \"doc\", so it reads as absent"
   details:
     id: DRF-16
     key: kind

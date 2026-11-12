@@ -1,0 +1,496 @@
+$ otman create --title Meeting notes --kind doc --body Agenda. --label notes --json
+env: OTM_ACTOR=talvor
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "item": {
+      "id": "OTM-3",
+      "title": "Meeting notes",
+      "kind": "doc",
+      "status": null,
+      "labels": [
+        "notes"
+      ],
+      "assignee": null,
+      "parent": null,
+      "blocked_by": [],
+      "path": "Projects/OTM/Docs/OTM-3 Meeting notes.md",
+      "rev": "891010b1fa04"
+    },
+    "changed": true
+  },
+  "warnings": [
+    {
+      "code": "new_label",
+      "message": "no other Item in OTM has the label \"notes\"",
+      "details": {
+        "closest": [],
+        "label": "notes",
+        "project": "OTM"
+      },
+      "hint": "check the spelling; 'otman label list' shows the Labels in use"
+    }
+  ]
+}
+-- stderr --
+
+$ otman create --title Empty doc --kind doc
+env: OTM_ACTOR=talvor
+tty: true
+exit: 0
+-- stdout --
+Created OTM-4 · Empty doc
+Projects/OTM/Docs/OTM-4 Empty doc.md
+-- stderr --
+
+$ otman view OTM-3
+tty: true
+exit: 0
+-- stdout --
+OTM-3 · Meeting notes
+doc
+Labels: notes
+Author: talvor · created 2026-01-02T03:04:05Z · updated 2026-01-02T03:04:05Z
+Path: Projects/OTM/Docs/OTM-3 Meeting notes.md
+
+Agenda.
+-- stderr --
+
+$ otman list
+exit: 0
+-- stdout --
+items[1]:
+  - id: OTM-1
+    title: Handle sync collisions
+    kind: issue
+    status: open
+    labels[0]:
+    assignee: agent-b
+    parent: null
+    blocked_by[0]:
+    path: Projects/OTM/Issues/OTM-1 Handle sync collisions.md
+    rev: 8c015b8d4fe9
+total: 1
+count: 1
+has_more: false
+-- stderr --
+
+$ otman list --kind doc --state closed
+exit: 0
+-- stdout --
+items[2]:
+  - id: OTM-3
+    title: Meeting notes
+    kind: doc
+    status: null
+    labels[1]: notes
+    assignee: null
+    parent: null
+    blocked_by[0]:
+    path: Projects/OTM/Docs/OTM-3 Meeting notes.md
+    rev: 891010b1fa04
+  - id: OTM-4
+    title: Empty doc
+    kind: doc
+    status: null
+    labels[0]:
+    assignee: null
+    parent: null
+    blocked_by[0]:
+    path: Projects/OTM/Docs/OTM-4 Empty doc.md
+    rev: d3013d49546e
+total: 2
+count: 2
+has_more: false
+-- stderr --
+
+$ otman frontier --json
+exit: 0
+-- stdout --
+{
+  "schema_version": 1,
+  "data": {
+    "items": [],
+    "total": 0,
+    "count": 0,
+    "has_more": false
+  },
+  "warnings": []
+}
+-- stderr --
+
+$ otman edit OTM-3 --title Meeting minutes --body Done. --add-label minutes
+exit: 0
+-- stdout --
+item:
+  id: OTM-3
+  title: Meeting minutes
+  kind: doc
+  status: null
+  labels[2]: notes,minutes
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Docs/OTM-3 Meeting minutes.md
+  rev: dce4259cc610
+changed: true
+-- stderr --
+warning:
+  code: new_label
+  message: "no other Item in OTM has the label \"minutes\""
+  details:
+    closest[0]:
+    label: minutes
+    project: OTM
+  hint: check the spelling; 'otman label list' shows the Labels in use
+
+$ otman comment OTM-3 --body Noted.
+env: OTM_ACTOR=talvor
+exit: 0
+-- stdout --
+item:
+  id: OTM-3
+  title: Meeting minutes
+  kind: doc
+  status: null
+  labels[2]: notes,minutes
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Docs/OTM-3 Meeting minutes.md
+  rev: 18da606ad42c
+changed: true
+-- stderr --
+
+$ otman create --title Bad --kind doc --assignee x
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_for_doc
+  message: "--assignee does not apply to a Doc: a Doc has no status, parent, blocked_by or assignee"
+  details:
+    flag: "--assignee"
+    kind: doc
+  hint: "drop --assignee, or create an issue, PRD or spec"
+
+$ otman create --title Bad --kind doc --parent OTM-1
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_for_doc
+  message: "--parent does not apply to a Doc: a Doc has no status, parent, blocked_by or assignee"
+  details:
+    flag: "--parent"
+    kind: doc
+  hint: "drop --parent, or create an issue, PRD or spec"
+
+$ otman create --title Bad --kind doc --blocked-by OTM-1
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_for_doc
+  message: "--blocked-by does not apply to a Doc: a Doc has no status, parent, blocked_by or assignee"
+  details:
+    flag: "--blocked-by"
+    kind: doc
+  hint: "drop --blocked-by, or create an issue, PRD or spec"
+
+$ otman edit OTM-3 --assignee x
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_for_doc
+  message: "--assignee does not apply to OTM-3, a Doc: a Doc has no status, parent, blocked_by or assignee"
+  details:
+    item: OTM-3
+  hint: "a Doc carries a title, Labels and a body; use an issue, PRD or spec for tracked work"
+
+$ otman edit OTM-3 --clear-assignee
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_for_doc
+  message: "--clear-assignee does not apply to OTM-3, a Doc: a Doc has no status, parent, blocked_by or assignee"
+  details:
+    item: OTM-3
+  hint: "a Doc carries a title, Labels and a body; use an issue, PRD or spec for tracked work"
+
+$ otman edit OTM-3 --kind issue
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_kind_change
+  message: cannot change the Kind of OTM-3 to or from doc
+  details:
+    item: OTM-3
+    kind: issue
+  hint: "a Doc has no status, parent, blocked_by or assignee; create a new Item of the Kind you want"
+
+$ otman edit OTM-1 --kind doc
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_kind_change
+  message: cannot change the Kind of OTM-1 to or from doc
+  details:
+    item: OTM-1
+    kind: doc
+  hint: "a Doc has no status, parent, blocked_by or assignee; create a new Item of the Kind you want"
+
+$ otman close OTM-3
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_for_doc
+  message: "close does not apply to OTM-3, a Doc: a Doc has no status, parent, blocked_by or assignee"
+  details:
+    item: OTM-3
+  hint: "a Doc carries a title, Labels and a body; use an issue, PRD or spec for tracked work"
+
+$ otman reopen OTM-3
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_for_doc
+  message: "reopen does not apply to OTM-3, a Doc: a Doc has no status, parent, blocked_by or assignee"
+  details:
+    item: OTM-3
+  hint: "a Doc carries a title, Labels and a body; use an issue, PRD or spec for tracked work"
+
+$ otman claim OTM-3
+env: OTM_ACTOR=talvor
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_for_doc
+  message: "claim does not apply to OTM-3, a Doc: a Doc has no status, parent, blocked_by or assignee"
+  details:
+    item: OTM-3
+  hint: "a Doc carries a title, Labels and a body; use an issue, PRD or spec for tracked work"
+
+$ otman release OTM-3
+env: OTM_ACTOR=talvor
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_for_doc
+  message: "release does not apply to OTM-3, a Doc: a Doc has no status, parent, blocked_by or assignee"
+  details:
+    item: OTM-3
+  hint: "a Doc carries a title, Labels and a body; use an issue, PRD or spec for tracked work"
+
+$ otman parent set OTM-3 OTM-1
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_for_doc
+  message: "a relation does not apply to OTM-3, a Doc: a Doc has no status, parent, blocked_by or assignee"
+  details:
+    item: OTM-3
+  hint: "a Doc carries a title, Labels and a body; use an issue, PRD or spec for tracked work"
+
+$ otman parent set OTM-1 OTM-3
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_for_doc
+  message: "OTM-3 is a Doc and cannot be a parent: a Doc has no status to close and takes part in no relation"
+  details:
+    item: OTM-3
+    role: parent
+  hint: "name an issue, PRD or spec"
+
+$ otman block OTM-1 --by OTM-3
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_for_doc
+  message: "OTM-3 is a Doc and cannot be a blocker: a Doc has no status to close and takes part in no relation"
+  details:
+    item: OTM-3
+    role: blocker
+  hint: "name an issue, PRD or spec"
+
+$ otman unblock OTM-3 --by OTM-1
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_for_doc
+  message: "a relation does not apply to OTM-3, a Doc: a Doc has no status, parent, blocked_by or assignee"
+  details:
+    item: OTM-3
+  hint: "a Doc carries a title, Labels and a body; use an issue, PRD or spec for tracked work"
+
+$ otman list --kind doc --unassigned
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_for_doc
+  message: "--unassigned does not apply to a Doc: a Doc has no status, parent, blocked_by or assignee"
+  details:
+    flag: "--unassigned"
+    kind: doc
+  hint: "drop --unassigned, or list another Kind"
+
+$ otman doctor
+exit: 0
+-- stdout --
+findings[0]:
+fixed[0]:
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+vault/Projects/OTM/Docs/
+-- vault/Projects/OTM/Docs/OTM-3 Meeting minutes.md --
+---
+id: OTM-3
+title: Meeting minutes
+aliases:
+  - Meeting minutes
+kind: doc
+author: talvor
+labels:
+  - notes
+  - minutes
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+Done.
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-02T03:04:05Z · talvor
+Noted.
+-- vault/Projects/OTM/Docs/OTM-4 Empty doc.md --
+---
+id: OTM-4
+title: Empty doc
+aliases:
+  - Empty doc
+kind: doc
+author: talvor
+labels: []
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Handle sync collisions.md --
+---
+id: OTM-1
+title: Handle sync collisions
+aliases:
+  - Handle sync collisions
+kind: issue
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: agent-b
+created: 2026-01-01T10:00:00Z
+updated: 2026-01-01T11:00:00Z
+---
+Detect duplicate numbers and report both paths.
+
+## Comments
+
+This body has its own Comments heading; the marker is the boundary.
+
+<!-- otman:comments -->
+## Comments
+
+### 2026-01-01T10:30:00Z · talvor
+Reproduced with a copied note.
+
+### 2026-01-01T11:00:00Z · agent-b
+Fixed in the scanner.
+
+### A heading inside the comment
+stays part of it.
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/OTM/Specs/
+-- vault/Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md --
+---
+id: OTM-2
+title: 'Item file format: frontmatter and body'
+aliases:
+  - 'Item file format: frontmatter and body'
+kind: spec
+status: closed
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T09:00:00Z
+updated: 2026-01-01T09:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/WEB/
+vault/Projects/WEB/PRDs/
+-- vault/Projects/WEB/PRDs/WEB-1 Landing page.md --
+---
+id: WEB-1
+title: Landing page
+aliases:
+  - Landing page
+kind: prd
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T08:00:00Z
+updated: 2026-01-01T08:00:00Z
+---
+Explain otman in one screen.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/WEB/WEB.md --
+---
+name: otman website
+kind: project
+---

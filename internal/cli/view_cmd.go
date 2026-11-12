@@ -129,11 +129,15 @@ func (d viewDisplay) RenderHuman(w io.Writer) error {
 	it := d.Item
 	var b strings.Builder
 	fmt.Fprintf(&b, "%s · %s\n", it.ID, it.Title)
-	assignment := "unassigned"
-	if it.Assignee != nil {
-		assignment = "assigned to " + *it.Assignee
+	if it.Kind != nil && it.Kind.IsDoc() {
+		fmt.Fprintf(&b, "%s\n", kindOrDash(it.Kind))
+	} else {
+		assignment := "unassigned"
+		if it.Assignee != nil {
+			assignment = "assigned to " + *it.Assignee
+		}
+		fmt.Fprintf(&b, "%s · %s · %s\n", kindOrDash(it.Kind), orDash(it.Status), assignment)
 	}
-	fmt.Fprintf(&b, "%s · %s · %s\n", kindOrDash(it.Kind), orDash(it.Status), assignment)
 	if len(it.Labels) > 0 {
 		fmt.Fprintf(&b, "Labels: %s\n", strings.Join(it.Labels, ", "))
 	}

@@ -109,11 +109,12 @@ exit: 2
       "allowed": [
         "issue",
         "prd",
-        "spec"
+        "spec",
+        "doc"
       ],
       "kind": "bug"
     },
-    "hint": "use --kind issue, prd or spec"
+    "hint": "use --kind issue, prd, spec or doc"
   }
 }
 

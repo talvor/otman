@@ -25,8 +25,12 @@ A numbered record in a Project, such as `OTM-12`. Every Item has exactly one Kin
 _Avoid_: Ticket, issue (when the Kind isn't meant), task
 
 **Kind**:
-What sort of Item it is: issue, PRD, or spec. An Item of any Kind can be the parent of other Items. A **PRD** says why and what: the problem, who it's for, goals, non-goals and success measures. A **spec** says how: the solution and the decisions needed to build and test it, often as the child of a PRD. An **issue** is a single piece of work, such as a ticket or bug.
+What sort of Item it is: issue, PRD, spec, or Doc. An Item of any Kind but a Doc can be the parent of other Items. A **PRD** says why and what: the problem, who it's for, goals, non-goals and success measures. A **spec** says how: the solution and the decisions needed to build and test it, often as the child of a PRD. An **issue** is a single piece of work, such as a ticket or bug. A **Doc** is a note; see Doc.
 _Avoid_: Type, category
+
+**Doc**:
+The Kind of Item that is a note rather than tracked work: a title, Labels, a body and comments, kept in the Project's `Docs/` folder. A Doc has no status, parent, blockers or assignee, so it is never open or closed, never on the Frontier, and never the parent or blocker of another Item. `list` shows Docs only with `--kind doc`. A Doc's Kind cannot be changed to or from Doc.
+_Avoid_: Note (Obsidian notes in general), page, wiki
 
 **Template**:
 The starting body a new Item of a given Kind receives when no body is supplied.

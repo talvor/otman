@@ -98,9 +98,9 @@ error:
   code: invalid_kind
   message: "unknown Kind \"task\""
   details:
-    allowed[3]: issue,prd,spec
+    allowed[4]: issue,prd,spec,doc
     kind: task
-  hint: "use --kind issue, prd or spec"
+  hint: "use --kind issue, prd, spec or doc"
 
 $ otman edit OTM-1 --kind spec --body a
 <!-- otman:comments -->

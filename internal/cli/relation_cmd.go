@@ -106,6 +106,9 @@ func (a *app) changeRelations(ref string, plan func(*vault.Vault, vault.ItemFile
 			return ioError(err)
 		}
 		links := newItemLinks(files)
+		if err := refuseDoc(f, item.Parse(data), "a relation"); err != nil {
+			return err
+		}
 		c, err := plan(v, f, item.Parse(data), links)
 		if err != nil {
 			return err
