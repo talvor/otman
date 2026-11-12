@@ -16,6 +16,9 @@ func TestDocKind(t *testing.T) {
 			{args: []string{"create", "--title", "Empty doc", "--kind", "doc"}, env: me, tty: true},
 			{args: []string{"view", "OTM-3"}, tty: true},
 			{args: []string{"list"}},
+			{args: []string{"list", "--kind", "doc"}},
+			{args: []string{"list", "--state", "all"}},
+			{args: []string{"list", "--kind", "doc", "--state", "open"}},
 			{args: []string{"list", "--kind", "doc", "--state", "closed"}},
 			{args: []string{"frontier", "--json"}},
 			{args: []string{"frontier", "--kind", "doc"}},
@@ -34,10 +37,22 @@ func TestDocKind(t *testing.T) {
 			{args: []string{"release", "OTM-3"}, env: me},
 			{args: []string{"parent", "set", "OTM-3", "OTM-1"}},
 			{args: []string{"parent", "set", "OTM-1", "OTM-3"}},
+			{args: []string{"create", "--title", "Child of doc", "--parent", "OTM-3"}},
 			{args: []string{"block", "OTM-1", "--by", "OTM-3"}},
+			{args: []string{"create", "--title", "Bad blocker", "--blocked-by", "OTM-3"}},
 			{args: []string{"unblock", "OTM-3", "--by", "OTM-1"}},
 			{args: []string{"list", "--kind", "doc", "--unassigned"}},
 			{args: []string{"doctor"}},
+		},
+	})
+}
+
+func TestDocUnblock(t *testing.T) {
+	runGolden(t, goldenCase{
+		name: "doc-unblock", fixture: "items", files: withOTM(nil),
+		steps: []step{
+			{args: []string{"create", "--title", "Blocker doc", "--kind", "doc"}},
+			{write: map[string]string{"vault/Projects/OTM/Issues/OTM-1 Handle sync collisions.md": "---\nid: OTM-1\ntitle: Handle sync collisions\nkind: issue\nstatus: open\nblocked_by: [\"[[OTM-3 Blocker doc]]\"]\n---\nIssue body.\n\n<!-- otman:comments -->\n## Comments\n"}, args: []string{"unblock", "OTM-1", "--by", "OTM-3"}},
 		},
 	})
 }

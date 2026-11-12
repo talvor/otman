@@ -188,7 +188,7 @@ func createRelations(v *vault.Vault, key, parentRef string, blockerRefs []string
 	}
 	var blockers []string
 	for _, ref := range blockerRefs {
-		t, err := resolveTarget(v, key, ref, "blocker")
+		t, err := resolveNewBlocker(v, key, ref)
 		if err != nil {
 			return nil, nil, err
 		}

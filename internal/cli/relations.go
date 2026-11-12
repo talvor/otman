@@ -173,18 +173,24 @@ func resolveTarget(v *vault.Vault, key, ref, role string) (vault.ItemFile, error
 	if e, ok := err.(*Error); ok && e.Code == "item_not_found" {
 		return vault.ItemFile{}, missingTarget(ref, key, role)
 	}
-	if err == nil {
-		data, rerr := v.ReadItemFile(f)
-		if rerr != nil {
-			return vault.ItemFile{}, ioError(rerr)
-		}
-		if k := kindOf(f, item.Parse(data)); k != nil && k.IsDoc() {
-			return vault.ItemFile{}, invalid("invalid_for_doc",
-				f.ID()+" is a Doc and cannot be a "+role+": a Doc has no status to close and takes part in no relation",
-				map[string]any{"item": f.ID(), "role": role}, "name an issue, PRD or spec")
-		}
-	}
 	return f, err
+}
+
+func resolveNewBlocker(v *vault.Vault, key, ref string) (vault.ItemFile, error) {
+	f, err := resolveTarget(v, key, ref, "blocker")
+	if err != nil {
+		return f, err
+	}
+	data, err := v.ReadItemFile(f)
+	if err != nil {
+		return vault.ItemFile{}, ioError(err)
+	}
+	if k := kindOf(f, item.Parse(data)); k != nil && k.IsDoc() {
+		return vault.ItemFile{}, invalid("invalid_for_doc",
+			f.ID()+" is a Doc and cannot be a blocker: a Doc has no status to close",
+			map[string]any{"item": f.ID(), "role": "blocker"}, "name an issue, PRD or spec")
+	}
+	return f, nil
 }
 
 func missingTarget(ref, key, role string) error {

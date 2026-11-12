@@ -167,7 +167,7 @@ func planParentClear(_ *vault.Vault, f vault.ItemFile, p item.Parsed, _ itemLink
 }
 
 func planBlock(v *vault.Vault, f vault.ItemFile, p item.Parsed, links itemLinks, ref string) (relationChange, error) {
-	blocker, err := resolveTarget(v, f.Key, ref, "blocker")
+	blocker, err := resolveNewBlocker(v, f.Key, ref)
 	if err != nil {
 		return relationChange{}, err
 	}

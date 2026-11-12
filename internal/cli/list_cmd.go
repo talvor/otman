@@ -43,7 +43,7 @@ func (a *app) newListCmd() *cobra.Command {
 	}
 	fl := cmd.Flags()
 	fl.StringVar(&f.state, "state", "open", "open, closed or all")
-	fl.StringVar(&f.kind, "kind", "", "only Items of this Kind: issue, prd, spec or doc (Docs are listed only with --kind doc)")
+	fl.StringVar(&f.kind, "kind", "", "only Items of this Kind: issue, prd, spec or doc (Docs appear with --kind doc or --state all)")
 	fl.StringArrayVar(&f.labels, "label", nil, "only Items with the Label L (repeatable; Items must have every one)")
 	fl.StringArrayVar(&f.withoutLabels, "without-label", nil, "only Items without the Label L (repeatable)")
 	fl.BoolVar(&f.unlabeled, "unlabeled", false, "only Items with no Labels (conflicts with --label)")
@@ -152,13 +152,8 @@ func (f listFlags) query(cmd *cobra.Command) (itemQuery, error) {
 			return itemQuery{}, err
 		}
 		q.kind = &kind
-		if kind.IsDoc() {
-			for _, flag := range []string{"assignee", "unassigned", "parent", "blocked-by", "unblocked"} {
-				if cmd.Flags().Changed(flag) || flag == "unblocked" && f.unblocked || flag == "unassigned" && f.unassigned {
-					return itemQuery{}, invalid("invalid_for_doc", "--"+flag+" does not apply to a Doc: a Doc has no status, parent, blocked_by or assignee",
-						map[string]any{"flag": "--" + flag, "kind": kind}, "drop --"+flag+", or list another Kind")
-				}
-			}
+		if kind.IsDoc() && !cmd.Flags().Changed("state") && !f.unblocked {
+			q.state = "all"
 		}
 	}
 	if f.unassigned && cmd.Flags().Changed("assignee") {
@@ -395,9 +390,7 @@ func listProject(v *vault.Vault, key string, q itemQuery, inUse labelSet, drift 
 			continue
 		}
 		if k := kindOf(f, p); k != nil && k.IsDoc() {
-			// A Doc has no status: it is listed only by --kind doc, whatever
-			// --state says.
-			if q.kind == nil {
+			if q.state != "all" || q.unblocked {
 				continue
 			}
 			found = append(found, s)

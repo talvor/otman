@@ -527,6 +527,12 @@ func planDoctor(v *vault.Vault, f vault.ItemFile, data []byte, all []vault.ItemF
 			pl.to = to
 		}
 	}
+	if p.Kind != nil && d.Kind != nil && p.Kind.IsDoc() != d.Kind.IsDoc() {
+		for _, fd := range pl.findings {
+			fd.Fix, fd.applied = "none", false
+		}
+		return doctorPlan{findings: pl.findings}
+	}
 
 	for _, fd := range pl.findings {
 		switch fd.Code {

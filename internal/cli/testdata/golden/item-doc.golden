@@ -77,7 +77,7 @@ count: 1
 has_more: false
 -- stderr --
 
-$ otman list --kind doc --state closed
+$ otman list --kind doc
 exit: 0
 -- stdout --
 items[2]:
@@ -106,6 +106,73 @@ count: 2
 has_more: false
 -- stderr --
 
+$ otman list --state all
+exit: 0
+-- stdout --
+items[4]:
+  - id: OTM-1
+    title: Handle sync collisions
+    kind: issue
+    status: open
+    labels[0]:
+    assignee: agent-b
+    parent: null
+    blocked_by[0]:
+    path: Projects/OTM/Issues/OTM-1 Handle sync collisions.md
+    rev: 8c015b8d4fe9
+  - id: OTM-2
+    title: "Item file format: frontmatter and body"
+    kind: spec
+    status: closed
+    labels[0]:
+    assignee: null
+    parent: null
+    blocked_by[0]:
+    path: Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md
+    rev: fc9a1f15b73e
+  - id: OTM-3
+    title: Meeting notes
+    kind: doc
+    status: null
+    labels[1]: notes
+    assignee: null
+    parent: null
+    blocked_by[0]:
+    path: Projects/OTM/Docs/OTM-3 Meeting notes.md
+    rev: 891010b1fa04
+  - id: OTM-4
+    title: Empty doc
+    kind: doc
+    status: null
+    labels[0]:
+    assignee: null
+    parent: null
+    blocked_by[0]:
+    path: Projects/OTM/Docs/OTM-4 Empty doc.md
+    rev: d3013d49546e
+total: 4
+count: 4
+has_more: false
+-- stderr --
+
+$ otman list --kind doc --state open
+exit: 0
+-- stdout --
+items[0]:
+total: 0
+count: 0
+has_more: false
+-- stderr --
+
+$ otman list --kind doc --state closed
+exit: 0
+-- stdout --
+items[0]:
+total: 0
+count: 0
+has_more: false
+-- stderr --
+
 $ otman frontier --json
 exit: 0
 -- stdout --
@@ -122,16 +189,13 @@ exit: 0
 -- stderr --
 
 $ otman frontier --kind doc
-exit: 2
+exit: 0
 -- stdout --
+items[0]:
+total: 0
+count: 0
+has_more: false
 -- stderr --
-error:
-  code: invalid_for_doc
-  message: "--unassigned does not apply to a Doc: a Doc has no status, parent, blocked_by or assignee"
-  details:
-    flag: "--unassigned"
-    kind: doc
-  hint: "drop --unassigned, or list another Kind"
 
 $ otman edit OTM-3 --title Meeting minutes --body Done. --add-label minutes
 exit: 0
@@ -316,16 +380,44 @@ error:
   hint: "a Doc carries a title, Labels and a body; use an issue, PRD or spec for tracked work"
 
 $ otman parent set OTM-1 OTM-3
-exit: 2
+exit: 0
 -- stdout --
+item:
+  id: OTM-1
+  title: Handle sync collisions
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: agent-b
+  parent:
+    id: OTM-3
+    path: Projects/OTM/Docs/OTM-3 Meeting minutes.md
+    resolved: true
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-1 Handle sync collisions.md
+  rev: dadf68c066e3
+changed: true
 -- stderr --
-error:
-  code: invalid_for_doc
-  message: "OTM-3 is a Doc and cannot be a parent: a Doc has no status to close and takes part in no relation"
-  details:
-    item: OTM-3
-    role: parent
-  hint: "name an issue, PRD or spec"
+
+$ otman create --title Child of doc --parent OTM-3
+exit: 0
+-- stdout --
+item:
+  id: OTM-5
+  title: Child of doc
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent:
+    id: OTM-3
+    path: Projects/OTM/Docs/OTM-3 Meeting minutes.md
+    resolved: true
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-5 Child of doc.md
+  rev: 47ae6802733a
+changed: true
+-- stderr --
 
 $ otman block OTM-1 --by OTM-3
 exit: 2
@@ -333,7 +425,19 @@ exit: 2
 -- stderr --
 error:
   code: invalid_for_doc
-  message: "OTM-3 is a Doc and cannot be a blocker: a Doc has no status to close and takes part in no relation"
+  message: "OTM-3 is a Doc and cannot be a blocker: a Doc has no status to close"
+  details:
+    item: OTM-3
+    role: blocker
+  hint: "name an issue, PRD or spec"
+
+$ otman create --title Bad blocker --blocked-by OTM-3
+exit: 2
+-- stdout --
+-- stderr --
+error:
+  code: invalid_for_doc
+  message: "OTM-3 is a Doc and cannot be a blocker: a Doc has no status to close"
   details:
     item: OTM-3
     role: blocker
@@ -351,16 +455,33 @@ error:
   hint: "a Doc carries a title, Labels and a body; use an issue, PRD or spec for tracked work"
 
 $ otman list --kind doc --unassigned
-exit: 2
+exit: 0
 -- stdout --
--- stderr --
-error:
-  code: invalid_for_doc
-  message: "--unassigned does not apply to a Doc: a Doc has no status, parent, blocked_by or assignee"
-  details:
-    flag: "--unassigned"
+items[2]:
+  - id: OTM-3
+    title: Meeting minutes
     kind: doc
-  hint: "drop --unassigned, or list another Kind"
+    status: null
+    labels[2]: notes,minutes
+    assignee: null
+    parent: null
+    blocked_by[0]:
+    path: Projects/OTM/Docs/OTM-3 Meeting minutes.md
+    rev: 18da606ad42c
+  - id: OTM-4
+    title: Empty doc
+    kind: doc
+    status: null
+    labels[0]:
+    assignee: null
+    parent: null
+    blocked_by[0]:
+    path: Projects/OTM/Docs/OTM-4 Empty doc.md
+    rev: d3013d49546e
+total: 2
+count: 2
+has_more: false
+-- stderr --
 
 $ otman doctor
 exit: 0
@@ -431,12 +552,12 @@ aliases:
 kind: issue
 status: open
 author: talvor
-parent: null
+parent: "[[OTM-3 Meeting minutes]]"
 blocked_by: []
 labels: []
 assignee: agent-b
 created: 2026-01-01T10:00:00Z
-updated: 2026-01-01T11:00:00Z
+updated: 2026-01-02T03:04:05Z
 ---
 Detect duplicate numbers and report both paths.
 
@@ -455,6 +576,33 @@ Fixed in the scanner.
 
 ### A heading inside the comment
 stays part of it.
+-- vault/Projects/OTM/Issues/OTM-5 Child of doc.md --
+---
+id: OTM-5
+title: Child of doc
+aliases:
+  - Child of doc
+kind: issue
+status: open
+author: null
+parent: "[[OTM-3 Meeting minutes]]"
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+## Summary
+
+<!-- What needs doing, or what is broken, in a few sentences. For a bug: steps to reproduce, expected and actual behaviour. -->
+
+## Acceptance criteria
+
+<!-- A checklist that tells anyone, human or agent, when this is done. -->
+- [ ] 
+
+<!-- otman:comments -->
+## Comments
 -- vault/Projects/OTM/OTM.md --
 ---
 name: otman

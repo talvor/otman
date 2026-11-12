@@ -14,6 +14,22 @@ var doctorConfig = map[string]string{
 	"config/otman/config.toml": "vault = \"$WORK/vault\"\nproject = \"DOC\"\nactor = \"talvor\"\n",
 }
 
+func TestDoctorDocKindBoundary(t *testing.T) {
+	runGolden(t, goldenCase{
+		name: "doctor-doc-kind-boundary", fixture: "items", files: map[string]string{
+			"config/otman/config.toml":                         "vault = \"$WORK/vault\"\nproject = \"OTM\"\nactor = \"talvor\"\n",
+			"vault/Projects/OTM/Docs/OTM-5 Issue in Docs.md":   "---\nid: OTM-5\ntitle: Issue in Docs\nkind: issue\nstatus: open\nassignee: talvor\n---\nIssue body.\n\n<!-- otman:comments -->\n## Comments\n",
+			"vault/Projects/OTM/Issues/OTM-6 Doc in Issues.md": "---\nid: OTM-6\ntitle: Doc in Issues\nkind: doc\n---\nDoc body.\n\n<!-- otman:comments -->\n## Comments\n",
+		},
+		steps: []step{
+			{args: []string{"doctor", "OTM-5", "--fix", "--prefer", "file"}},
+			{args: []string{"doctor", "OTM-5", "--fix", "--prefer", "frontmatter"}},
+			{args: []string{"doctor", "OTM-6", "--fix", "--prefer", "file"}},
+			{args: []string{"doctor", "OTM-6", "--fix", "--prefer", "frontmatter"}},
+		},
+	})
+}
+
 // Without --fix nothing changes. Every finding is listed with its fix:
 // auto when --fix repairs it deterministically, choice when it needs
 // --prefer, and none when a person must act. A clean Item is not listed,

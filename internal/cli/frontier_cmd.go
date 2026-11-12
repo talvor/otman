@@ -18,7 +18,7 @@ func (a *app) newFrontierCmd() *cobra.Command {
 		Args:  cobra.NoArgs,
 	}
 	fl := cmd.Flags()
-	fl.StringVar(&f.kind, "kind", "", "only Items of this Kind: issue, prd or spec; a Doc is never on the Frontier")
+	fl.StringVar(&f.kind, "kind", "", "only Items of this Kind: issue, prd, spec or doc; Docs never match the Frontier")
 	fl.StringArrayVar(&f.labels, "label", nil, "only Items with the Label L (repeatable; Items must have every one)")
 	fl.StringVar(&f.parent, "parent", "", "the Frontier of REF: only its direct children, in REF's Project")
 	fl.StringVar(&f.search, "search", "", "only Items whose title or body contains TEXT, ignoring case")
