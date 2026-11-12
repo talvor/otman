@@ -34,12 +34,15 @@ const (
 	Issue Kind = "issue"
 	PRD   Kind = "prd"
 	Spec  Kind = "spec"
+	// Doc is a note: a title and a body, with no status, parent, blockers
+	// or assignee.
+	Doc Kind = "doc"
 )
 
 // Kinds are the Kinds, in display order.
-var Kinds = []Kind{Issue, PRD, Spec}
+var Kinds = []Kind{Issue, PRD, Spec, Doc}
 
-var folders = map[Kind]string{Issue: "Issues", PRD: "PRDs", Spec: "Specs"}
+var folders = map[Kind]string{Issue: "Issues", PRD: "PRDs", Spec: "Specs", Doc: "Docs"}
 
 // ParseKind validates a --kind value.
 func ParseKind(s string) (Kind, bool) {
@@ -47,6 +50,10 @@ func ParseKind(s string) (Kind, bool) {
 	_, ok := folders[k]
 	return k, ok
 }
+
+// IsDoc reports whether k is Doc, the Kind that carries no status, parent,
+// blockers or assignee.
+func (k Kind) IsDoc() bool { return k == Doc }
 
 // Folder is the folder under Projects/<KEY>/ that holds Items of Kind k.
 func (k Kind) Folder() string { return folders[k] }
@@ -61,10 +68,10 @@ func KindOfFolder(name string) (Kind, bool) {
 	return "", false
 }
 
-// The statuses an Item can have.
+// The statuses an Item with workflow state can have.
 const (
-	// Open is the status of an Item whose work is not done; every new Item
-	// is open.
+	// Open is the status of an Item whose work is not done; every new
+	// non-Doc Item is open.
 	Open = "open"
 	// Closed is the status of an Item whose work is done or abandoned.
 	Closed = "closed"
@@ -209,8 +216,9 @@ type Fields struct {
 	Updated   time.Time
 }
 
-// Render writes a new Item file: flat frontmatter with every owned key,
-// then the body, then the comments marker and heading. New files use LF.
+// Render writes a new Item file: flat frontmatter with its applicable owned keys,
+// then the body, then the comments marker and heading. A Doc has no status,
+// parent, blocked_by or assignee key. New files use LF.
 // Trailing line breaks of the body are not kept; a non-empty body is
 // separated from the marker by one blank line.
 func Render(f Fields, body string) ([]byte, error) {
@@ -226,12 +234,18 @@ func Render(f Fields, body string) ([]byte, error) {
 	add("title", str(f.Title))
 	add("aliases", list([]string{f.Title}))
 	add("kind", str(string(f.Kind)))
-	add("status", str(f.Status))
+	if !f.Kind.IsDoc() {
+		add("status", str(f.Status))
+	}
 	add("author", optional(f.Author))
-	add("parent", optionalLink(f.Parent))
-	add("blocked_by", links(f.BlockedBy))
+	if !f.Kind.IsDoc() {
+		add("parent", optionalLink(f.Parent))
+		add("blocked_by", links(f.BlockedBy))
+	}
 	add("labels", list(labels))
-	add("assignee", optional(f.Assignee))
+	if !f.Kind.IsDoc() {
+		add("assignee", optional(f.Assignee))
+	}
 	add("created", timestamp(f.Created))
 	add("updated", timestamp(f.Updated))
 

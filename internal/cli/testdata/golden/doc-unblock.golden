@@ -1,0 +1,132 @@
+$ otman create --title Blocker doc --kind doc
+exit: 0
+-- stdout --
+item:
+  id: OTM-3
+  title: Blocker doc
+  kind: doc
+  status: null
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Docs/OTM-3 Blocker doc.md
+  rev: c4ecadb64c70
+changed: true
+-- stderr --
+
+$ write "vault/Projects/OTM/Issues/OTM-1 Handle sync collisions.md"
+
+$ otman unblock OTM-1 --by OTM-3
+exit: 0
+-- stdout --
+item:
+  id: OTM-1
+  title: Handle sync collisions
+  kind: issue
+  status: open
+  labels[0]:
+  assignee: null
+  parent: null
+  blocked_by[0]:
+  path: Projects/OTM/Issues/OTM-1 Handle sync collisions.md
+  rev: 5128ea0055db
+changed: true
+-- stderr --
+
+== tree ==
+config/
+config/otman/
+-- config/otman/config.toml --
+vault = "$WORK/vault"
+project = "OTM"
+home/
+vault/
+vault/.otman/
+-- vault/.otman/.gitignore --
+*
+-- vault/.otman/lock --
+-- vault/.otman/otman.db --
+[sqlite database]
+vault/Projects/
+vault/Projects/OTM/
+vault/Projects/OTM/Docs/
+-- vault/Projects/OTM/Docs/OTM-3 Blocker doc.md --
+---
+id: OTM-3
+title: Blocker doc
+aliases:
+  - Blocker doc
+kind: doc
+author: null
+labels: []
+created: 2026-01-02T03:04:05Z
+updated: 2026-01-02T03:04:05Z
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/OTM/Issues/
+-- vault/Projects/OTM/Issues/OTM-1 Handle sync collisions.md --
+---
+id: OTM-1
+title: Handle sync collisions
+kind: issue
+status: open
+blocked_by: []
+updated: 2026-01-02T03:04:05Z
+---
+Issue body.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/OTM/OTM.md --
+---
+name: otman
+kind: project
+---
+vault/Projects/OTM/Specs/
+-- vault/Projects/OTM/Specs/OTM-2 Item file format frontmatter and body.md --
+---
+id: OTM-2
+title: 'Item file format: frontmatter and body'
+aliases:
+  - 'Item file format: frontmatter and body'
+kind: spec
+status: closed
+author: null
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T09:00:00Z
+updated: 2026-01-01T09:00:00Z
+---
+<!-- otman:comments -->
+## Comments
+vault/Projects/WEB/
+vault/Projects/WEB/PRDs/
+-- vault/Projects/WEB/PRDs/WEB-1 Landing page.md --
+---
+id: WEB-1
+title: Landing page
+aliases:
+  - Landing page
+kind: prd
+status: open
+author: talvor
+parent: null
+blocked_by: []
+labels: []
+assignee: null
+created: 2026-01-01T08:00:00Z
+updated: 2026-01-01T08:00:00Z
+---
+Explain otman in one screen.
+
+<!-- otman:comments -->
+## Comments
+-- vault/Projects/WEB/WEB.md --
+---
+name: otman website
+kind: project
+---

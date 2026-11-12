@@ -43,7 +43,7 @@ func (a *app) newListCmd() *cobra.Command {
 	}
 	fl := cmd.Flags()
 	fl.StringVar(&f.state, "state", "open", "open, closed or all")
-	fl.StringVar(&f.kind, "kind", "", "only Items of this Kind: issue, prd or spec")
+	fl.StringVar(&f.kind, "kind", "", "only Items of this Kind: issue, prd, spec or doc (Docs appear with --kind doc or --state all)")
 	fl.StringArrayVar(&f.labels, "label", nil, "only Items with the Label L (repeatable; Items must have every one)")
 	fl.StringArrayVar(&f.withoutLabels, "without-label", nil, "only Items without the Label L (repeatable)")
 	fl.BoolVar(&f.unlabeled, "unlabeled", false, "only Items with no Labels (conflicts with --label)")
@@ -152,6 +152,9 @@ func (f listFlags) query(cmd *cobra.Command) (itemQuery, error) {
 			return itemQuery{}, err
 		}
 		q.kind = &kind
+		if kind.IsDoc() && !cmd.Flags().Changed("state") && !f.unblocked {
+			q.state = "all"
+		}
 	}
 	if f.unassigned && cmd.Flags().Changed("assignee") {
 		return itemQuery{}, conflictingFlags("--assignee", "--unassigned",
@@ -349,12 +352,12 @@ func listScope(v *vault.Vault, sel config.Value) ([]string, []output.Problem, er
 
 // listProject is the summaries of the Items of Project key that q keeps,
 // sorted by number, then path, and a warning for each Item left out
-// because it drifted: its frontmatter cannot be read, or its status is
-// missing or neither open nor closed, whatever --state says. It records
-// the drift warnings of each Item it keeps in drift, by path, so that only
-// those of the Items shown are reported. It adds the Labels of every Item
-// it reads, kept or not, to inUse. It checks the
-// blockers of an Item, under q.unblocked, only once every other filter
+// because it drifted: its frontmatter cannot be read, or a non-Doc Item's
+// status is missing or neither open nor closed, whatever --state says. It
+// records the drift warnings of each Item it keeps in drift, by path, so
+// that only those of the Items shown are reported. It adds the Labels of
+// every Item it reads, kept or not, to inUse. It checks the blockers of an
+// Item, under q.unblocked, only once every other filter
 // keeps it, so broken blocker links of Items left out anyway do not
 // matter.
 func listProject(v *vault.Vault, key string, q itemQuery, inUse labelSet, drift map[string][]output.Problem) ([]itemSummary, []output.Problem, error) {
@@ -384,6 +387,14 @@ func listProject(v *vault.Vault, key string, q itemQuery, inUse labelSet, drift 
 		if ok, err := q.related(f, p, links); err != nil {
 			return nil, nil, err
 		} else if !ok {
+			continue
+		}
+		if k := kindOf(f, p); k != nil && k.IsDoc() {
+			if q.state != "all" || q.unblocked {
+				continue
+			}
+			found = append(found, s)
+			drift[f.Path] = driftProblems(f, p)
 			continue
 		}
 		if !hasValidStatus(p) {

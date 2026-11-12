@@ -106,6 +106,9 @@ func (a *app) changeRelations(ref string, plan func(*vault.Vault, vault.ItemFile
 			return ioError(err)
 		}
 		links := newItemLinks(files)
+		if err := refuseDoc(f, item.Parse(data), "a relation"); err != nil {
+			return err
+		}
 		c, err := plan(v, f, item.Parse(data), links)
 		if err != nil {
 			return err
@@ -164,7 +167,7 @@ func planParentClear(_ *vault.Vault, f vault.ItemFile, p item.Parsed, _ itemLink
 }
 
 func planBlock(v *vault.Vault, f vault.ItemFile, p item.Parsed, links itemLinks, ref string) (relationChange, error) {
-	blocker, err := resolveTarget(v, f.Key, ref, "blocker")
+	blocker, err := resolveNewBlocker(v, f.Key, ref)
 	if err != nil {
 		return relationChange{}, err
 	}

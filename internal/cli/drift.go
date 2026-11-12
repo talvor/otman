@@ -94,7 +94,7 @@ func driftProblems(f vault.ItemFile, p item.Parsed) []output.Problem {
 			map[string]any{"id": f.ID(), "path": f.Path, "kind": *p.Kind, "folder_kind": *d.Kind},
 			"otman shows the frontmatter Kind; 'otman doctor --fix --prefer frontmatter|file' settles which is right"))
 	}
-	if !hasValidStatus(p) {
+	if k := kindOf(f, p); (k == nil || !k.IsDoc()) && !hasValidStatus(p) {
 		ws = append(ws, invalidStatus(f, p, false))
 	}
 	for _, bad := range p.BadValues {
@@ -242,7 +242,7 @@ func kindFolders(key string) string {
 
 // wellFormed is what the value of each owned key should be.
 var wellFormed = map[string]string{
-	"title": "text", "kind": `"issue", "prd" or "spec"`, "author": "a name", "assignee": "a name",
+	"title": "text", "kind": `"issue", "prd", "spec" or "doc"`, "author": "a name", "assignee": "a name",
 	"created": "a timestamp", "updated": "a timestamp", "labels": "a list of Labels",
 }
 

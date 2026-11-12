@@ -79,6 +79,9 @@ func (a *app) setStatus(cmd *cobra.Command, c statusCommand, ref, commentText, c
 			return ioError(err)
 		}
 		before := item.Parse(data)
+		if err := refuseDoc(f, before, c.use); err != nil {
+			return err
+		}
 		data, changed, err := item.SetStatus(data, f.Derived(), c.status, comment, a.opts.Now())
 		if err != nil {
 			return writeError(f, err)

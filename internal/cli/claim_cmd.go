@@ -79,6 +79,9 @@ func (a *app) setClaim(c claimCommand, ref string) error {
 			return writeError(f, err)
 		}
 		before := item.Parse(data)
+		if err := refuseDoc(f, before, c.use); err != nil {
+			return err
+		}
 		if c.claim && (before.Status == nil || *before.Status != item.Open) {
 			return notOpen(f, before.Status)
 		}
